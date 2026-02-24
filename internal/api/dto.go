@@ -229,3 +229,64 @@ type MathLeaderboardEntry struct {
 	TotalProblemsSolved int     `json:"total_problems_solved"`
 	TotalTimeSpent      int     `json:"total_time_spent"`
 }
+
+// ============================================================================
+// TYPING APP - Request DTOs
+// ============================================================================
+
+// RaceStartRequest represents a request to start a typing race
+type RaceStartRequest struct {
+	WordCount  int    `json:"word_count"`
+	Difficulty string `json:"difficulty"`
+}
+
+// ============================================================================
+// TYPING APP - Response DTOs
+// ============================================================================
+
+// UserResponseTyping represents a user in typing app context
+type UserResponseTyping struct {
+	ID       int64  `json:"id"`
+	Username string `json:"username"`
+}
+
+// RecentTypingResult represents a recent typing result
+type RecentTypingResult struct {
+	WPM       int       `json:"wpm"`
+	Accuracy  float64   `json:"accuracy"`
+	TestType  string    `json:"test_type"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// TypingStatsDetailedResponse represents detailed typing statistics with recent results
+type TypingStatsDetailedResponse struct {
+	UserStats     interface{}         `json:"user_stats"`
+	RecentResults []RecentTypingResult `json:"recent_results"`
+}
+
+// RacingStatsResponse represents racing statistics for a user
+type RacingStatsResponse struct {
+	TotalRaces int `json:"total_races"`
+	Wins       int `json:"wins"`
+	Podiums    int `json:"podiums"`
+	TotalXP    int `json:"total_xp"`
+	AvgWPM     int `json:"avg_wpm"`
+	CurrentCar string `json:"current_car"`
+}
+
+// LeaderboardResult represents a leaderboard result entry
+type LeaderboardResult struct {
+	WPM       int       `json:"wpm"`
+	Accuracy  float64   `json:"accuracy"`
+	TestType  string    `json:"test_type"`
+	CreatedAt time.Time `json:"created_at"`
+	Username  string    `json:"username"`
+}
+
+// RaceLeaderboardResult represents a race leaderboard entry
+type RaceLeaderboardResult struct {
+	Username   string `json:"username"`
+	Wins       int    `json:"wins"`
+	TotalRaces int    `json:"total_races"`
+	TotalXP    int    `json:"total_xp"`
+}

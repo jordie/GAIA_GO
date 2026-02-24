@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jgirmay/GAIA_GO/internal/api"
 	"github.com/jgirmay/GAIA_GO/internal/middleware"
 	"github.com/jgirmay/GAIA_GO/internal/models"
 	"github.com/jgirmay/GAIA_GO/internal/session"
@@ -40,7 +41,7 @@ func (app *TypingApp) handleGetCurrentUser(c *gin.Context) {
 	userID, _ := middleware.GetUserID(c)
 	username, _ := middleware.GetUsername(c)
 
-	c.JSON(http.StatusOK, gin.H{
+	api.RespondWith(c, http.StatusOK, gin.H{
 		"user_id":  userID,
 		"username": username,
 	})
@@ -49,41 +50,36 @@ func (app *TypingApp) handleGetCurrentUser(c *gin.Context) {
 func (app *TypingApp) handleGetUsers(c *gin.Context) {
 	rows, err := app.db.Query(`SELECT id, username FROM users ORDER BY username`)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch users"})
+		api.RespondWithError(c, api.ErrInternalServer)
 		return
 	}
 	defer rows.Close()
 
-	var users []gin.H
+	var users []api.UserResponseTyping
 	for rows.Next() {
-		var id int64
-		var username string
-		if scanErr := rows.Scan(&id, &username); scanErr != nil {
+		var user api.UserResponseTyping
+		if scanErr := rows.Scan(&user.ID, &user.Username); scanErr != nil {
 			continue
 		}
-		users = append(users, gin.H{
-			"id":       id,
-			"username": username,
-		})
+		users = append(users, user)
 	}
 
-	c.JSON(http.StatusOK, users)
+	// Use RawArrayResponse adapter to maintain backward compatibility
+	api.RawArrayResponse(c, users)
 }
 
 func (app *TypingApp) handleCreateUser(sessionMgr *session.Manager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req struct {
-			Username string `json:"username" binding:"required"`
-		}
+		var req api.CreateUserRequest
 
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "username is required"})
+			api.RespondWithError(c, api.ErrBadRequest)
 			return
 		}
 
 		username := req.Username
 		if len(username) < 2 || len(username) > 20 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "username must be between 2 and 20 characters"})
+			api.RespondWithError(c, api.ErrBadRequest)
 			return
 		}
 
@@ -91,14 +87,14 @@ func (app *TypingApp) handleCreateUser(sessionMgr *session.Manager) gin.HandlerF
 		var existingID int64
 		err := app.db.QueryRow(`SELECT id FROM users WHERE username = ?`, username).Scan(&existingID)
 		if err == nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "username already exists"})
+			api.RespondWithError(c, api.ErrConflict)
 			return
 		}
 
 		// Create user
 		user, err := sessionMgr.CreateUser(username)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user"})
+			api.RespondWithError(c, api.ErrInternalServer)
 			return
 		}
 
@@ -108,7 +104,7 @@ func (app *TypingApp) handleCreateUser(sessionMgr *session.Manager) gin.HandlerF
 			user.ID,
 		)
 
-		c.JSON(http.StatusOK, gin.H{
+		api.RespondWith(c, http.StatusOK, gin.H{
 			"success":  true,
 			"user_id":  user.ID,
 			"username": user.Username,
@@ -128,7 +124,7 @@ func (app *TypingApp) handleGetText(c *gin.Context) {
 
 	text := app.GetText(testType, category, wordCount)
 
-	c.JSON(http.StatusOK, gin.H{
+	api.RespondWith(c, http.StatusOK, gin.H{
 		"text": text,
 	})
 }
@@ -136,21 +132,10 @@ func (app *TypingApp) handleGetText(c *gin.Context) {
 func (app *TypingApp) handleSaveResult(c *gin.Context) {
 	userID, _ := middleware.GetUserID(c)
 
-	var req struct {
-		WPM                 int     `json:"wpm" binding:"required"`
-		Accuracy            float64 `json:"accuracy" binding:"required"`
-		TestType            string  `json:"test_type"`
-		TestDuration        int     `json:"test_duration"`
-		TotalCharacters     int     `json:"total_characters"`
-		CorrectCharacters   int     `json:"correct_characters"`
-		IncorrectCharacters int     `json:"incorrect_characters"`
-		RawWPM              int     `json:"raw_wpm"`
-		Errors              int     `json:"errors"`
-		TextSnippet         string  `json:"text_snippet"`
-	}
+	var req api.SaveResultRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		api.RespondWithError(c, api.ErrBadRequest)
 		return
 	}
 
@@ -165,7 +150,7 @@ func (app *TypingApp) handleSaveResult(c *gin.Context) {
 	)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save result"})
+		api.RespondWithError(c, api.ErrInternalServer)
 		return
 	}
 
@@ -201,12 +186,12 @@ func (app *TypingApp) handleSaveResult(c *gin.Context) {
 	)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update stats"})
+		api.RespondWithError(c, api.ErrInternalServer)
 		return
 	}
 
 	resultID, _ := result.LastInsertId()
-	c.JSON(http.StatusOK, gin.H{
+	api.RespondWith(c, http.StatusOK, gin.H{
 		"success":   true,
 		"result_id": resultID,
 		"message":   "Result saved successfully",
@@ -225,7 +210,7 @@ func (app *TypingApp) handleGetStats(c *gin.Context) {
 	).Scan(&stats.ID, &stats.UserID, &stats.TotalSessions, &stats.AverageWPM, &stats.AverageAccuracy, &stats.BestWPM, &stats.TotalTime)
 
 	if err != nil && err != sql.ErrNoRows {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch stats"})
+		api.RespondWithError(c, api.ErrInternalServer)
 		return
 	}
 
@@ -237,27 +222,17 @@ func (app *TypingApp) handleGetStats(c *gin.Context) {
 	)
 	defer rows.Close()
 
-	var recentResults []gin.H
+	var recentResults []api.RecentTypingResult
 	for rows.Next() {
-		var wpm int
-		var accuracy float64
-		var testType string
-		var createdAt time.Time
-		if err := rows.Scan(&wpm, &accuracy, &testType, &createdAt); err != nil {
+		var result api.RecentTypingResult
+		if err := rows.Scan(&result.WPM, &result.Accuracy, &result.TestType, &result.CreatedAt); err != nil {
 			continue
 		}
-		recentResults = append(recentResults, gin.H{
-			"wpm":        wpm,
-			"accuracy":   accuracy,
-			"test_type":  testType,
-			"created_at": createdAt,
-		})
+		recentResults = append(recentResults, result)
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"user_stats":     stats,
-		"recent_results": recentResults,
-	})
+	// Use adapter to maintain old nested format
+	api.TypingStatsResponse(c, stats, recentResults)
 }
 
 func (app *TypingApp) handleGetLeaderboard(c *gin.Context) {
@@ -270,23 +245,13 @@ func (app *TypingApp) handleGetLeaderboard(c *gin.Context) {
 	)
 	defer topWPM.Close()
 
-	var topWPMList []gin.H
+	var topWPMList []api.LeaderboardResult
 	for topWPM.Next() {
-		var wpm int
-		var accuracy float64
-		var testType string
-		var createdAt time.Time
-		var username string
-		if err := topWPM.Scan(&wpm, &accuracy, &testType, &createdAt, &username); err != nil {
+		var result api.LeaderboardResult
+		if err := topWPM.Scan(&result.WPM, &result.Accuracy, &result.TestType, &result.CreatedAt, &result.Username); err != nil {
 			continue
 		}
-		topWPMList = append(topWPMList, gin.H{
-			"wpm":        wpm,
-			"accuracy":   accuracy,
-			"test_type":  testType,
-			"created_at": createdAt,
-			"username":   username,
-		})
+		topWPMList = append(topWPMList, result)
 	}
 
 	// Top accuracy scores
@@ -299,29 +264,17 @@ func (app *TypingApp) handleGetLeaderboard(c *gin.Context) {
 	)
 	defer topAcc.Close()
 
-	var topAccList []gin.H
+	var topAccList []api.LeaderboardResult
 	for topAcc.Next() {
-		var wpm int
-		var accuracy float64
-		var testType string
-		var createdAt time.Time
-		var username string
-		if err := topAcc.Scan(&wpm, &accuracy, &testType, &createdAt, &username); err != nil {
+		var result api.LeaderboardResult
+		if err := topAcc.Scan(&result.WPM, &result.Accuracy, &result.TestType, &result.CreatedAt, &result.Username); err != nil {
 			continue
 		}
-		topAccList = append(topAccList, gin.H{
-			"wpm":        wpm,
-			"accuracy":   accuracy,
-			"test_type":  testType,
-			"created_at": createdAt,
-			"username":   username,
-		})
+		topAccList = append(topAccList, result)
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"top_wpm":      topWPMList,
-		"top_accuracy": topAccList,
-	})
+	// Use adapter to maintain dual-list response format
+	api.DualTopListResponse(c, topWPMList, topAccList)
 }
 
 // ============================================================================
@@ -329,10 +282,7 @@ func (app *TypingApp) handleGetLeaderboard(c *gin.Context) {
 // ============================================================================
 
 func (app *TypingApp) handleRaceStart(c *gin.Context) {
-	var req struct {
-		WordCount  int    `json:"word_count"`
-		Difficulty string `json:"difficulty"`
-	}
+	var req api.RaceStartRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		req.WordCount = 30
@@ -341,7 +291,7 @@ func (app *TypingApp) handleRaceStart(c *gin.Context) {
 
 	text, opponents := app.GenerateRaceOpponents(req.Difficulty, req.WordCount)
 
-	c.JSON(http.StatusOK, gin.H{
+	api.RespondWith(c, http.StatusOK, gin.H{
 		"text":        text,
 		"word_count":  req.WordCount,
 		"difficulty":  req.Difficulty,
@@ -353,16 +303,10 @@ func (app *TypingApp) handleRaceFinish(sessionMgr *session.Manager) gin.HandlerF
 	return func(c *gin.Context) {
 		userID, _ := middleware.GetUserID(c)
 
-		var req struct {
-			WPM        int     `json:"wpm" binding:"required"`
-			Accuracy   float64 `json:"accuracy" binding:"required"`
-			Placement  int     `json:"placement" binding:"required"`
-			RaceTime   float64 `json:"race_time"`
-			Difficulty string  `json:"difficulty"`
-		}
+		var req api.RaceFinishRequest
 
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+			api.RespondWithError(c, api.ErrBadRequest)
 			return
 		}
 
@@ -377,7 +321,7 @@ func (app *TypingApp) handleRaceFinish(sessionMgr *session.Manager) gin.HandlerF
 		)
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save race"})
+			api.RespondWithError(c, api.ErrInternalServer)
 			return
 		}
 
@@ -429,7 +373,7 @@ func (app *TypingApp) handleRaceFinish(sessionMgr *session.Manager) gin.HandlerF
 		// Add XP to user
 		_ = sessionMgr.AddUserXP(userID, int64(xpEarned))
 
-		c.JSON(http.StatusOK, gin.H{
+		api.RespondWith(c, http.StatusOK, gin.H{
 			"success":    true,
 			"xp_earned":  xpEarned,
 			"placement":  req.Placement,
@@ -440,14 +384,15 @@ func (app *TypingApp) handleRaceFinish(sessionMgr *session.Manager) gin.HandlerF
 func (app *TypingApp) handleRaceStats(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil || userID == 0 {
-		c.JSON(http.StatusOK, gin.H{
-			"total_races": 0,
-			"wins":        0,
-			"podiums":     0,
-			"total_xp":    0,
-			"avg_wpm":     0,
-			"current_car": "🚗",
-		})
+		response := api.RacingStatsResponse{
+			TotalRaces: 0,
+			Wins:       0,
+			Podiums:    0,
+			TotalXP:    0,
+			AvgWPM:     0,
+			CurrentCar: "🚗",
+		}
+		api.RespondWith(c, http.StatusOK, response)
 		return
 	}
 
@@ -472,14 +417,16 @@ func (app *TypingApp) handleRaceStats(c *gin.Context) {
 
 	car := GetCarForXP(stats.TotalXP)
 
-	c.JSON(http.StatusOK, gin.H{
-		"total_races": stats.TotalRaces,
-		"wins":        stats.Wins,
-		"podiums":     stats.Podiums,
-		"total_xp":    stats.TotalXP,
-		"avg_wpm":     int(avgWPM),
-		"current_car": car,
-	})
+	response := api.RacingStatsResponse{
+		TotalRaces: stats.TotalRaces,
+		Wins:       stats.Wins,
+		Podiums:    stats.Podiums,
+		TotalXP:    stats.TotalXP,
+		AvgWPM:     int(avgWPM),
+		CurrentCar: car,
+	}
+
+	api.RespondWith(c, http.StatusOK, response)
 }
 
 func (app *TypingApp) handleRaceLeaderboard(c *gin.Context) {
@@ -493,19 +440,13 @@ func (app *TypingApp) handleRaceLeaderboard(c *gin.Context) {
 	)
 	defer topWins.Close()
 
-	var topWinsList []gin.H
+	var topWinsList []api.RaceLeaderboardResult
 	for topWins.Next() {
-		var username string
-		var wins, totalRaces, totalXP int
-		if err := topWins.Scan(&username, &wins, &totalRaces, &totalXP); err != nil {
+		var result api.RaceLeaderboardResult
+		if err := topWins.Scan(&result.Username, &result.Wins, &result.TotalRaces, &result.TotalXP); err != nil {
 			continue
 		}
-		topWinsList = append(topWinsList, gin.H{
-			"username":    username,
-			"wins":        wins,
-			"total_races": totalRaces,
-			"total_xp":    totalXP,
-		})
+		topWinsList = append(topWinsList, result)
 	}
 
 	// Top racers by XP
@@ -518,23 +459,15 @@ func (app *TypingApp) handleRaceLeaderboard(c *gin.Context) {
 	)
 	defer topXP.Close()
 
-	var topXPList []gin.H
+	var topXPList []api.RaceLeaderboardResult
 	for topXP.Next() {
-		var username string
-		var totalXP, wins, totalRaces int
-		if err := topXP.Scan(&username, &totalXP, &wins, &totalRaces); err != nil {
+		var result api.RaceLeaderboardResult
+		if err := topXP.Scan(&result.Username, &result.TotalXP, &result.Wins, &result.TotalRaces); err != nil {
 			continue
 		}
-		topXPList = append(topXPList, gin.H{
-			"username":    username,
-			"total_xp":    totalXP,
-			"wins":        wins,
-			"total_races": totalRaces,
-		})
+		topXPList = append(topXPList, result)
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"top_wins": topWinsList,
-		"top_xp":   topXPList,
-	})
+	// Use adapter to maintain dual-list response format
+	api.RaceLeaderboardResponse(c, topWinsList, topXPList)
 }

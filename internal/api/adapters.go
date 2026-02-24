@@ -118,3 +118,21 @@ func WordsListResponse(c *gin.Context, words interface{}, count int) {
 		"count":   count,
 	})
 }
+
+// RaceLeaderboardResponse maintains the old race leaderboard response format
+// Old format: {"top_wins": [...], "top_xp": [...]}
+func RaceLeaderboardResponse(c *gin.Context, topWins, topXP interface{}) {
+	c.JSON(200, gin.H{
+		"top_wins": topWins,
+		"top_xp":   topXP,
+	})
+}
+
+// TypingStatsResponse maintains old typing stats response format with nested fields
+// Old format: {"user_stats": {...}, "recent_results": [...]}
+func TypingStatsResponse(c *gin.Context, userStats, recentResults interface{}) {
+	c.JSON(200, gin.H{
+		"user_stats":     userStats,
+		"recent_results": recentResults,
+	})
+}
