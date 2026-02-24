@@ -402,6 +402,253 @@ type CentralSyncResponse struct {
 }
 
 // ============================================================================
+// CHESS APP - Request DTOs
+// ============================================================================
+
+// CreateGameRequest represents a request to create a new chess game
+type CreateGameRequest struct {
+	OpponentID  int64  `json:"opponent_id" binding:"required"`
+	TimeControl string `json:"time_control" binding:"required"` // "bullet", "blitz", "rapid", "classical"
+	TimePerSide int    `json:"time_per_side" binding:"required"`
+	Difficulty  string `json:"difficulty,omitempty"` // Optional AI difficulty
+}
+
+// MakeMoveRequest represents a request to make a chess move
+type MakeMoveRequest struct {
+	GameID     int64  `json:"game_id" binding:"required"`
+	FromSquare string `json:"from_square" binding:"required"` // e.g., "e2"
+	ToSquare   string `json:"to_square" binding:"required"`   // e.g., "e4"
+	Promotion  string `json:"promotion,omitempty"`            // "queen", "rook", "bishop", "knight"
+}
+
+// ValidateMoveRequest represents a request to validate a move
+type ValidateMoveRequest struct {
+	GameID     int64  `json:"game_id" binding:"required"`
+	FromSquare string `json:"from_square" binding:"required"`
+	ToSquare   string `json:"to_square" binding:"required"`
+	Piece      string `json:"piece" binding:"required"`
+	BoardState string `json:"board_state" binding:"required"` // FEN notation
+}
+
+// ResignGameRequest represents a request to resign from a game
+type ResignGameRequest struct {
+	GameID int64  `json:"game_id" binding:"required"`
+	Reason string `json:"reason,omitempty"`
+}
+
+// AcceptGameRequest represents accepting a game invitation
+type AcceptGameRequest struct {
+	GameID int64 `json:"game_id" binding:"required"`
+}
+
+// InviteRequest represents sending a game invitation
+type InviteRequest struct {
+	OpponentID  int64  `json:"opponent_id" binding:"required"`
+	TimeControl string `json:"time_control" binding:"required"`
+}
+
+// FollowRequest represents following a player
+type FollowRequest struct {
+	PlayerID int64 `json:"player_id" binding:"required"`
+}
+
+// ListGamesRequest represents a request to list games
+type ListGamesRequest struct {
+	Status string `form:"status"`
+	Limit  int    `form:"limit" binding:"max=100"`
+	Offset int    `form:"offset"`
+}
+
+// RecordResultRequest represents recording a game result
+type RecordResultRequest struct {
+	GameID     int64  `json:"game_id" binding:"required"`
+	WinnerID   int64  `json:"winner_id" binding:"required"`
+	ResultType string `json:"result_type" binding:"required"` // "checkmate", "resignation", "timeout", "stalemate"
+	Duration   int    `json:"duration"`
+	MoveCount  int    `json:"move_count"`
+}
+
+// ============================================================================
+// CHESS APP - Response DTOs
+// ============================================================================
+
+// GameResponse represents complete game state
+type GameResponse struct {
+	ID            int64      `json:"id"`
+	WhitePlayer   PlayerInfo `json:"white_player"`
+	BlackPlayer   PlayerInfo `json:"black_player"`
+	Status        string     `json:"status"`
+	TimeControl   string     `json:"time_control"`
+	BoardState    string     `json:"board_state"`    // FEN
+	Moves         []ChessMove `json:"moves,omitempty"`
+	CurrentTurn   string     `json:"current_turn"`
+	IsCheck       bool       `json:"is_check"`
+	IsCheckmate   bool       `json:"is_checkmate"`
+	IsStalemate   bool       `json:"is_stalemate"`
+	Winner        *int64     `json:"winner,omitempty"`
+	WinReason     string     `json:"win_reason,omitempty"`
+	CreatedAt     time.Time  `json:"created_at"`
+}
+
+// ChessMove for response
+type ChessMove struct {
+	MoveNumber        int    `json:"move_number"`
+	FromSquare        string `json:"from_square"`
+	ToSquare          string `json:"to_square"`
+	Piece             string `json:"piece"`
+	AlgebraicNotation string `json:"algebraic_notation"`
+	IsCapture         bool   `json:"is_capture"`
+	IsCheck           bool   `json:"is_check"`
+}
+
+// ValidationResponse represents move validation result
+type ValidationResponse struct {
+	Valid              bool   `json:"valid"`
+	Reason             string `json:"reason,omitempty"`
+	IsCapture          bool   `json:"is_capture"`
+	IsCastle           bool   `json:"is_castle"`
+	IsEnPassant        bool   `json:"is_en_passant"`
+	RequiresPromotion  bool   `json:"requires_promotion"`
+	NextBoardState     string `json:"next_board_state,omitempty"` // FEN after move
+}
+
+// PlayerProfileResponse represents chess player profile
+type ChessPlayerProfileResponse struct {
+	PlayerID       int64         `json:"player_id"`
+	Username       string        `json:"username"`
+	ProfilePicture string        `json:"profile_picture,omitempty"`
+	Bio            string        `json:"bio,omitempty"`
+	Rating         int           `json:"rating"`
+	RatingTier     string        `json:"rating_tier"`
+	Stats          ChessPlayerStatsResponse `json:"stats"`
+	Achievements   []Achievement `json:"achievements,omitempty"`
+	RecentGames    []GameSummary `json:"recent_games,omitempty"`
+	JoinedAt       time.Time     `json:"joined_at"`
+}
+
+// ChessPlayerStatsResponse represents player statistics
+type ChessPlayerStatsResponse struct {
+	GamesPlayed         int     `json:"games_played"`
+	Wins                int     `json:"wins"`
+	Losses              int     `json:"losses"`
+	Draws               int     `json:"draws"`
+	WinRate             float64 `json:"win_rate"`
+	AverageGameDuration int     `json:"average_game_duration"`
+	FavoriteOpening     string  `json:"favorite_opening,omitempty"`
+	BestRating          int     `json:"best_rating"`
+	LowestRating        int     `json:"lowest_rating"`
+}
+
+// Achievement for response
+type Achievement struct {
+	ID          int64     `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	IconURL     string    `json:"icon_url,omitempty"`
+	EarnedAt    time.Time `json:"earned_at,omitempty"`
+}
+
+// GameSummary for response (already defined above in PlayerInfo)
+
+// LeaderboardResponse represents leaderboard entries
+type ChessLeaderboardResponse struct {
+	Entries []ChessLeaderboardEntryResponse `json:"entries"`
+	Total   int                              `json:"total"`
+}
+
+// ChessLeaderboardEntryResponse represents a leaderboard entry
+type ChessLeaderboardEntryResponse struct {
+	Rank        int    `json:"rank"`
+	PlayerID    int64  `json:"player_id"`
+	Username    string `json:"username"`
+	Rating      int    `json:"rating"`
+	GamesPlayed int    `json:"games_played"`
+	WinRate     float64 `json:"win_rate"`
+	RatingTier  string `json:"rating_tier"`
+}
+
+// GameListResponse represents a list of games
+type GameListResponse struct {
+	Games []GameResponse `json:"games"`
+	Total int            `json:"total"`
+}
+
+// GameReplayResponse represents game replay data
+type GameReplayResponse struct {
+	ID            int64     `json:"id"`
+	WhitePlayer   PlayerInfo `json:"white_player"`
+	BlackPlayer   PlayerInfo `json:"black_player"`
+	Moves         []ChessMove `json:"moves"`
+	StartingBoard string    `json:"starting_board"` // FEN
+	Result        string    `json:"result"`
+	Duration      int       `json:"duration"`
+}
+
+// GameAnalysisResponse represents game analysis
+type GameAnalysisResponse struct {
+	GameID       int64  `json:"game_id"`
+	Opening      string `json:"opening"`
+	OpeningECO   string `json:"opening_eco,omitempty"`
+	BestMoveMissed int  `json:"best_moves_missed"`
+	GamePhase    string `json:"game_phase"` // "opening", "middle", "endgame"
+	Complexity   int    `json:"complexity"` // 1-10 scale
+}
+
+// GameResultResponse represents game result recording
+type GameResultResponse struct {
+	GameID       int64  `json:"game_id"`
+	WinnerID     int64  `json:"winner_id"`
+	RatingDelta  int    `json:"rating_delta"`
+	XPEarned     int    `json:"xp_earned"`
+	AchievementUnlocked string `json:"achievement_unlocked,omitempty"`
+}
+
+// InvitationResponse represents game invitation
+type InvitationResponse struct {
+	ID           int64     `json:"id"`
+	FromPlayerID int64     `json:"from_player_id"`
+	ToPlayerID   int64     `json:"to_player_id"`
+	TimeControl  string    `json:"time_control"`
+	Status       string    `json:"status"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+// FriendsListResponse represents player's friend list
+type FriendsListResponse struct {
+	Friends []PlayerInfo `json:"friends"`
+	Total   int          `json:"total"`
+}
+
+// RatingHistoryResponse represents rating change history
+type RatingHistoryResponse struct {
+	Entries []RatingHistoryEntry `json:"entries"`
+}
+
+// RatingHistoryEntry represents a single rating change
+type RatingHistoryEntry struct {
+	GameID         int64     `json:"game_id"`
+	OldRating      int       `json:"old_rating"`
+	NewRating      int       `json:"new_rating"`
+	Delta          int       `json:"delta"`
+	OpponentRating int       `json:"opponent_rating"`
+	Result         string    `json:"result"` // "win", "loss", "draw"
+	RecordedAt     time.Time `json:"recorded_at"`
+}
+
+// AchievementsResponse represents available achievements
+type AchievementsResponse struct {
+	Achievements []Achievement `json:"achievements"`
+	Total        int           `json:"total"`
+}
+
+// PlayerAchievementsResponse represents player's achievements
+type PlayerAchievementsResponse struct {
+	PlayerID     int64         `json:"player_id"`
+	Achievements []Achievement `json:"achievements"`
+	Total        int           `json:"total"`
+}
+
+// ============================================================================
 // MATH APP - Speech-to-Text DTOs
 // ============================================================================
 
