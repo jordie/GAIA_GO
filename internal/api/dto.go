@@ -201,3 +201,31 @@ type WordMasteryResponse struct {
 	AttemptCount int    `json:"attempt_count"`
 	CorrectCount int    `json:"correct_count"`
 }
+
+// ============================================================================
+// MATH APP - Response DTOs
+// ============================================================================
+
+// CheckAnswerResponse represents the result of checking a math answer
+type CheckAnswerResponse struct {
+	Correct        bool    `json:"correct"`
+	ExpectedAnswer float64 `json:"expected_answer"`
+	UserAnswer     float64 `json:"user_answer"`
+	TimeTaken      float64 `json:"time_taken"`
+}
+
+// MathStatsResponse represents math-specific user statistics
+type MathStatsResponse struct {
+	TotalProblemsSolved int     `json:"total_problems_solved"`
+	AverageAccuracy     float64 `json:"average_accuracy"`
+	BestAccuracy        float64 `json:"best_accuracy"`
+	TotalTimeSpent      int     `json:"total_time_spent"`
+}
+
+// MathLeaderboardEntry represents a single entry in the math leaderboard
+type MathLeaderboardEntry struct {
+	Username            string  `json:"username"`
+	AverageAccuracy     float64 `json:"average_accuracy"`
+	TotalProblemsSolved int     `json:"total_problems_solved"`
+	TotalTimeSpent      int     `json:"total_time_spent"`
+}

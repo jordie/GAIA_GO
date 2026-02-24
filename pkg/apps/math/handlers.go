@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jgirmay/GAIA_GO/internal/api"
 	"github.com/jgirmay/GAIA_GO/internal/middleware"
 	"github.com/jgirmay/GAIA_GO/internal/session"
 )
@@ -49,18 +50,15 @@ func RegisterHandlers(router *gin.RouterGroup, app *MathApp, sessionMgr *session
 
 // handleGenerateProblem generates a new math problem
 func handleGenerateProblem(c *gin.Context, app *MathApp) {
-	var req struct {
-		Operation  string `json:"operation" binding:"required"`
-		Difficulty string `json:"difficulty" binding:"required"`
-	}
+	var req api.GenerateProblemRequest
 
 	if err := c.BindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		api.RespondWithError(c, api.ErrBadRequest)
 		return
 	}
 
 	problem := app.GenerateProblem(req.Operation, req.Difficulty)
-	c.JSON(http.StatusOK, problem)
+	api.RespondWith(c, http.StatusOK, problem)
 }
 
 // ============================================================================
@@ -160,47 +158,38 @@ func handleCheckSpeechAnswer(c *gin.Context) {
 
 // handleCheckAnswer checks a regular typed answer
 func handleCheckAnswer(c *gin.Context, app *MathApp, sessionMgr *session.Manager) {
-	var req struct {
-		ProblemID      string  `json:"problem_id" binding:"required"`
-		UserAnswer     float64 `json:"user_answer" binding:"required"`
-		ExpectedAnswer float64 `json:"expected_answer" binding:"required"`
-		TimeTaken      int     `json:"time_taken"` // seconds
-	}
+	var req api.CheckAnswerRequest
 
 	if err := c.BindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		api.RespondWithError(c, api.ErrBadRequest)
 		return
 	}
 
 	// Check if answer is correct (with small tolerance for floating point)
-	isCorrect := CheckAnswerCorrect(req.UserAnswer, req.ExpectedAnswer, 0.01)
+	isCorrect := CheckAnswerCorrect(req.UserAnswer, req.CorrectAnswer, 0.01)
 
-	c.JSON(http.StatusOK, gin.H{
-		"correct":          isCorrect,
-		"expected_answer":  req.ExpectedAnswer,
-		"user_answer":      req.UserAnswer,
-		"time_taken":       req.TimeTaken,
-	})
+	response := api.CheckAnswerResponse{
+		Correct:        isCorrect,
+		ExpectedAnswer: req.CorrectAnswer,
+		UserAnswer:     req.UserAnswer,
+		TimeTaken:      req.TimeTaken,
+	}
+
+	api.RespondWith(c, http.StatusOK, response)
 }
 
 // handleSaveSession saves a practice session
 func handleSaveSession(c *gin.Context, app *MathApp, sessionMgr *session.Manager) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil || userID == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		api.RespondWithError(c, api.ErrUnauthorized)
 		return
 	}
 
-	var req struct {
-		Operation       string `json:"operation" binding:"required"`
-		Difficulty      string `json:"difficulty" binding:"required"`
-		TotalQuestions  int    `json:"total_questions" binding:"required"`
-		CorrectAnswers  int    `json:"correct_answers" binding:"required"`
-		TotalTime       int    `json:"total_time"` // seconds
-	}
+	var req api.SaveSessionRequest
 
 	if err := c.BindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		api.RespondWithError(c, api.ErrBadRequest)
 		return
 	}
 
@@ -219,7 +208,7 @@ func handleSaveSession(c *gin.Context, app *MathApp, sessionMgr *session.Manager
 	)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
+		api.RespondWithError(c, api.ErrInternalServer)
 		return
 	}
 
@@ -229,7 +218,7 @@ func handleSaveSession(c *gin.Context, app *MathApp, sessionMgr *session.Manager
 	xpEarned := int64(CalculateMathXP(fmt.Sprintf("%.1f%%", accuracy), req.Difficulty))
 	_ = sessionMgr.AddUserXP(userID, xpEarned)
 
-	c.JSON(http.StatusOK, gin.H{
+	api.RespondWith(c, http.StatusOK, gin.H{
 		"success":       true,
 		"result_id":     resultID,
 		"accuracy":      accuracy,
@@ -242,16 +231,11 @@ func handleSaveSession(c *gin.Context, app *MathApp, sessionMgr *session.Manager
 func handleGetStats(c *gin.Context, app *MathApp, sessionMgr *session.Manager) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil || userID == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		api.RespondWithError(c, api.ErrUnauthorized)
 		return
 	}
 
-	var stats struct {
-		TotalProblemsSolved int     `db:"total_problems_solved"`
-		AverageAccuracy     float64 `db:"average_accuracy"`
-		BestAccuracy        float64 `db:"best_accuracy"`
-		TotalTimeSpent      int     `db:"total_time_spent"`
-	}
+	var stats api.MathStatsResponse
 
 	dbErr := app.db.QueryRow(`
 		SELECT COALESCE(total_problems_solved, 0),
@@ -264,27 +248,30 @@ func handleGetStats(c *gin.Context, app *MathApp, sessionMgr *session.Manager) {
 		&stats.BestAccuracy, &stats.TotalTimeSpent)
 
 	if dbErr != nil {
-		// User has no stats yet
-		stats.TotalProblemsSolved = 0
-		stats.AverageAccuracy = 0
-		stats.BestAccuracy = 0
-		stats.TotalTimeSpent = 0
+		// User has no stats yet - return zero values
+		stats = api.MathStatsResponse{
+			TotalProblemsSolved: 0,
+			AverageAccuracy:     0,
+			BestAccuracy:        0,
+			TotalTimeSpent:      0,
+		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"total_problems_solved": stats.TotalProblemsSolved,
-		"average_accuracy":      stats.AverageAccuracy,
-		"best_accuracy":         stats.BestAccuracy,
-		"total_time_spent":      stats.TotalTimeSpent,
-	})
+	api.RespondWith(c, http.StatusOK, stats)
 }
 
 // handleGetLeaderboard retrieves the math leaderboard
 func handleGetLeaderboard(c *gin.Context, app *MathApp) {
-	limitStr := c.DefaultQuery("limit", "10")
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil || limit > 100 {
-		limit = 10
+	var req api.LeaderboardRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		// Use defaults if binding fails
+		req.Limit = 10
+		req.Offset = 0
+	}
+
+	// Apply default and max limit
+	if req.Limit <= 0 || req.Limit > 100 {
+		req.Limit = 10
 	}
 
 	rows, err := app.db.Query(`
@@ -293,24 +280,17 @@ func handleGetLeaderboard(c *gin.Context, app *MathApp) {
 		JOIN users u ON ms.user_id = u.id
 		ORDER BY ms.average_accuracy DESC, ms.total_problems_solved DESC
 		LIMIT ?
-	`, limit)
+	`, req.Limit)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch leaderboard"})
+		api.RespondWithError(c, api.ErrInternalServer)
 		return
 	}
 	defer rows.Close()
 
-	type LeaderboardEntry struct {
-		Username             string  `json:"username"`
-		AverageAccuracy      float64 `json:"average_accuracy"`
-		TotalProblemsSolved  int     `json:"total_problems_solved"`
-		TotalTimeSpent       int     `json:"total_time_spent"`
-	}
-
-	var entries []LeaderboardEntry
+	var entries []api.MathLeaderboardEntry
 	for rows.Next() {
-		var entry LeaderboardEntry
+		var entry api.MathLeaderboardEntry
 		if err := rows.Scan(&entry.Username, &entry.AverageAccuracy,
 			&entry.TotalProblemsSolved, &entry.TotalTimeSpent); err != nil {
 			continue
@@ -318,11 +298,8 @@ func handleGetLeaderboard(c *gin.Context, app *MathApp) {
 		entries = append(entries, entry)
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success":      true,
-		"leaderboard":  entries,
-		"entry_count":  len(entries),
-	})
+	// Use adapter to maintain backward compatibility with old response format
+	api.LegacyLeaderboardResponse(c, entries, len(entries))
 }
 
 // ============================================================================
