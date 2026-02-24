@@ -12,7 +12,7 @@ import (
 	typinghandlers "github.com/jgirmay/GAIA_GO/pkg/apps/typing"
 )
 
-// RegisterAllApps discovers and registers all GAIA applications
+// RegisterAllApps discovers and registers all GAIA applications with documentation and health checks
 func (r *AppRouter) RegisterAllApps(db *sql.DB, sessionManager *session.Manager) error {
 	// Discover all apps
 	discovered, err := DiscoverApps(db, sessionManager)
@@ -29,6 +29,14 @@ func (r *AppRouter) RegisterAllApps(db *sql.DB, sessionManager *session.Manager)
 			// Continue with other apps instead of failing completely
 		}
 	}
+
+	// Register API documentation (Phase 3)
+	r.RegisterDocumentation(discovered.Apps, discovered.Metadata)
+	log.Printf("Registered API documentation endpoints\n")
+
+	// Register health check endpoints (Phase 3)
+	r.RegisterHealthCheck(db, discovered.Apps, discovered.Metadata)
+	log.Printf("Registered health check endpoints\n")
 
 	return nil
 }

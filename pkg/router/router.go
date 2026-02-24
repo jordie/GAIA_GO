@@ -1,7 +1,12 @@
 package router
 
 import (
+	"database/sql"
+
 	"github.com/gin-gonic/gin"
+	"github.com/jgirmay/GAIA_GO/internal/app"
+	"github.com/jgirmay/GAIA_GO/internal/docs"
+	"github.com/jgirmay/GAIA_GO/internal/health"
 	"github.com/jgirmay/GAIA_GO/internal/middleware"
 	"github.com/jgirmay/GAIA_GO/internal/session"
 )
@@ -93,6 +98,19 @@ func (r *AppRouter) RegisterStaticFiles(appName, staticDir string) {
 // RegisterTemplates sets up template rendering
 func (r *AppRouter) RegisterTemplates(templateDir string) {
 	r.engine.LoadHTMLGlob(templateDir)
+}
+
+// RegisterDocumentation registers API documentation routes
+func (r *AppRouter) RegisterDocumentation(apps []app.AppRegistry, metadata map[string]*app.AppMetadata) {
+	docHandler := docs.NewDocumentationHandler(apps, metadata)
+	docHandler.RegisterRoutes(r.engine)
+}
+
+// RegisterHealthCheck registers health check routes
+func (r *AppRouter) RegisterHealthCheck(db *sql.DB, apps []app.AppRegistry, metadata map[string]*app.AppMetadata) {
+	checker := health.NewHealthChecker(db, apps, metadata)
+	healthHandler := health.NewHealthHandler(checker)
+	healthHandler.RegisterRoutes(r.engine)
 }
 
 // ============================================================================
