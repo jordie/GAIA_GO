@@ -157,3 +157,40 @@ func UserProgressResponse(c *gin.Context, currentLevel, totalWordsMastered int, 
 		"last_updated":         lastUpdated,
 	})
 }
+
+// ============================================================================
+// SPEECH-TO-TEXT - Backward Compatibility Adapters
+// ============================================================================
+
+// TranscribeAudioSuccessResponse maintains old transcription response format
+// Old format: {"success": true, "text": "...", "confidence": N}
+func TranscribeAudioSuccessResponse(c *gin.Context, text string, confidence float64) {
+	c.JSON(200, gin.H{
+		"success":    true,
+		"text":       text,
+		"confidence": confidence,
+	})
+}
+
+// TranscribeAudioErrorResponse maintains old transcription error format
+// Old format: {"success": false, "error": "..."}
+func TranscribeAudioErrorResponse(c *gin.Context, statusCode int, message string) {
+	c.JSON(statusCode, gin.H{
+		"success": false,
+		"error":   message,
+	})
+}
+
+// CheckSpeechAnswerResponse maintains old speech answer check format
+// Old format: {"success": true, "match": bool, "spoken_number": N, "expected_number": N, ...}
+func CheckSpeechAnswerSuccessResponse(c *gin.Context, match bool, spokenNum, expectedNum float64, matchType, feedback string, score float64) {
+	c.JSON(200, gin.H{
+		"success":           true,
+		"match":             match,
+		"spoken_number":     spokenNum,
+		"expected_number":   expectedNum,
+		"match_type":        matchType,
+		"feedback":          feedback,
+		"score":             score,
+	})
+}

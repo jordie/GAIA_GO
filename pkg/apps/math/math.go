@@ -27,17 +27,17 @@ func NewMathApp(db *sql.DB) *MathApp {
 
 // Problem represents a math problem
 type Problem struct {
-	ID              string  `json:"id"`
-	Operation       string  `json:"operation"`       // add, subtract, multiply, divide
-	Difficulty      string  `json:"difficulty"`      // easy, medium, hard
-	Operand1        int     `json:"operand1"`
-	Operand2        int     `json:"operand2"`
-	Answer          float64 `json:"answer"`
-	QuestionText    string  `json:"question_text"`
-	AnswerType      string  `json:"answer_type"`    // int, float
-	TimeLimit       int     `json:"time_limit"`     // seconds
-	HintAvailable   bool    `json:"hint_available"`
-	Hint            string  `json:"hint,omitempty"`
+	ID            string  `json:"id"`
+	Operation     string  `json:"operation"`  // add, subtract, multiply, divide
+	Difficulty    string  `json:"difficulty"` // easy, medium, hard
+	Operand1      int     `json:"operand1"`
+	Operand2      int     `json:"operand2"`
+	Answer        float64 `json:"answer"`
+	QuestionText  string  `json:"question_text"`
+	AnswerType    string  `json:"answer_type"` // int, float
+	TimeLimit     int     `json:"time_limit"`  // seconds
+	HintAvailable bool    `json:"hint_available"`
+	Hint          string  `json:"hint,omitempty"`
 }
 
 // GenerateProblem creates a new math problem based on difficulty and operation
@@ -268,12 +268,12 @@ func parseNumberWords(text string) *float64 {
 
 // SpeechMatchResult represents the result of checking a spoken answer
 type SpeechMatchResult struct {
-	IsMatch       bool    `json:"match"`
-	SpokenNumber  float64 `json:"spoken_number"`
+	IsMatch        bool    `json:"match"`
+	SpokenNumber   float64 `json:"spoken_number"`
 	ExpectedNumber float64 `json:"expected_number"`
-	MatchType     string  `json:"match_type"`
-	Feedback      string  `json:"feedback"`
-	Score         float64 `json:"score"`
+	MatchType      string  `json:"match_type"`
+	Feedback       string  `json:"feedback"`
+	Score          float64 `json:"score"`
 }
 
 // CheckSpeechAnswer validates if a spoken answer matches the expected answer

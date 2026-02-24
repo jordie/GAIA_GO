@@ -166,12 +166,12 @@ func TestParseNumberFromSpeechEmpty(t *testing.T) {
 
 func TestCheckSpeechAnswer(t *testing.T) {
 	tests := []struct {
-		name            string
-		spokenText      string
-		expectedAnswer  float64
-		tolerance       float64
-		shouldMatch     bool
-		minScore        float64
+		name           string
+		spokenText     string
+		expectedAnswer float64
+		tolerance      float64
+		shouldMatch    bool
+		minScore       float64
 	}{
 		{
 			name:           "exact match with word number",
@@ -261,10 +261,10 @@ func TestCheckSpeechAnswerWithTolerance(t *testing.T) {
 
 func TestCalculateAccuracy(t *testing.T) {
 	tests := []struct {
-		correct   int
-		total     int
-		expected  float64
-		name      string
+		correct  int
+		total    int
+		expected float64
+		name     string
 	}{
 		{10, 10, 100.0, "perfect"},
 		{5, 10, 50.0, "half"},
@@ -320,9 +320,9 @@ func TestCheckAnswerCorrect(t *testing.T) {
 func TestSpeechToAnswerFlow(t *testing.T) {
 	// Simulate a complete flow: spoken text -> parsed number -> answer check
 	testCases := []struct {
-		name           string
-		spokenText     string
-		expectedAnswer float64
+		name            string
+		spokenText      string
+		expectedAnswer  float64
 		shouldBeCorrect bool
 	}{
 		{

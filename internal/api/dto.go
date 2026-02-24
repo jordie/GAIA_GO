@@ -400,3 +400,32 @@ type CentralSyncResponse struct {
 	UserID     int64       `json:"user_id,omitempty"`
 	LastSync   string      `json:"last_sync,omitempty"`
 }
+
+// ============================================================================
+// MATH APP - Speech-to-Text DTOs
+// ============================================================================
+
+// CheckSpeechAnswerRequest represents a spoken answer validation request
+type CheckSpeechAnswerRequest struct {
+	SpokenText     string  `json:"spoken_text" binding:"required"`
+	ExpectedAnswer float64 `json:"expected_answer" binding:"required"`
+	Tolerance      float64 `json:"tolerance"` // Optional, defaults to 0.01
+}
+
+// CheckSpeechAnswerResponse represents the result of speech answer validation
+type CheckSpeechAnswerResponse struct {
+	Success        bool    `json:"success"`
+	Match          bool    `json:"match"`
+	SpokenNumber   float64 `json:"spoken_number"`
+	ExpectedNumber float64 `json:"expected_number"`
+	MatchType      string  `json:"match_type"`
+	Feedback       string  `json:"feedback"`
+	Score          float64 `json:"score"`
+}
+
+// TranscribeAudioResponse represents the result of audio transcription
+type TranscribeAudioResponse struct {
+	Success    bool    `json:"success"`
+	Text       string  `json:"text"`
+	Confidence float64 `json:"confidence"`
+}

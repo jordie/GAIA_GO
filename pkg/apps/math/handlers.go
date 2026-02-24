@@ -67,24 +67,19 @@ func handleGenerateProblem(c *gin.Context, app *MathApp) {
 
 // handleTranscribeAudio transcribes audio using Whisper API
 // This is the critical endpoint for speech-to-text
+// CRITICAL: Uses multipart form for audio file upload - not JSON binding
 func handleTranscribeAudio(c *gin.Context) {
 	// Get audio file from multipart form
 	file, err := c.FormFile("audio")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "No audio file provided",
-		})
+		api.TranscribeAudioErrorResponse(c, http.StatusBadRequest, "No audio file provided")
 		return
 	}
 
 	// Open the file
 	src, err := file.Open()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Failed to read audio file",
-		})
+		api.TranscribeAudioErrorResponse(c, http.StatusInternalServerError, "Failed to read audio file")
 		return
 	}
 	defer src.Close()
@@ -92,43 +87,27 @@ func handleTranscribeAudio(c *gin.Context) {
 	// Read file content
 	audioData, err := io.ReadAll(src)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Failed to read audio data",
-		})
+		api.TranscribeAudioErrorResponse(c, http.StatusInternalServerError, "Failed to read audio data")
 		return
 	}
 
 	// Transcribe using Whisper API
 	transcribedText, confidence, err := TranscribeAudio(audioData, file.Filename)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   fmt.Sprintf("Transcription failed: %v", err),
-		})
+		api.TranscribeAudioErrorResponse(c, http.StatusInternalServerError, fmt.Sprintf("Transcription failed: %v", err))
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success":    true,
-		"text":       transcribedText,
-		"confidence": confidence,
-	})
+	api.TranscribeAudioSuccessResponse(c, transcribedText, confidence)
 }
 
 // handleCheckSpeechAnswer checks if a spoken answer matches the expected answer
+// CRITICAL: Uses CheckSpeechAnswerRequest DTO with required fields
 func handleCheckSpeechAnswer(c *gin.Context) {
-	var req struct {
-		SpokenText      string  `json:"spoken_text" binding:"required"`
-		ExpectedAnswer  float64 `json:"expected_answer" binding:"required"`
-		Tolerance       float64 `json:"tolerance"`
-	}
+	var req api.CheckSpeechAnswerRequest
 
 	if err := c.BindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Invalid request",
-		})
+		api.TranscribeAudioErrorResponse(c, http.StatusBadRequest, "Invalid request")
 		return
 	}
 
@@ -141,15 +120,7 @@ func handleCheckSpeechAnswer(c *gin.Context) {
 	// Check the answer
 	result := CheckSpeechAnswer(req.SpokenText, req.ExpectedAnswer, tolerance)
 
-	c.JSON(http.StatusOK, gin.H{
-		"success":           true,
-		"match":             result.IsMatch,
-		"spoken_number":     result.SpokenNumber,
-		"expected_number":   result.ExpectedNumber,
-		"match_type":        result.MatchType,
-		"feedback":          result.Feedback,
-		"score":             result.Score,
-	})
+	api.CheckSpeechAnswerSuccessResponse(c, result.IsMatch, result.SpokenNumber, result.ExpectedNumber, result.MatchType, result.Feedback, result.Score)
 }
 
 // ============================================================================
@@ -219,11 +190,11 @@ func handleSaveSession(c *gin.Context, app *MathApp, sessionMgr *session.Manager
 	_ = sessionMgr.AddUserXP(userID, xpEarned)
 
 	api.RespondWith(c, http.StatusOK, gin.H{
-		"success":       true,
-		"result_id":     resultID,
-		"accuracy":      accuracy,
-		"average_time":  averageTime,
-		"xp_earned":     xpEarned,
+		"success":      true,
+		"result_id":    resultID,
+		"accuracy":     accuracy,
+		"average_time": averageTime,
+		"xp_earned":    xpEarned,
 	})
 }
 
