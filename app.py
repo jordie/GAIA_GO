@@ -122,6 +122,12 @@ import task_worklog
 import webhooks as task_webhooks
 from db import get_pool_stats
 
+# Import rate limiting and resource monitoring services
+from services.rate_limiting import RateLimitService
+from services.resource_monitor import ResourceMonitor
+from services.background_tasks import get_background_task_manager
+from services.rate_limiting_routes import rate_limiting_bp
+
 # Import web dashboard modules
 try:
     from auto_confirm_monitor import AutoConfirmMonitor
@@ -551,6 +557,105 @@ tracing_enabled = init_tracing(app)
 if tracing_enabled:
     logger.info("Distributed tracing initialized with OpenTelemetry")
 
+# Initialize rate limiting and resource monitoring services
+app.rate_limiter = None
+app.resource_monitor = None
+app.bg_task_manager = None
+
+
+def init_rate_limiting_services():
+    """Initialize rate limiting and resource monitoring services."""
+    try:
+        # Initialize services
+        app.rate_limiter = RateLimitService(database.get_db_connection)
+        app.resource_monitor = ResourceMonitor(database.get_db_connection)
+        app.bg_task_manager = get_background_task_manager()
+
+        # Register background tasks
+        app.bg_task_manager.register_task(
+            task_name="cleanup_rate_limits",
+            task_func=lambda: app.rate_limiter.cleanup_old_data(days=7),
+            interval_seconds=3600,  # Every hour
+            start_immediately=False
+        )
+
+        app.bg_task_manager.register_task(
+            task_name="record_resource_metrics",
+            task_func=lambda: app.resource_monitor.record_snapshot(),
+            interval_seconds=60,  # Every minute
+            start_immediately=True
+        )
+
+        app.bg_task_manager.register_task(
+            task_name="cleanup_resources",
+            task_func=lambda: app.resource_monitor.cleanup_old_data(days=30),
+            interval_seconds=3600,  # Every hour
+            start_immediately=False
+        )
+
+        # Start background tasks
+        app.bg_task_manager.start()
+        logger.info("Rate limiting and resource monitoring services initialized")
+    except Exception as e:
+        logger.error(f"Failed to initialize rate limiting services: {e}")
+
+
+def setup_default_rate_limits():
+    """Set up default rate limit configurations in database."""
+    if app.rate_limiter is None:
+        return
+
+    try:
+        # Check if configs already exist
+        existing = app.rate_limiter.get_all_configs()
+        if len(existing) > 0:
+            logger.info(f"Rate limit configs already exist ({len(existing)} rules), skipping initialization")
+            return
+
+        # Create default configurations
+        defaults = [
+            {
+                "rule_name": "default_global",
+                "scope": "ip",
+                "limit_type": "requests_per_minute",
+                "limit_value": 1000,
+                "resource_type": None
+            },
+            {
+                "rule_name": "login_limit",
+                "scope": "ip",
+                "limit_type": "requests_per_minute",
+                "limit_value": 100,
+                "resource_type": "login"
+            },
+            {
+                "rule_name": "create_limit",
+                "scope": "ip",
+                "limit_type": "requests_per_minute",
+                "limit_value": 500,
+                "resource_type": "create"
+            },
+            {
+                "rule_name": "upload_limit",
+                "scope": "ip",
+                "limit_type": "requests_per_minute",
+                "limit_value": 200,
+                "resource_type": "upload"
+            },
+        ]
+
+        for config in defaults:
+            success = app.rate_limiter.create_config(**config)
+            if success:
+                logger.info(f"Created rate limit config: {config['rule_name']}")
+            else:
+                logger.warning(f"Failed to create config: {config['rule_name']}")
+
+        logger.info(f"Default rate limit configurations created ({len(defaults)} rules)")
+    except Exception as e:
+        logger.error(f"Error setting up default rate limits: {e}")
+
+
 # Initialize web dashboard modules
 _dashboard_obj = None
 router = None
@@ -761,6 +866,13 @@ try:
     app.register_blueprint(quick_create_bp)
 except ImportError as e:
     print(f"Warning: Could not load quick_create blueprint: {e}")
+
+# Rate limiting and resource monitoring routes
+try:
+    app.register_blueprint(rate_limiting_bp)
+    logger.info("Rate limiting API blueprint registered")
+except Exception as e:
+    logger.error(f"Failed to load rate_limiting blueprint: {e}")
 
 try:
     from services.llm_metrics_routes import llm_metrics_bp
@@ -1126,6 +1238,12 @@ try:
     _alert_service.set_socketio(socketio)
 except Exception as e:
     print(f"Warning: Could not initialize task alert service: {e}")
+
+# Initialize rate limiting and resource monitoring services
+init_rate_limiting_services()
+
+# Setup default rate limit configurations
+setup_default_rate_limits()
 
 # Code source directories to scan
 CODE_SOURCES = [
@@ -2690,10 +2808,17 @@ RATE_LIMIT_WHITELIST = [
 ]
 
 
-def rate_limit(requests_per_minute: int = 60, per_endpoint: bool = True):
-    """Decorator to rate limit API endpoints by IP address.
+def rate_limit(requests_per_minute: int = 60, per_endpoint: bool = True, resource_type: str = "default"):
+    """Enhanced rate limit decorator with database persistence and auto-throttling.
 
-    Uses a sliding window algorithm to track requests per IP.
+    Uses sliding window algorithm. When database service is available, also tracks
+    violations to database for persistence and analytics. Supports auto-throttling
+    based on system load.
+
+    Args:
+        requests_per_minute: Number of requests allowed per minute
+        per_endpoint: If True, limit is per endpoint; if False, global limit
+        resource_type: Type of resource (login, create, upload, etc.) for granular limits
     """
 
     def decorator(f):
@@ -2707,6 +2832,54 @@ def rate_limit(requests_per_minute: int = 60, per_endpoint: bool = True):
                     # Whitelisted IP - skip rate limiting
                     return f(*args, **kwargs)
 
+            # Try database-backed rate limiting first if service is available
+            if app.rate_limiter is not None and app.resource_monitor is not None:
+                try:
+                    # Check auto-throttle based on system load
+                    should_throttle, throttle_reason = app.resource_monitor.should_throttle()
+                    if should_throttle:
+                        logger.warning(f"Auto-throttling due to {throttle_reason}")
+                        response = jsonify({
+                            "error": "Service temporarily overloaded",
+                            "reason": throttle_reason,
+                            "retry_after": 60
+                        })
+                        response.status_code = 503
+                        response.headers["Retry-After"] = "60"
+                        return response
+
+                    # Check database-backed limit
+                    allowed, info = app.rate_limiter.check_limit(
+                        scope="ip",
+                        scope_value=ip,
+                        resource_type=resource_type,
+                        request_path=request.path,
+                        user_agent=request.headers.get('User-Agent', '')
+                    )
+
+                    if not allowed:
+                        logger.warning(
+                            f"Rate limit exceeded: ip={ip}, "
+                            f"type={resource_type}, limit={info['limit']}"
+                        )
+                        response = jsonify({
+                            "error": "Rate limit exceeded",
+                            "message": f"Too many requests. Limit: {info['limit']}/{info['limit_type']}",
+                            "retry_after": info['retry_after'],
+                            "limit": info['limit'],
+                            "limit_type": info['limit_type']
+                        })
+                        response.status_code = 429
+                        response.headers["Retry-After"] = str(info['retry_after'])
+                        response.headers["X-RateLimit-Limit"] = str(info['limit'])
+                        response.headers["X-RateLimit-Remaining"] = "0"
+                        return response
+
+                except Exception as e:
+                    logger.error(f"Error in database-backed rate limiting: {e}")
+                    # Fall through to in-memory limiter on error
+
+            # Fall back to in-memory rate limiting
             endpoint = request.endpoint if per_endpoint else "global"
             key = f"{ip}:{endpoint}"
             now = time.time()
