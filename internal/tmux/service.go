@@ -415,7 +415,8 @@ func (s *Service) autoAssignLogic(sessionName string, projectMap map[string]int)
 	for slug, projectID := range projectMap {
 		if strings.HasPrefix(lower, slug) {
 			env := s.extractEnvironment(lower)
-			return &projectID, env, false
+			id := projectID // Create a copy to avoid pointing to loop variable
+			return &id, env, false
 		}
 	}
 
