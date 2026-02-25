@@ -4,6 +4,9 @@ import (
 	"database/sql"
 	"math/rand"
 	"strings"
+
+	"github.com/gin-gonic/gin"
+	"github.com/jgirmay/GAIA_GO/internal/models"
 )
 
 // TypingApp manages the typing application
@@ -379,4 +382,97 @@ func (app *TypingApp) InitDB() error {
 		)
 	`)
 	return err
+}
+
+// ============================================================================
+// APP INTERFACE IMPLEMENTATION
+// ============================================================================
+
+// GetName returns the app identifier
+func (app *TypingApp) GetName() string {
+	return "typing"
+}
+
+// GetDisplayName returns the human-readable app name
+func (app *TypingApp) GetDisplayName() string {
+	return "Typing Master"
+}
+
+// GetDescription returns app description
+func (app *TypingApp) GetDescription() string {
+	return "Test and improve your typing speed and accuracy"
+}
+
+// GetVersion returns app version
+func (app *TypingApp) GetVersion() string {
+	return "2.0.0"
+}
+
+// RegisterRoutes registers all HTTP routes for the typing app
+// Routes are actually registered by handlers.go's RegisterHandlers function
+func (app *TypingApp) RegisterRoutes(router *gin.RouterGroup) {
+	// Stub implementation - actual routes registered by handlers.RegisterHandlers
+}
+
+// GetUserStats returns typing-specific stats for a user
+func (app *TypingApp) GetUserStats(userID int64) (map[string]interface{}, error) {
+	var stats models.TypingStats
+	err := app.db.QueryRow(
+		`SELECT id, user_id, total_tests, average_wpm, average_accuracy, best_wpm, total_time_typed
+		 FROM typing_stats WHERE user_id = ?`,
+		userID,
+	).Scan(&stats.ID, &stats.UserID, &stats.TotalSessions, &stats.AverageWPM, &stats.AverageAccuracy, &stats.BestWPM, &stats.TotalTime)
+
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"total_tests":     stats.TotalSessions,
+		"average_wpm":     stats.AverageWPM,
+		"average_accuracy": stats.AverageAccuracy,
+		"best_wpm":        stats.BestWPM,
+		"total_time":      stats.TotalTime,
+	}, nil
+}
+
+// GetLeaderboard returns top typists
+func (app *TypingApp) GetLeaderboard(limit int) ([]map[string]interface{}, error) {
+	if limit <= 0 || limit > 100 {
+		limit = 10
+	}
+
+	rows, err := app.db.Query(`
+		SELECT u.username, s.best_wpm, s.average_accuracy, s.total_tests
+		FROM typing_stats s
+		JOIN users u ON s.user_id = u.id
+		WHERE s.total_tests > 0
+		ORDER BY s.best_wpm DESC
+		LIMIT ?
+	`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []map[string]interface{}
+	for rows.Next() {
+		var username string
+		var bestWPM int
+		var avgAccuracy float64
+		var totalTests int
+
+		if err := rows.Scan(&username, &bestWPM, &avgAccuracy, &totalTests); err != nil {
+			continue
+		}
+
+		results = append(results, map[string]interface{}{
+			"username":         username,
+			"best_wpm":         bestWPM,
+			"average_accuracy": avgAccuracy,
+			"total_tests":      totalTests,
+		})
+	}
+
+	return results, nil
 }

@@ -37,13 +37,13 @@ type AppHealth struct {
 // HealthChecker performs health checks on system components
 type HealthChecker struct {
 	db       *sql.DB
-	apps     []appmodule.AppRegistry
-	metadata map[string]*appmodule.AppMetadata
+	apps     []appmodule.App
+	metadata map[string]*appmodule.Metadata
 	startTime time.Time
 }
 
 // NewHealthChecker creates a new health checker
-func NewHealthChecker(db *sql.DB, apps []appmodule.AppRegistry, metadata map[string]*appmodule.AppMetadata) *HealthChecker {
+func NewHealthChecker(db *sql.DB, apps []appmodule.App, metadata map[string]*appmodule.Metadata) *HealthChecker {
 	return &HealthChecker{
 		db:       db,
 		apps:     apps,
@@ -71,25 +71,18 @@ func (hc *HealthChecker) Check() *HealthStatus {
 
 	// Check apps
 	for _, app := range hc.apps {
-		appMeta := hc.metadata[app.Name()]
+		appMeta := hc.metadata[app.GetName()]
 		if appMeta == nil {
 			continue
 		}
 
 		appHealth := AppHealth{
-			Name:    app.Name(),
+			Name:    app.GetName(),
 			Status:  "healthy",
 			Version: appMeta.Version,
 		}
 
-		// Count endpoints
-		endpointCount := 0
-		for _, group := range appMeta.Routes {
-			endpointCount += len(group.Routes)
-		}
-		appHealth.Endpoints = endpointCount
-
-		status.Apps[app.Name()] = appHealth
+		status.Apps[app.GetName()] = appHealth
 	}
 
 	// Determine overall status
@@ -150,7 +143,7 @@ func (hc *HealthChecker) calculateUptime() string {
 // CheckApp performs health check on a specific app
 func (hc *HealthChecker) CheckApp(appName string) *AppHealth {
 	for _, app := range hc.apps {
-		if app.Name() == appName {
+		if app.GetName() == appName {
 			appMeta := hc.metadata[appName]
 			if appMeta == nil {
 				return &AppHealth{
@@ -164,13 +157,6 @@ func (hc *HealthChecker) CheckApp(appName string) *AppHealth {
 				Status:  "healthy",
 				Version: appMeta.Version,
 			}
-
-			// Count endpoints
-			endpointCount := 0
-			for _, group := range appMeta.Routes {
-				endpointCount += len(group.Routes)
-			}
-			appHealth.Endpoints = endpointCount
 
 			return &appHealth
 		}

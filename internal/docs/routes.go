@@ -10,14 +10,14 @@ import (
 
 // DocumentationHandler manages API documentation endpoints
 type DocumentationHandler struct {
-	apps      []appmodule.AppRegistry
-	metadata  map[string]*appmodule.AppMetadata
+	apps      []appmodule.App
+	metadata  map[string]*appmodule.Metadata
 	openAPI   *OpenAPISpec
 	directory []AppInfo
 }
 
 // NewDocumentationHandler creates a new documentation handler
-func NewDocumentationHandler(apps []appmodule.AppRegistry, metadata map[string]*appmodule.AppMetadata) *DocumentationHandler {
+func NewDocumentationHandler(apps []appmodule.App, metadata map[string]*appmodule.Metadata) *DocumentationHandler {
 	return &DocumentationHandler{
 		apps:      apps,
 		metadata:  metadata,

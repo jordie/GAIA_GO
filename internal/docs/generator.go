@@ -113,7 +113,7 @@ type Tag struct {
 }
 
 // GenerateOpenAPISpec creates an OpenAPI 3.0 specification from discovered apps
-func GenerateOpenAPISpec(apps []appmodule.AppRegistry, metadata map[string]*appmodule.AppMetadata) *OpenAPISpec {
+func GenerateOpenAPISpec(apps []appmodule.App, metadata map[string]*appmodule.Metadata) *OpenAPISpec {
 	spec := &OpenAPISpec{
 		OpenAPI: "3.0.0",
 		Info: Info{
@@ -144,78 +144,16 @@ func GenerateOpenAPISpec(apps []appmodule.AppRegistry, metadata map[string]*appm
 
 	// Process each app
 	for _, app := range apps {
-		appMeta, exists := metadata[app.Name()]
+		appMeta, exists := metadata[app.GetName()]
 		if !exists {
 			continue
 		}
 
 		// Add app as a tag
 		spec.Tags = append(spec.Tags, Tag{
-			Name:        app.Name(),
+			Name:        app.GetName(),
 			Description: appMeta.Description,
 		})
-
-		// Process route groups
-		for _, group := range app.RouteGroups() {
-			// Add routes
-			for _, route := range group.Routes {
-				path := fmt.Sprintf("%s%s", appMeta.BasePath, group.Path + route.Path)
-
-				// Get or create path item
-				pathItem, exists := spec.Paths[path]
-				if !exists {
-					pathItem = PathItem{}
-				}
-
-				// Create operation
-				op := &Operation{
-					Summary:     route.Description,
-					Description: fmt.Sprintf("%s - %s", app.Name(), route.Description),
-					Tags:        []string{app.Name()},
-					OperationID: fmt.Sprintf("%s_%s", app.Name(), sanitizeOperationID(route.Description)),
-					Responses: map[string]Response{
-						"200": {
-							Description: "Success",
-							Content: map[string]MediaType{
-								"application/json": {
-									Schema: Schema{
-										Type: "object",
-									},
-								},
-							},
-						},
-						"400": {
-							Description: "Bad Request",
-						},
-						"401": {
-							Description: "Unauthorized",
-						},
-						"404": {
-							Description: "Not Found",
-						},
-						"500": {
-							Description: "Internal Server Error",
-						},
-					},
-				}
-
-				// Assign operation to correct HTTP method
-				switch route.Method {
-				case "GET":
-					pathItem.Get = op
-				case "POST":
-					pathItem.Post = op
-				case "PUT":
-					pathItem.Put = op
-				case "DELETE":
-					pathItem.Delete = op
-				case "PATCH":
-					pathItem.Patch = op
-				}
-
-				spec.Paths[path] = pathItem
-			}
-		}
 	}
 
 	return spec
@@ -269,11 +207,11 @@ type RouteInfoOutput struct {
 }
 
 // GenerateAppDirectory creates a discovery document listing all apps and routes
-func GenerateAppDirectory(apps []appmodule.AppRegistry, metadata map[string]*appmodule.AppMetadata) []AppInfo {
+func GenerateAppDirectory(apps []appmodule.App, metadata map[string]*appmodule.Metadata) []AppInfo {
 	directory := make([]AppInfo, 0)
 
 	for _, app := range apps {
-		appMeta, exists := metadata[app.Name()]
+		appMeta, exists := metadata[app.GetName()]
 		if !exists {
 			continue
 		}
@@ -282,31 +220,9 @@ func GenerateAppDirectory(apps []appmodule.AppRegistry, metadata map[string]*app
 			Name:        appMeta.Name,
 			Description: appMeta.Description,
 			Version:     appMeta.Version,
-			BasePath:    appMeta.BasePath,
+			BasePath:    fmt.Sprintf("/api/%s", appMeta.Name),
 			Status:      appMeta.Status,
 			RouteGroups: make([]RouteGroupInfo, 0),
-		}
-
-		// Add route groups
-		for _, group := range appMeta.Routes {
-			groupInfo := RouteGroupInfo{
-				Path:        group.Path,
-				Description: group.Description,
-				Routes:      make([]RouteInfoOutput, 0),
-			}
-
-			// Add routes
-			for _, route := range group.Routes {
-				routeInfo := RouteInfoOutput{
-					Method:      route.Method,
-					Path:        route.Path,
-					Description: route.Description,
-					FullPath:    fmt.Sprintf("%s%s%s", appMeta.BasePath, group.Path, route.Path),
-				}
-				groupInfo.Routes = append(groupInfo.Routes, routeInfo)
-			}
-
-			appInfo.RouteGroups = append(appInfo.RouteGroups, groupInfo)
 		}
 
 		directory = append(directory, appInfo)

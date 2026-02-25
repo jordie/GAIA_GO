@@ -7,15 +7,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jgirmay/GAIA_GO/internal/api"
+	"github.com/jgirmay/GAIA_GO/internal/metrics"
 	"github.com/jgirmay/GAIA_GO/internal/middleware"
 	"github.com/jgirmay/GAIA_GO/internal/session"
 )
 
 // RegisterHandlers registers all piano app routes
-func RegisterHandlers(router *gin.RouterGroup, app *PianoApp, sessionMgr *session.Manager) {
+func RegisterHandlers(router *gin.RouterGroup, app *PianoApp, sessionMgr *session.Manager, businessMetrics *metrics.BusinessMetricsRegistry) {
 	// Practice sessions
 	router.POST("/api/save_session", func(c *gin.Context) {
-		handleSaveSession(c, app, sessionMgr)
+		handleSaveSession(c, app, sessionMgr, businessMetrics)
 	})
 
 	// Note analytics
@@ -96,7 +97,7 @@ func RegisterHandlers(router *gin.RouterGroup, app *PianoApp, sessionMgr *sessio
 // SESSION HANDLERS
 // ============================================================================
 
-func handleSaveSession(c *gin.Context, app *PianoApp, sessionMgr *session.Manager) {
+func handleSaveSession(c *gin.Context, app *PianoApp, sessionMgr *session.Manager, businessMetrics *metrics.BusinessMetricsRegistry) {
 	var req api.SaveSessionRequest
 
 	if err := c.BindJSON(&req); err != nil {
@@ -134,7 +135,23 @@ func handleSaveSession(c *gin.Context, app *PianoApp, sessionMgr *session.Manage
 	sessionMgr.AddUserXP(userID, xpReward)
 
 	// Check for badge unlocks
-	checkAndAwardBadges(app, userID)
+	checkAndAwardBadges(app, userID, businessMetrics)
+
+	// Record metrics
+	if businessMetrics != nil {
+		businessMetrics.RecordSessionCompleted("piano")
+		businessMetrics.RecordXPEarned("piano", int(xpReward))
+
+		// Determine difficulty based on level
+		difficulty := "beginner"
+		if req.Level >= 5 {
+			difficulty = "intermediate"
+		}
+		if req.Level >= 10 {
+			difficulty = "advanced"
+		}
+		businessMetrics.RecordPianoSongPlayed(difficulty)
+	}
 
 	api.RespondWith(c, http.StatusOK, gin.H{
 		"session_id": sessionID,
@@ -468,11 +485,14 @@ func handleCentralSync(c *gin.Context, app *PianoApp, sessionMgr *session.Manage
 // HELPER FUNCTIONS
 // ============================================================================
 
-func checkAndAwardBadges(app *PianoApp, userID int64) {
+func checkAndAwardBadges(app *PianoApp, userID int64, businessMetrics *metrics.BusinessMetricsRegistry) {
 	// Check for consistency champion (7 day streak)
 	streak, _ := app.GetStreak(userID)
 	if streak.CurrentStreak >= 7 {
-		app.AwardAchievement(userID, "consistency_champion", 1)
+		awarded, _ := app.AwardAchievement(userID, "consistency_champion", 1)
+		if awarded && businessMetrics != nil {
+			businessMetrics.RecordAchievementUnlocked("piano", "intermediate")
+		}
 	}
 
 	// Check for level badges
@@ -483,12 +503,18 @@ func checkAndAwardBadges(app *PianoApp, userID int64) {
 	).Scan(&level)
 
 	if level >= 5 {
-		app.AwardAchievement(userID, "level_5_reached", 1)
+		awarded, _ := app.AwardAchievement(userID, "level_5_reached", 1)
+		if awarded && businessMetrics != nil {
+			businessMetrics.RecordAchievementUnlocked("piano", "beginner")
+		}
 	}
 
 	// Check accuracy expert (95%+ accuracy)
 	stats, _ := app.GetUserStats(userID)
 	if avgAcc, ok := stats["average_accuracy"].(float64); ok && avgAcc >= 95 {
-		app.AwardAchievement(userID, "accuracy_expert", 1)
+		awarded, _ := app.AwardAchievement(userID, "accuracy_expert", 1)
+		if awarded && businessMetrics != nil {
+			businessMetrics.RecordAchievementUnlocked("piano", "advanced")
+		}
 	}
 }

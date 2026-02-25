@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jgirmay/GAIA_GO/internal/api"
+	"github.com/jgirmay/GAIA_GO/internal/metrics"
 	"github.com/jgirmay/GAIA_GO/internal/middleware"
 	"github.com/jgirmay/GAIA_GO/internal/models"
 	"github.com/jgirmay/GAIA_GO/internal/session"
@@ -14,7 +15,7 @@ import (
 )
 
 // RegisterHandlers registers all typing app handlers with the router
-func RegisterHandlers(router *gin.RouterGroup, app *TypingApp, sessionMgr *session.Manager) {
+func RegisterHandlers(router *gin.RouterGroup, app *TypingApp, sessionMgr *session.Manager, businessMetrics *metrics.BusinessMetricsRegistry) {
 	// User endpoints
 	router.GET("/current-user", app.handleGetCurrentUser)
 	router.GET("/users", app.handleGetUsers)
@@ -22,13 +23,13 @@ func RegisterHandlers(router *gin.RouterGroup, app *TypingApp, sessionMgr *sessi
 
 	// Practice endpoints
 	router.GET("/text", app.handleGetText)
-	router.POST("/save-result", middleware.RequireAuth(), app.handleSaveResult)
+	router.POST("/save-result", middleware.RequireAuth(), app.handleSaveResultWithMetrics(businessMetrics))
 	router.GET("/stats", middleware.RequireAuth(), app.handleGetStats)
 	router.GET("/leaderboard", app.handleGetLeaderboard)
 
 	// Race endpoints (AI)
 	router.POST("/race/start", app.handleRaceStart)
-	router.POST("/race/finish", middleware.RequireAuth(), app.handleRaceFinish(sessionMgr))
+	router.POST("/race/finish", middleware.RequireAuth(), app.handleRaceFinish(sessionMgr, businessMetrics))
 	router.GET("/race/stats", app.handleRaceStats)
 	router.GET("/race/leaderboard", app.handleRaceLeaderboard)
 
@@ -142,7 +143,14 @@ func (app *TypingApp) handleGetText(c *gin.Context) {
 	})
 }
 
-func (app *TypingApp) handleSaveResult(c *gin.Context) {
+// handleSaveResultWithMetrics wraps handleSaveResult to record metrics
+func (app *TypingApp) handleSaveResultWithMetrics(businessMetrics *metrics.BusinessMetricsRegistry) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		app.handleSaveResult(c, businessMetrics)
+	}
+}
+
+func (app *TypingApp) handleSaveResult(c *gin.Context, businessMetrics *metrics.BusinessMetricsRegistry) {
 	userID, _ := middleware.GetUserID(c)
 
 	var req api.SaveResultRequest
@@ -204,6 +212,12 @@ func (app *TypingApp) handleSaveResult(c *gin.Context) {
 	}
 
 	resultID, _ := result.LastInsertId()
+
+	// Record metrics
+	if businessMetrics != nil {
+		businessMetrics.RecordTypingTestCompleted()
+	}
+
 	api.RespondWith(c, http.StatusOK, gin.H{
 		"success":   true,
 		"result_id": resultID,
@@ -312,7 +326,7 @@ func (app *TypingApp) handleRaceStart(c *gin.Context) {
 	})
 }
 
-func (app *TypingApp) handleRaceFinish(sessionMgr *session.Manager) gin.HandlerFunc {
+func (app *TypingApp) handleRaceFinish(sessionMgr *session.Manager, businessMetrics *metrics.BusinessMetricsRegistry) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, _ := middleware.GetUserID(c)
 
@@ -385,6 +399,13 @@ func (app *TypingApp) handleRaceFinish(sessionMgr *session.Manager) gin.HandlerF
 
 		// Add XP to user
 		_ = sessionMgr.AddUserXP(userID, int64(xpEarned))
+
+		// Record metrics
+		if businessMetrics != nil {
+			businessMetrics.RecordSessionCompleted("typing")
+			businessMetrics.RecordXPEarned("typing", xpEarned)
+			businessMetrics.RecordTypingTestCompleted()
+		}
 
 		api.RespondWith(c, http.StatusOK, gin.H{
 			"success":    true,
