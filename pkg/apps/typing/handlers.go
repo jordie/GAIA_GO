@@ -10,6 +10,7 @@ import (
 	"github.com/jgirmay/GAIA_GO/internal/middleware"
 	"github.com/jgirmay/GAIA_GO/internal/models"
 	"github.com/jgirmay/GAIA_GO/internal/session"
+	"github.com/jgirmay/GAIA_GO/pkg/apps/typing/multiplayer"
 )
 
 // RegisterHandlers registers all typing app handlers with the router
@@ -25,11 +26,24 @@ func RegisterHandlers(router *gin.RouterGroup, app *TypingApp, sessionMgr *sessi
 	router.GET("/stats", middleware.RequireAuth(), app.handleGetStats)
 	router.GET("/leaderboard", app.handleGetLeaderboard)
 
-	// Race endpoints
+	// Race endpoints (AI)
 	router.POST("/race/start", app.handleRaceStart)
 	router.POST("/race/finish", middleware.RequireAuth(), app.handleRaceFinish(sessionMgr))
 	router.GET("/race/stats", app.handleRaceStats)
 	router.GET("/race/leaderboard", app.handleRaceLeaderboard)
+
+	// Multiplayer endpoints
+	registerMultiplayerRoutes(router, app, sessionMgr)
+}
+
+// registerMultiplayerRoutes registers multiplayer-specific routes
+func registerMultiplayerRoutes(router *gin.RouterGroup, app *TypingApp, sessionMgr *session.Manager) {
+	// Initialize multiplayer components
+	roomManager := multiplayer.NewGameRoomManager(app.db, app)
+	wsHub := multiplayer.NewWebSocketHub(roomManager, sessionMgr)
+
+	// Register multiplayer handlers
+	RegisterMultiplayerHandlers(router, roomManager, wsHub, sessionMgr)
 }
 
 // ============================================================================
