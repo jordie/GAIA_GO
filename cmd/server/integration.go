@@ -21,17 +21,17 @@ import (
 
 // DistributedGAIAConfig holds configuration for the distributed system
 type DistributedGAIAConfig struct {
-	DatabaseURL          string
-	RaftEnabled          bool
-	RaftNodeID           string
-	RaftBindAddr         string
-	RaftAdvertiseAddr    string
-	RaftDiscoveryNodes   string
-	ClusterSnapshotDir   string
-	SessionLeaseTimeout  time.Duration
+	DatabaseURL              string
+	RaftEnabled              bool
+	RaftNodeID               string
+	RaftBindAddr             string
+	RaftAdvertiseAddr        string
+	RaftDiscoveryNodes       string
+	ClusterSnapshotDir       string
+	SessionLeaseTimeout      time.Duration
 	SessionHeartbeatInterval time.Duration
-	TaskQueueMaxRetries  int
-	UsabilityMetricsEnabled bool
+	TaskQueueMaxRetries      int
+	UsabilityMetricsEnabled  bool
 }
 
 // DistributedGAIAComponents holds all initialized components
@@ -258,8 +258,8 @@ func ShutdownDistributedGAIA(components *DistributedGAIAComponents) error {
 // HealthCheck performs a health check on all components
 func HealthCheck(components *DistributedGAIAComponents) map[string]interface{} {
 	health := map[string]interface{}{
-		"timestamp": time.Now(),
-		"status":    "healthy",
+		"timestamp":  time.Now(),
+		"status":     "healthy",
 		"components": map[string]interface{}{},
 	}
 
@@ -297,8 +297,8 @@ func HealthCheck(components *DistributedGAIAComponents) map[string]interface{} {
 	if components.SessionCoordinator != nil {
 		sessions := components.SessionCoordinator.GetAvailableSessions()
 		components_health["session_coordinator"] = map[string]interface{}{
-			"status":             "healthy",
-			"active_sessions":    len(sessions),
+			"status":          "healthy",
+			"active_sessions": len(sessions),
 		}
 	}
 

@@ -50,10 +50,10 @@ func setupRaftRoutes(router *chi.Mux, components *DistributedGAIAComponents) {
 		// Cluster status
 		r.Get("/status", func(w http.ResponseWriter, req *http.Request) {
 			status := map[string]interface{}{
-				"node_id":    components.RaftNode.NodeID,
-				"is_leader":  components.RaftNode.IsLeader(),
-				"leader":     components.RaftNode.Leader(),
-				"peers":      components.RaftNode.Peers(),
+				"node_id":   components.RaftNode.NodeID,
+				"is_leader": components.RaftNode.IsLeader(),
+				"leader":    components.RaftNode.Leader(),
+				"peers":     components.RaftNode.Peers(),
 			}
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(status)

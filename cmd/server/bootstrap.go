@@ -10,17 +10,17 @@ import (
 // LoadDistributedGAIAConfig loads configuration from environment variables
 func LoadDistributedGAIAConfig() DistributedGAIAConfig {
 	return DistributedGAIAConfig{
-		DatabaseURL: getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/gaia_go"),
-		RaftEnabled: getEnvBool("CLUSTER_ENABLED", false),
-		RaftNodeID: getEnv("CLUSTER_NODE_ID", "node-1"),
-		RaftBindAddr: getEnv("CLUSTER_BIND_ADDR", "127.0.0.1:8300"),
-		RaftAdvertiseAddr: getEnv("CLUSTER_ADVERTISE_ADDR", "127.0.0.1:8300"),
-		RaftDiscoveryNodes: getEnv("CLUSTER_DISCOVERY_NODES", "127.0.0.1:8300"),
-		ClusterSnapshotDir: getEnv("CLUSTER_SNAPSHOT_DIR", "./data/raft"),
-		SessionLeaseTimeout: getEnvDuration("SESSION_LEASE_TIMEOUT", 30*time.Second),
+		DatabaseURL:              getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/gaia_go"),
+		RaftEnabled:              getEnvBool("CLUSTER_ENABLED", false),
+		RaftNodeID:               getEnv("CLUSTER_NODE_ID", "node-1"),
+		RaftBindAddr:             getEnv("CLUSTER_BIND_ADDR", "127.0.0.1:8300"),
+		RaftAdvertiseAddr:        getEnv("CLUSTER_ADVERTISE_ADDR", "127.0.0.1:8300"),
+		RaftDiscoveryNodes:       getEnv("CLUSTER_DISCOVERY_NODES", "127.0.0.1:8300"),
+		ClusterSnapshotDir:       getEnv("CLUSTER_SNAPSHOT_DIR", "./data/raft"),
+		SessionLeaseTimeout:      getEnvDuration("SESSION_LEASE_TIMEOUT", 30*time.Second),
 		SessionHeartbeatInterval: getEnvDuration("SESSION_HEARTBEAT_INTERVAL", 10*time.Second),
-		TaskQueueMaxRetries: getEnvInt("TASK_MAX_RETRIES", 3),
-		UsabilityMetricsEnabled: getEnvBool("USABILITY_METRICS_ENABLED", true),
+		TaskQueueMaxRetries:      getEnvInt("TASK_MAX_RETRIES", 3),
+		UsabilityMetricsEnabled:  getEnvBool("USABILITY_METRICS_ENABLED", true),
 	}
 }
 
