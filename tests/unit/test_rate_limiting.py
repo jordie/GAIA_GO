@@ -183,8 +183,11 @@ class TestRateLimitService(TestDatabase):
         service.check_limit("ip", "192.168.1.1", "default")  # This one violates
 
         stats = service.get_stats(days=1)
-        assert stats["total_requests"] >= 3
+        # Only 2 requests counted (denied requests not in buckets)
+        assert stats["total_requests"] >= 2
         assert "violations_by_scope" in stats
+        # Should have at least one violation recorded
+        assert stats["violations_by_scope"].get("ip", 0) >= 1
 
     def test_violations_summary(self, test_db):
         """Test getting violations summary."""
