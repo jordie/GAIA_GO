@@ -9,6 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/jgirmay/GAIA_GO/internal/session"
+	"github.com/jgirmay/GAIA_GO/internal/tmux"
 	"github.com/jgirmay/GAIA_GO/pkg/router"
 )
 
@@ -31,6 +32,10 @@ func main() {
 	sessionMgr := session.NewManager(db)
 	log.Printf("[INFO] Session manager initialized")
 
+	// Initialize tmux session grouping service
+	tmuxService := tmux.NewService(db)
+	log.Printf("[INFO] Tmux session grouping service initialized")
+
 	// Create router
 	appRouter := router.NewAppRouter(sessionMgr)
 	appRouter.RegisterMiddleware()
@@ -44,6 +49,11 @@ func main() {
 		log.Printf("[WARN] Failed to auto-register apps: %v", err)
 	}
 	log.Printf("[INFO] All apps auto-registered")
+
+	// Register tmux session grouping routes
+	apiGroup := appRouter.GetEngine().Group("/api")
+	tmux.RegisterRoutes(apiGroup, tmuxService)
+	log.Printf("[INFO] Tmux session grouping routes registered")
 
 	// Serve static files for each app
 	staticDirs := map[string]string{
@@ -213,6 +223,57 @@ func runMigrations(db *sql.DB) error {
 		}
 		guestID, _ := result.LastInsertId()
 		db.Exec("INSERT INTO typing_stats (user_id, total_tests) VALUES (?, 0)", guestID)
+	}
+
+	// Migration 4: Tmux Session Grouping
+	migration4 := `
+	CREATE TABLE IF NOT EXISTS projects (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		slug TEXT UNIQUE NOT NULL,
+		name TEXT NOT NULL,
+		icon TEXT,
+		display_order INTEGER DEFAULT 0,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS tmux_sessions (
+		id TEXT PRIMARY KEY,
+		name TEXT UNIQUE NOT NULL,
+		project_id INTEGER,
+		environment TEXT DEFAULT 'dev',
+		is_worker BOOLEAN DEFAULT 0,
+		attached BOOLEAN DEFAULT 0,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY(project_id) REFERENCES projects(id)
+	);
+
+	CREATE TABLE IF NOT EXISTS session_group_prefs (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER NOT NULL,
+		group_id TEXT NOT NULL,
+		collapsed BOOLEAN DEFAULT 0,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY(user_id) REFERENCES users(id),
+		UNIQUE(user_id, group_id)
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_tmux_sessions_project_id ON tmux_sessions(project_id);
+	CREATE INDEX IF NOT EXISTS idx_tmux_sessions_environment ON tmux_sessions(environment);
+	CREATE INDEX IF NOT EXISTS idx_tmux_sessions_is_worker ON tmux_sessions(is_worker);
+	CREATE INDEX IF NOT EXISTS idx_tmux_sessions_name ON tmux_sessions(name);
+	CREATE INDEX IF NOT EXISTS idx_session_group_prefs_user_id ON session_group_prefs(user_id);
+
+	INSERT OR IGNORE INTO projects (slug, name, icon, display_order) VALUES
+		('basic_edu', 'Basic Education Apps', '🎓', 1),
+		('rando', 'Rando Project', '🎲', 2),
+		('architect', 'Architect System', '🏗️', 3),
+		('gaia_improvements', 'GAIA Improvements', '⚡', 4);
+	`
+
+	if _, err := db.Exec(migration4); err != nil {
+		return err
 	}
 
 	return nil
