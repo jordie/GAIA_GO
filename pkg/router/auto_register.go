@@ -9,6 +9,7 @@ import (
 	"github.com/jgirmay/GAIA_GO/internal/docs"
 	"github.com/jgirmay/GAIA_GO/internal/metrics"
 	"github.com/jgirmay/GAIA_GO/internal/session"
+	guessinghandlers "github.com/jgirmay/GAIA_GO/pkg/apps/guessing"
 	mathhandlers "github.com/jgirmay/GAIA_GO/pkg/apps/math"
 	pianohandlers "github.com/jgirmay/GAIA_GO/pkg/apps/piano"
 	readinghandlers "github.com/jgirmay/GAIA_GO/pkg/apps/reading"
@@ -30,9 +31,14 @@ func (r *AppRouter) RegisterAllApps(db *sql.DB, sessionManager *session.Manager)
 	r.metricsRegistry = httpMetrics
 	log.Printf("✓ Initialized HTTP metrics registry\n")
 
+	// Initialize business metrics (Phase 2)
+	businessMetrics := metrics.NewBusinessMetricsRegistry()
+	r.businessMetrics = businessMetrics
+	log.Printf("✓ Initialized business metrics registry\n")
+
 	// Register handlers for each app in dependency order
 	for _, appName := range discovered.LoadOrder {
-		if err := r.registerAppHandlers(appName, db, sessionManager); err != nil {
+		if err := r.registerAppHandlers(appName, db, sessionManager, businessMetrics); err != nil {
 			log.Printf("Error registering handlers for %s: %v\n", appName, err)
 			// Continue with other apps instead of failing completely
 		}
@@ -59,31 +65,35 @@ func (r *AppRouter) RegisterAllApps(db *sql.DB, sessionManager *session.Manager)
 }
 
 // discoveredOpenAPISpec generates OpenAPI spec from discovered apps
-func discoveredOpenAPISpec(apps []appmodule.AppRegistry, metadata map[string]*appmodule.AppMetadata) *docs.OpenAPISpec {
+func discoveredOpenAPISpec(apps []appmodule.App, metadata map[string]*appmodule.Metadata) *docs.OpenAPISpec {
 	return docs.GenerateOpenAPISpec(apps, metadata)
 }
 
 // registerAppHandlers registers all handlers for a specific app
-func (r *AppRouter) registerAppHandlers(appName string, db *sql.DB, sm *session.Manager) error {
+func (r *AppRouter) registerAppHandlers(appName string, db *sql.DB, sm *session.Manager, businessMetrics *metrics.BusinessMetricsRegistry) error {
 	group := r.RegisterAppRoutes(appName)
 
 	switch appName {
 	case "math":
 		mathApp := mathhandlers.NewMathApp(db)
-		mathhandlers.RegisterHandlers(group, mathApp, sm)
+		mathhandlers.RegisterHandlers(group, mathApp, sm, businessMetrics)
 		log.Printf("Registered math app handlers\n")
 	case "typing":
 		typingApp := typinghandlers.NewTypingApp(db)
-		typinghandlers.RegisterHandlers(group, typingApp, sm)
+		typinghandlers.RegisterHandlers(group, typingApp, sm, businessMetrics)
 		log.Printf("Registered typing app handlers\n")
 	case "reading":
 		readingApp := readinghandlers.NewReadingApp(db)
-		readinghandlers.RegisterHandlers(group, readingApp, sm)
+		readinghandlers.RegisterHandlers(group, readingApp, sm, businessMetrics)
 		log.Printf("Registered reading app handlers\n")
 	case "piano":
 		pianoApp := pianohandlers.NewPianoApp(db)
-		pianohandlers.RegisterHandlers(group, pianoApp, sm)
+		pianohandlers.RegisterHandlers(group, pianoApp, sm, businessMetrics)
 		log.Printf("Registered piano app handlers\n")
+	case "guessing":
+		guessingApp := guessinghandlers.NewGuessingApp(db)
+		guessinghandlers.RegisterHandlers(group, guessingApp, sm, businessMetrics)
+		log.Printf("Registered guessing app handlers\n")
 	default:
 		return fmt.Errorf("unknown app: %s", appName)
 	}
@@ -106,9 +116,7 @@ func GetAppMetadata(db *sql.DB, sessionManager *session.Manager) (map[string]int
 			"name":        appMeta.Name,
 			"description": appMeta.Description,
 			"version":     appMeta.Version,
-			"base_path":   appMeta.BasePath,
 			"status":      appMeta.Status,
-			"routes":      appMeta.Routes,
 		}
 	}
 

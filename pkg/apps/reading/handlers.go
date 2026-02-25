@@ -7,12 +7,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jgirmay/GAIA_GO/internal/api"
+	"github.com/jgirmay/GAIA_GO/internal/metrics"
 	"github.com/jgirmay/GAIA_GO/internal/middleware"
 	"github.com/jgirmay/GAIA_GO/internal/session"
 )
 
 // RegisterHandlers registers all reading app routes
-func RegisterHandlers(router *gin.RouterGroup, app *ReadingApp, sessionMgr *session.Manager) {
+func RegisterHandlers(router *gin.RouterGroup, app *ReadingApp, sessionMgr *session.Manager, businessMetrics *metrics.BusinessMetricsRegistry) {
 	// Word retrieval (CRITICAL: No repetition!)
 	router.POST("/api/get_words", func(c *gin.Context) {
 		handleGetWords(c, app)
@@ -24,11 +25,11 @@ func RegisterHandlers(router *gin.RouterGroup, app *ReadingApp, sessionMgr *sess
 
 	// Word mastery tracking
 	router.POST("/api/mark_word_correct", func(c *gin.Context) {
-		handleMarkWordCorrect(c, app, sessionMgr)
+		handleMarkWordCorrect(c, app, sessionMgr, businessMetrics)
 	})
 
 	router.POST("/api/mark_word_error", func(c *gin.Context) {
-		handleMarkWordError(c, app, sessionMgr)
+		handleMarkWordError(c, app, sessionMgr, businessMetrics)
 	})
 
 	router.POST("/api/record_word_attempt", func(c *gin.Context) {
@@ -54,7 +55,7 @@ func RegisterHandlers(router *gin.RouterGroup, app *ReadingApp, sessionMgr *sess
 	})
 
 	router.POST("/api/sessions/complete", func(c *gin.Context) {
-		handleCompleteSession(c, app)
+		handleCompleteSession(c, app, businessMetrics)
 	})
 
 	// Leaderboard
@@ -158,7 +159,7 @@ func handleGetWordsByLevel(c *gin.Context, app *ReadingApp) {
 // ============================================================================
 
 // handleMarkWordCorrect records a correct word attempt
-func handleMarkWordCorrect(c *gin.Context, app *ReadingApp, sessionMgr *session.Manager) {
+func handleMarkWordCorrect(c *gin.Context, app *ReadingApp, sessionMgr *session.Manager, businessMetrics *metrics.BusinessMetricsRegistry) {
 	var req api.MarkWordCorrectRequest
 
 	if err := c.BindJSON(&req); err != nil {
@@ -179,6 +180,11 @@ func handleMarkWordCorrect(c *gin.Context, app *ReadingApp, sessionMgr *session.
 	// Award XP for correct answer
 	sessionMgr.AddUserXP(userID, 5)
 
+	// Record metrics
+	if businessMetrics != nil {
+		businessMetrics.RecordXPEarned("reading", 5)
+	}
+
 	api.RespondWith(c, http.StatusOK, gin.H{
 		"success": true,
 		"message": "Word recorded correctly",
@@ -186,7 +192,7 @@ func handleMarkWordCorrect(c *gin.Context, app *ReadingApp, sessionMgr *session.
 }
 
 // handleMarkWordError records an incorrect word attempt
-func handleMarkWordError(c *gin.Context, app *ReadingApp, sessionMgr *session.Manager) {
+func handleMarkWordError(c *gin.Context, app *ReadingApp, sessionMgr *session.Manager, businessMetrics *metrics.BusinessMetricsRegistry) {
 	var req api.MarkWordIncorrectRequest
 
 	if err := c.BindJSON(&req); err != nil {
@@ -206,6 +212,11 @@ func handleMarkWordError(c *gin.Context, app *ReadingApp, sessionMgr *session.Ma
 
 	// Award partial XP for attempt
 	sessionMgr.AddUserXP(userID, 1)
+
+	// Record metrics
+	if businessMetrics != nil {
+		businessMetrics.RecordXPEarned("reading", 1)
+	}
 
 	api.RespondWith(c, http.StatusOK, gin.H{
 		"success": true,
@@ -354,7 +365,7 @@ func handleCreateSession(c *gin.Context, app *ReadingApp) {
 }
 
 // handleCompleteSession marks a reading session as complete
-func handleCompleteSession(c *gin.Context, app *ReadingApp) {
+func handleCompleteSession(c *gin.Context, app *ReadingApp, businessMetrics *metrics.BusinessMetricsRegistry) {
 	var req api.CompleteSessionRequest
 
 	if err := c.BindJSON(&req); err != nil {
@@ -377,6 +388,12 @@ func handleCompleteSession(c *gin.Context, app *ReadingApp) {
 	if err != nil {
 		api.RespondWithError(c, api.ErrInternalServer)
 		return
+	}
+
+	// Record metrics
+	if businessMetrics != nil {
+		businessMetrics.RecordSessionCompleted("reading")
+		businessMetrics.RecordReadingPassageCompleted("level_unknown")
 	}
 
 	api.RespondWith(c, http.StatusOK, gin.H{

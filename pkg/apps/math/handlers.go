@@ -7,12 +7,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jgirmay/GAIA_GO/internal/api"
+	"github.com/jgirmay/GAIA_GO/internal/metrics"
 	"github.com/jgirmay/GAIA_GO/internal/middleware"
 	"github.com/jgirmay/GAIA_GO/internal/session"
 )
 
 // RegisterHandlers registers all math app routes
-func RegisterHandlers(router *gin.RouterGroup, app *MathApp, sessionMgr *session.Manager) {
+func RegisterHandlers(router *gin.RouterGroup, app *MathApp, sessionMgr *session.Manager, businessMetrics *metrics.BusinessMetricsRegistry) {
 	// Problem generation endpoints
 	router.POST("/api/generate_problem", func(c *gin.Context) {
 		handleGenerateProblem(c, app)
@@ -34,7 +35,7 @@ func RegisterHandlers(router *gin.RouterGroup, app *MathApp, sessionMgr *session
 
 	// Practice session endpoints
 	router.POST("/api/save_session", func(c *gin.Context) {
-		handleSaveSession(c, app, sessionMgr)
+		handleSaveSession(c, app, sessionMgr, businessMetrics)
 	})
 
 	// Stats endpoints
@@ -149,7 +150,7 @@ func handleCheckAnswer(c *gin.Context, app *MathApp, sessionMgr *session.Manager
 }
 
 // handleSaveSession saves a practice session
-func handleSaveSession(c *gin.Context, app *MathApp, sessionMgr *session.Manager) {
+func handleSaveSession(c *gin.Context, app *MathApp, sessionMgr *session.Manager, businessMetrics *metrics.BusinessMetricsRegistry) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil || userID == 0 {
 		api.RespondWithError(c, api.ErrUnauthorized)
@@ -187,6 +188,13 @@ func handleSaveSession(c *gin.Context, app *MathApp, sessionMgr *session.Manager
 	// Calculate and award XP
 	xpEarned := int64(CalculateMathXP(fmt.Sprintf("%.1f%%", accuracy), req.Difficulty))
 	_ = sessionMgr.AddUserXP(userID, xpEarned)
+
+	// Record metrics
+	if businessMetrics != nil {
+		businessMetrics.RecordSessionCompleted("math")
+		businessMetrics.RecordXPEarned("math", int(xpEarned))
+		businessMetrics.RecordMathProblemSolved(req.Difficulty)
+	}
 
 	api.RespondWith(c, http.StatusOK, gin.H{
 		"success":      true,

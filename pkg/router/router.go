@@ -21,6 +21,7 @@ type AppRouter struct {
 	authMiddleware   gin.HandlerFunc
 	requireAuth      gin.HandlerFunc
 	metricsRegistry  *metrics.HTTPMetricsRegistry
+	businessMetrics  *metrics.BusinessMetricsRegistry
 }
 
 // NewAppRouter creates a new unified application router
@@ -112,13 +113,13 @@ func (r *AppRouter) RegisterTemplates(templateDir string) {
 }
 
 // RegisterDocumentation registers API documentation routes
-func (r *AppRouter) RegisterDocumentation(apps []app.AppRegistry, metadata map[string]*app.AppMetadata) {
+func (r *AppRouter) RegisterDocumentation(apps []app.App, metadata map[string]*app.Metadata) {
 	docHandler := docs.NewDocumentationHandler(apps, metadata)
 	docHandler.RegisterRoutes(r.engine)
 }
 
 // RegisterHealthCheck registers health check routes
-func (r *AppRouter) RegisterHealthCheck(db *sql.DB, apps []app.AppRegistry, metadata map[string]*app.AppMetadata) {
+func (r *AppRouter) RegisterHealthCheck(db *sql.DB, apps []app.App, metadata map[string]*app.Metadata) {
 	checker := health.NewHealthChecker(db, apps, metadata)
 	healthHandler := health.NewHealthHandler(checker)
 	healthHandler.RegisterRoutes(r.engine)

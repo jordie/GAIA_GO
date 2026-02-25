@@ -1,74 +1,138 @@
 package app
 
 import (
-	"database/sql"
+	"fmt"
+	"log"
+	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jgirmay/GAIA_GO/internal/session"
 )
 
-// AppRegistry defines the contract all GAIA apps must implement
-// This enables automatic discovery, validation, and registration
-type AppRegistry interface {
-	// Identity methods
-	Name() string        // Unique app identifier (e.g., "math", "typing")
-	Description() string // Human-readable description
-	Version() string     // Semantic version (e.g., "1.0.0")
-
-	// Route information
-	BasePath() string       // Root path for this app (e.g., "/api/math")
-	RouteGroups() []RouteGroup // Organized route information
-
-	// Dependency declaration
-	Dependencies() []Dependency // What this app requires
-
-	// Initialization
-	Initialize(ctx *AppContext) error // Setup phase
-
-	// Handler registration
-	RegisterHandlers(router *gin.RouterGroup) error // Bind HTTP handlers
+// Registry manages all registered GAIA apps
+type Registry struct {
+	apps      map[string]App
+	metadata  map[string]Metadata
+	mu        sync.RWMutex
 }
 
-// Dependency describes a dependency this app requires
-type Dependency struct {
-	Name     string // Unique name (e.g., "database", "session_manager")
-	Type     string // Go type name for documentation
-	Required bool   // Is this dependency required?
+// NewRegistry creates a new app registry
+func NewRegistry() *Registry {
+	return &Registry{
+		apps:     make(map[string]App),
+		metadata: make(map[string]Metadata),
+	}
 }
 
-// RouteGroup organizes related routes for documentation
-type RouteGroup struct {
-	Path        string      // Base path for this group (e.g., "/problem")
-	Description string      // What this group does
-	Routes      []RouteInfo // Individual routes in this group
+// Register registers a new app
+func (r *Registry) Register(config AppConfig) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, exists := r.apps[config.Name]; exists {
+		return fmt.Errorf("app %s already registered", config.Name)
+	}
+
+	if config.Instance == nil {
+		return fmt.Errorf("app %s has no instance", config.Name)
+	}
+
+	// Validate instance matches config
+	if config.Instance.GetName() != config.Name {
+		return fmt.Errorf("app name mismatch: config says %s, instance says %s",
+			config.Name, config.Instance.GetName())
+	}
+
+	// Initialize database for app
+	if err := config.Instance.InitDB(); err != nil {
+		return fmt.Errorf("failed to initialize %s database: %v", config.Name, err)
+	}
+
+	// Store app and metadata
+	r.apps[config.Name] = config.Instance
+	r.metadata[config.Name] = Metadata{
+		Name:        config.Name,
+		DisplayName: config.Instance.GetDisplayName(),
+		Description: config.Instance.GetDescription(),
+		Version:     config.Instance.GetVersion(),
+		Status:      "active",
+	}
+
+	log.Printf("[App Registry] Registered: %s (%s) v%s\n",
+		config.Name, config.DisplayName, config.Instance.GetVersion())
+
+	return nil
 }
 
-// RouteInfo describes a single HTTP route
-type RouteInfo struct {
-	Method      string // HTTP method (GET, POST, PUT, DELETE)
-	Path        string // Route path relative to group
-	Description string // What this endpoint does
+// GetApp retrieves a registered app
+func (r *Registry) GetApp(name string) (App, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	app, exists := r.apps[name]
+	if !exists {
+		return nil, fmt.Errorf("app %s not found", name)
+	}
+
+	return app, nil
 }
 
-// AppContext provides dependency-injected services to apps
-type AppContext struct {
-	DB             *sql.DB
-	SessionManager *session.Manager
-	Config         *AppConfig
+// GetMetadata retrieves app metadata
+func (r *Registry) GetMetadata(name string) (Metadata, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	metadata, exists := r.metadata[name]
+	if !exists {
+		return Metadata{}, fmt.Errorf("metadata for %s not found", name)
+	}
+
+	return metadata, nil
 }
 
-// AppConfig holds configuration accessible to all apps
-type AppConfig struct {
-	Environment string                 // "development", "staging", "production"
-	Settings    map[string]interface{} // App-specific configuration
+// ListApps returns all registered apps
+func (r *Registry) ListApps() map[string]Metadata {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	result := make(map[string]Metadata)
+	for name, metadata := range r.metadata {
+		result[name] = metadata
+	}
+
+	return result
 }
 
-// AppMetadata represents discovered app information
-type AppMetadata struct {
-	Name        string
-	Description string
-	Version     string
-	BasePath    string
-	Routes      []RouteGroup
-	Status      string // "initialized", "registered", "error"
+// RegisterRoutes registers routes for all apps
+// Assumes router is at /api, will create /api/<app_name> for each app
+func (r *Registry) RegisterRoutes(apiRouter *gin.RouterGroup) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for name, app := range r.apps {
+		// Create app-specific router group
+		appRouter := apiRouter.Group("/" + name)
+
+		// Register app's routes
+		app.RegisterRoutes(appRouter)
+
+		log.Printf("[App Registry] Routes registered for %s at /api/%s\n", name, name)
+	}
+}
+
+// GetAppCount returns number of registered apps
+func (r *Registry) GetAppCount() int {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return len(r.apps)
+}
+
+// AppsEndpoint returns all apps as JSON (for discovery)
+func (r *Registry) AppsEndpoint() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		apps := r.ListApps()
+		c.JSON(200, gin.H{
+			"apps":  apps,
+			"count": len(apps),
+		})
+	}
 }
