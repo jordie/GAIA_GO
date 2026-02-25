@@ -1,0 +1,104 @@
+{
+  "id": "llm_quick_validation",
+  "name": "LLM Quick Validation",
+  "description": "Quick smoke test for LLM code generation",
+  "target_service": "generated_app",
+  "tags": ["llm", "quick", "smoke"],
+  "parallel": false,
+  "stop_on_failure": true,
+
+  "global_variables": {
+    "provider": "${LLM_PROVIDER}",
+    "test_run_id": "${TEST_RUN_ID}",
+    "output_dir": "/tmp/llm_quick_${provider}_${test_run_id}",
+    "max_lines": 500
+  },
+
+  "test_cases": [
+    {
+      "id": "quick_generation",
+      "name": "Quick Code Generation",
+      "description": "Generate minimal working calculator",
+      "tags": ["generation", "quick"],
+      "variables": {
+        "prompt": "Create a minimal calculator in ${output_dir}:\\n1. calculator.html - Simple calculator UI\\n2. calculator.js - Basic operations\\n3. calculator.css - Basic styling\\nKeep under ${max_lines} lines total."
+      },
+      "steps": [
+        {
+          "type": "api_post",
+          "target": "http://localhost:8080/api/assigner/send",
+          "value": {
+            "content": "${prompt}",
+            "priority": 10,
+            "target_session": "${provider}",
+            "timeout_minutes": 3
+          },
+          "description": "Send generation request"
+        },
+        {
+          "type": "wait",
+          "value": 3,
+          "description": "Wait for generation"
+        },
+        {
+          "type": "wait_for",
+          "target": "generation_complete",
+          "options": {"max_wait": 180},
+          "description": "Wait for completion"
+        }
+      ]
+    },
+
+    {
+      "id": "quick_validation",
+      "name": "Quick Validation",
+      "description": "Verify files were generated",
+      "tags": ["validation"],
+      "steps": [
+        {
+          "type": "assert_element",
+          "target": "${output_dir}/calculator.html",
+          "description": "Verify HTML exists"
+        },
+        {
+          "type": "assert_element",
+          "target": "${output_dir}/calculator.js",
+          "description": "Verify JS exists"
+        },
+        {
+          "type": "extract",
+          "target": "total_lines",
+          "value": "count_lines(${output_dir})",
+          "description": "Count lines"
+        },
+        {
+          "type": "compare",
+          "target": "total_lines",
+          "value": "${max_lines}",
+          "options": {"operator": "<="},
+          "description": "Verify under line limit"
+        }
+      ]
+    },
+
+    {
+      "id": "quick_cleanup",
+      "name": "Quick Cleanup",
+      "description": "Clean up test files",
+      "tags": ["cleanup"],
+      "steps": [
+        {
+          "type": "api_post",
+          "target": "http://localhost:8080/api/tasks",
+          "value": {
+            "type": "shell",
+            "data": {
+              "command": "rm -rf ${output_dir}"
+            }
+          },
+          "description": "Delete output directory"
+        }
+      ]
+    }
+  ]
+}

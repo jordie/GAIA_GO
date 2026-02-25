@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Monitor - Go Wrapper</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #667eea; --secondary: #764ba2;
+            --success: #48bb78; --error: #f56565;
+            --warning: #ed8936; --info: #4299e1;
+            --dark-bg: #1a202c; --card-bg: #2d3748;
+            --text-primary: #e2e8f0; --text-secondary: #a0aec0;
+            --border: #4a5568;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--dark-bg), #2d3748);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(45, 55, 72, 0.95);
+            border-bottom: 2px solid var(--primary);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-healthy { background: var(--success); }
+        .status-degraded { background: var(--warning); }
+        .status-unhealthy { background: var(--error); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--card-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(45, 55, 72, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-unit {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-left: 5px;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-panel {
+            background: rgba(45, 55, 72, 0.8);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .actions-panel {
+            background: rgba(45, 55, 72, 0.8);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .action-btn {
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .action-btn:hover {
+            background: rgba(102, 126, 234, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .info-panel {
+            background: rgba(45, 55, 72, 0.8);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            padding: 15px;
+            background: var(--card-bg);
+            border-radius: 8px;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Performance Monitor</h1>
+        <div class="header-controls">
+            <div class="status-indicator status-healthy" id="statusIndicator"></div>
+            <span id="statusText">Healthy</span>
+            <button class="btn btn-secondary" onclick="toggleAutoRefresh()">
+                <span id="refreshText">⏸ Pause</span>
+            </button>
+            <button class="btn btn-secondary" onclick="location.href='/'">🏠 Dashboard</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Memory Usage</div>
+                <div class="stat-value" id="statMemory">0<span class="stat-unit">MB</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Goroutines</div>
+                <div class="stat-value" id="statGoroutines">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">GC Pauses</div>
+                <div class="stat-value" id="statGC">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Heap Usage</div>
+                <div class="stat-value" id="statHeap">0<span class="stat-unit">%</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Uptime</div>
+                <div class="stat-value" id="statUptime">0<span class="stat-unit">s</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Request Rate</div>
+                <div class="stat-value" id="statReqRate">0<span class="stat-unit">/s</span></div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="chart-grid">
+            <div class="chart-panel">
+                <div class="chart-header">
+                    <div class="chart-title">Memory Usage</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="memoryChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-panel">
+                <div class="chart-header">
+                    <div class="chart-title">Goroutines</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="goroutineChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-panel">
+                <div class="chart-header">
+                    <div class="chart-title">GC Pause Times</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="gcChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-panel">
+                <div class="chart-header">
+                    <div class="chart-title">Heap Memory</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="heapChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Panel -->
+        <div class="actions-panel">
+            <h3 style="margin-bottom: 15px; color: var(--primary);">Actions</h3>
+            <div class="actions-grid">
+                <button class="action-btn" onclick="forceGC()">🗑️ Force GC</button>
+                <button class="action-btn" onclick="downloadHeapDump()">💾 Heap Dump</button>
+                <button class="action-btn" onclick="downloadCPUProfile()">🔥 CPU Profile (30s)</button>
+                <button class="action-btn" onclick="viewGoroutines()">🔍 View Goroutines</button>
+            </div>
+        </div>
+
+        <!-- Runtime Info -->
+        <div class="info-panel">
+            <h3 style="margin-bottom: 15px; color: var(--primary);">Runtime Information</h3>
+            <div class="info-grid" id="runtimeInfo"></div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefresh = true;
+        let refreshInterval = null;
+        let charts = {};
+        const maxDataPoints = 60;
+
+        // Initialize charts
+        function initCharts() {
+            const chartConfig = (label, color) => ({
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label,
+                        data: [],
+                        borderColor: color,
+                        backgroundColor: color + '33',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e2e8f0' } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#a0aec0' }, grid: { color: '#4a5568' } },
+                        y: { ticks: { color: '#a0aec0' }, grid: { color: '#4a5568' } }
+                    }
+                }
+            });
+
+            charts.memory = new Chart(document.getElementById('memoryChart'),
+                chartConfig('Memory (MB)', '#667eea'));
+            charts.goroutines = new Chart(document.getElementById('goroutineChart'),
+                chartConfig('Goroutines', '#48bb78'));
+            charts.gc = new Chart(document.getElementById('gcChart'),
+                chartConfig('Pause Time (ms)', '#ed8936'));
+            charts.heap = new Chart(document.getElementById('heapChart'),
+                chartConfig('Heap Usage (%)', '#4299e1'));
+        }
+
+        // Update chart
+        function updateChart(chart, label, value) {
+            chart.data.labels.push(label);
+            chart.data.datasets[0].data.push(value);
+
+            if (chart.data.labels.length > maxDataPoints) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+
+            chart.update('none');
+        }
+
+        // Fetch and update metrics
+        async function updateMetrics() {
+            try {
+                const response = await fetch('/api/profiling/metrics');
+                const data = await response.json();
+
+                const m = data.metrics;
+                const timestamp = new Date(m.timestamp).toLocaleTimeString();
+
+                // Update stats
+                document.getElementById('statMemory').innerHTML =
+                    (m.memory.alloc / 1024 / 1024).toFixed(1) + '<span class="stat-unit">MB</span>';
+                document.getElementById('statGoroutines').textContent = m.goroutines;
+                document.getElementById('statGC').textContent = m.gc.num_gc;
+                document.getElementById('statHeap').innerHTML =
+                    m.memory.usage_percent.toFixed(1) + '<span class="stat-unit">%</span>';
+                document.getElementById('statUptime').innerHTML =
+                    Math.floor(data.uptime) + '<span class="stat-unit">s</span>';
+
+                // Update charts
+                updateChart(charts.memory, timestamp, (m.memory.alloc / 1024 / 1024).toFixed(1));
+                updateChart(charts.goroutines, timestamp, m.goroutines);
+                updateChart(charts.gc, timestamp, (m.gc.last_pause / 1e6).toFixed(2));
+                updateChart(charts.heap, timestamp, m.memory.usage_percent.toFixed(1));
+
+            } catch (error) {
+                console.error('Failed to fetch metrics:', error);
+            }
+        }
+
+        // Update health status
+        async function updateHealth() {
+            try {
+                const response = await fetch('/api/profiling/health');
+                const data = await response.json();
+
+                const indicator = document.getElementById('statusIndicator');
+                const statusText = document.getElementById('statusText');
+
+                indicator.className = 'status-indicator status-' + data.status;
+                statusText.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+
+                if (data.issues && data.issues.length > 0) {
+                    statusText.title = 'Issues: ' + data.issues.join(', ');
+                }
+            } catch (error) {
+                console.error('Failed to fetch health:', error);
+            }
+        }
+
+        // Update runtime info
+        async function updateRuntimeInfo() {
+            try {
+                const response = await fetch('/api/profiling/runtime');
+                const data = await response.json();
+
+                const infoDiv = document.getElementById('runtimeInfo');
+                infoDiv.innerHTML = Object.entries(data).map(([key, value]) => `
+                    <div class="info-item">
+                        <div class="info-label">${key.replace(/_/g, ' ').toUpperCase()}</div>
+                        <div class="info-value">${typeof value === 'number' ? value.toFixed(2) : value}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to fetch runtime info:', error);
+            }
+        }
+
+        // Force GC
+        async function forceGC() {
+            try {
+                const response = await fetch('/api/profiling/force-gc', { method: 'POST' });
+                const data = await response.json();
+                alert(`GC completed in ${data.gc_duration_ms}ms\nHeap: ${data.heap_alloc_mb.toFixed(2)}MB`);
+                updateMetrics();
+            } catch (error) {
+                alert('Failed to force GC: ' + error.message);
+            }
+        }
+
+        // Download heap dump
+        function downloadHeapDump() {
+            window.open('/api/profiling/heap-dump', '_blank');
+        }
+
+        // Download CPU profile
+        function downloadCPUProfile() {
+            window.open('/api/profiling/cpu-profile?duration=30', '_blank');
+        }
+
+        // View goroutines
+        async function viewGoroutines() {
+            try {
+                const response = await fetch('/api/profiling/goroutines');
+                const data = await response.json();
+                const win = window.open('', 'Goroutines', 'width=800,height=600');
+                win.document.write('<pre style="background:#1a202c;color:#e2e8f0;padding:20px;">' +
+                    data.stack_trace + '</pre>');
+            } catch (error) {
+                alert('Failed to fetch goroutines: ' + error.message);
+            }
+        }
+
+        // Toggle auto-refresh
+        function toggleAutoRefresh() {
+            autoRefresh = !autoRefresh;
+            document.getElementById('refreshText').textContent = autoRefresh ? '⏸ Pause' : '▶ Resume';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            updateMetrics();
+            updateHealth();
+            updateRuntimeInfo();
+
+            refreshInterval = setInterval(() => {
+                if (autoRefresh) {
+                    updateMetrics();
+                    updateHealth();
+                }
+            }, 2000);
+
+            setInterval(() => {
+                if (autoRefresh) {
+                    updateRuntimeInfo();
+                }
+            }, 10000);
+        });
+    </script>
+</body>
+</html>

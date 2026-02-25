@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: architect-go-scripts
+  labels:
+    app: architect-go
+data:
+  # Health check script
+  health-check.sh: |
+    #!/bin/bash
+    set -e
+
+    echo "Running architect-go health checks..."
+
+    # Check basic health
+    curl -sf http://localhost:8080/health || exit 1
+
+    # Check readiness
+    curl -sf http://localhost:8080/health/readiness || exit 1
+
+    echo "Health checks passed"
+    exit 0
+
+  # Migration script
+  migrate.sh: |
+    #!/bin/bash
+    set -e
+
+    echo "Running database migrations..."
+
+    # Migration would be done via application startup
+    # This is a placeholder for custom migration logic
+
+    echo "Migrations completed"
+    exit 0

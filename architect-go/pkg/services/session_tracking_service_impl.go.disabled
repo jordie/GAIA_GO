@@ -1,0 +1,376 @@
+package services
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/google/uuid"
+
+	"architect-go/pkg/dto"
+	"architect-go/pkg/models"
+	"architect-go/pkg/repository"
+)
+
+// SessionTrackingServiceImpl implements SessionTrackingService
+type SessionTrackingServiceImpl struct {
+	repo repository.SessionRepository
+}
+
+// NewSessionTrackingService creates a new session tracking service
+func NewSessionTrackingService(repo repository.SessionRepository) SessionTrackingService {
+	return &SessionTrackingServiceImpl{repo: repo}
+}
+
+func (sts *SessionTrackingServiceImpl) CreateSession(ctx context.Context, userID string, ipAddress string, userAgent string) (*models.Session, error) {
+	session := &models.Session{
+		ID:        uuid.New().String(),
+		UserID:    userID,
+		Token:     uuid.New().String(),
+		CreatedAt: time.Now(),
+		ExpiresAt: time.Now().Add(24 * time.Hour),
+	}
+
+	if err := sts.repo.Create(ctx, session); err != nil {
+		return nil, fmt.Errorf("failed to create session: %w", err)
+	}
+
+	return session, nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetSession(ctx context.Context, sessionID string) (*models.Session, error) {
+	session, err := sts.repo.Get(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get session: %w", err)
+	}
+	return session, nil
+}
+
+func (sts *SessionTrackingServiceImpl) ListSessions(ctx context.Context, limit, offset int) ([]*models.Session, int64, error) {
+	sessions, total, err := sts.repo.List(ctx, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to list sessions: %w", err)
+	}
+	return sessions, total, nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetUserSessions(ctx context.Context, userID string, limit, offset int) ([]*models.Session, int64, error) {
+	sessions, total, err := sts.repo.ListByUser(ctx, userID, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get user sessions: %w", err)
+	}
+	return sessions, total, nil
+}
+
+func (sts *SessionTrackingServiceImpl) ExtendSession(ctx context.Context, sessionID string) (*models.Session, error) {
+	session, err := sts.repo.Get(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("session not found: %w", err)
+	}
+
+	session.ExpiresAt = time.Now().Add(24 * time.Hour)
+
+	if err := sts.repo.Update(ctx, session); err != nil {
+		return nil, fmt.Errorf("failed to extend session: %w", err)
+	}
+
+	return session, nil
+}
+
+func (sts *SessionTrackingServiceImpl) DestroySession(ctx context.Context, sessionID string) error {
+	if err := sts.repo.Delete(ctx, sessionID); err != nil {
+		return fmt.Errorf("failed to destroy session: %w", err)
+	}
+	return nil
+}
+
+func (sts *SessionTrackingServiceImpl) LogActivity(ctx context.Context, sessionID string, activity string) error {
+	return nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetActivityHistory(ctx context.Context, sessionID string, limit, offset int) ([]map[string]interface{}, int64, error) {
+	return make([]map[string]interface{}, 0), 0, nil
+}
+
+func (sts *SessionTrackingServiceImpl) KickUser(ctx context.Context, userID string) error {
+	sessions, _, err := sts.GetUserSessions(ctx, userID, 1000, 0)
+	if err != nil {
+		return err
+	}
+
+	for _, session := range sessions {
+		sts.DestroySession(ctx, session.ID)
+	}
+
+	return nil
+}
+
+func (sts *SessionTrackingServiceImpl) KickSession(ctx context.Context, sessionID string) error {
+	return sts.DestroySession(ctx, sessionID)
+}
+
+func (sts *SessionTrackingServiceImpl) LockSession(ctx context.Context, sessionID string) error {
+	session, err := sts.repo.Get(ctx, sessionID)
+	if err != nil {
+		return fmt.Errorf("session not found: %w", err)
+	}
+
+	session.Locked = true
+	return sts.repo.Update(ctx, session)
+}
+
+func (sts *SessionTrackingServiceImpl) UnlockSession(ctx context.Context, sessionID string) error {
+	session, err := sts.repo.Get(ctx, sessionID)
+	if err != nil {
+		return fmt.Errorf("session not found: %w", err)
+	}
+
+	session.Locked = false
+	return sts.repo.Update(ctx, session)
+}
+
+func (sts *SessionTrackingServiceImpl) GetOnlineUsers(ctx context.Context) ([]string, error) {
+	return make([]string, 0), nil
+}
+
+func (sts *SessionTrackingServiceImpl) CheckUserOnlineStatus(ctx context.Context, userID string) (bool, error) {
+	sessions, _, err := sts.GetUserSessions(ctx, userID, 1, 0)
+	if err != nil || len(sessions) == 0 {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (sts *SessionTrackingServiceImpl) DetectSuspiciousActivity(ctx context.Context, sessionID string) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"suspicious": false,
+	}, nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetRiskySessions(ctx context.Context, limit, offset int) ([]*models.Session, int64, error) {
+	return make([]*models.Session, 0), 0, nil
+}
+
+func (sts *SessionTrackingServiceImpl) UpdatePresence(ctx context.Context, sessionID string, status string) error {
+	return nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetUserPresence(ctx context.Context, userID string) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"status": "offline",
+	}, nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetPresenceHistory(ctx context.Context, userID string, limit, offset int) ([]map[string]interface{}, error) {
+	return make([]map[string]interface{}, 0), nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetSessionStats(ctx context.Context) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"active_sessions": 0,
+		"unique_users":    0,
+	}, nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetUserSessionStats(ctx context.Context, userID string) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"session_count": 0,
+	}, nil
+}
+
+func (sts *SessionTrackingServiceImpl) CleanupExpiredSessions(ctx context.Context) (int64, error) {
+	return 0, nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetSessionSecurityLog(ctx context.Context, sessionID string) ([]map[string]interface{}, error) {
+	return make([]map[string]interface{}, 0), nil
+}
+
+func (sts *SessionTrackingServiceImpl) IsSessionValid(ctx context.Context, sessionID string) (bool, error) {
+	session, err := sts.repo.Get(ctx, sessionID)
+	if err != nil || session == nil {
+		return false, nil
+	}
+
+	if time.Now().After(session.ExpiresAt) {
+		return false, nil
+	}
+
+	if session.Locked {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetUserDevices(ctx context.Context, userID string) ([]map[string]interface{}, error) {
+	return make([]map[string]interface{}, 0), nil
+}
+
+func (sts *SessionTrackingServiceImpl) RemoveUserDevice(ctx context.Context, userID string, deviceID string) error {
+	return nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetActiveSessions(ctx context.Context) (int64, error) {
+	sessions, total, err := sts.ListSessions(ctx, 1000000, 0)
+	if err != nil {
+		return 0, err
+	}
+
+	count := int64(0)
+	for _, session := range sessions {
+		if time.Now().Before(session.ExpiresAt) {
+			count++
+		}
+	}
+
+	return count, nil
+}
+
+func (sts *SessionTrackingServiceImpl) LogoutAllSessions(ctx context.Context, userID string) error {
+	return sts.KickUser(ctx, userID)
+}
+
+func (sts *SessionTrackingServiceImpl) SetSessionTimeout(ctx context.Context, sessionID string, timeout int) error {
+	session, err := sts.repo.Get(ctx, sessionID)
+	if err != nil {
+		return fmt.Errorf("session not found: %w", err)
+	}
+
+	session.ExpiresAt = time.Now().Add(time.Duration(timeout) * time.Second)
+	return sts.repo.Update(ctx, session)
+}
+
+func (sts *SessionTrackingServiceImpl) RefreshSessionToken(ctx context.Context, sessionID string) (string, error) {
+	session, err := sts.repo.Get(ctx, sessionID)
+	if err != nil {
+		return "", fmt.Errorf("session not found: %w", err)
+	}
+
+	session.Token = uuid.New().String()
+	if err := sts.repo.Update(ctx, session); err != nil {
+		return "", err
+	}
+
+	return session.Token, nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetGeolocation(ctx context.Context, sessionID string) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"country": "Unknown",
+	}, nil
+}
+
+func (sts *SessionTrackingServiceImpl) ValidateSessionToken(ctx context.Context, token string) (bool, error) {
+	return true, nil
+}
+
+// Additional interface methods
+func (sts *SessionTrackingServiceImpl) GetCurrentSession(ctx context.Context, userID string) (*models.Session, error) {
+	sessions, _, err := sts.GetUserSessions(ctx, userID, 1, 0)
+	if err != nil || len(sessions) == 0 {
+		return nil, fmt.Errorf("no active session for user")
+	}
+	return sessions[0], nil
+}
+
+func (sts *SessionTrackingServiceImpl) DestroyAllUserSessions(ctx context.Context, userID string) error {
+	return sts.KickUser(ctx, userID)
+}
+
+func (sts *SessionTrackingServiceImpl) ExtendSession(ctx context.Context, id string, req *SessionExtendRequest) error {
+	session, err := sts.repo.Get(ctx, id)
+	if err != nil {
+		return fmt.Errorf("session not found: %w", err)
+	}
+	session.ExpiresAt = time.Now().Add(24 * time.Hour)
+	return sts.repo.Update(ctx, session)
+}
+
+func (sts *SessionTrackingServiceImpl) ListActiveSessions(ctx context.Context, limit, offset int) ([]*models.Session, int64, error) {
+	return make([]*models.Session, 0), 0, nil
+}
+
+func (sts *SessionTrackingServiceImpl) ListInactiveSessions(ctx context.Context, limit, offset int) ([]*models.Session, int64, error) {
+	return make([]*models.Session, 0), 0, nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetSessionStats(ctx context.Context) (*SessionStatsResponse, error) {
+	return &SessionStatsResponse{}, nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetConcurrentUserCount(ctx context.Context) (*ConcurrentUserResponse, error) {
+	return &ConcurrentUserResponse{}, nil
+}
+
+func (sts *SessionTrackingServiceImpl) ValidateSession(ctx context.Context, id string) (bool, error) {
+	return sts.IsSessionValid(ctx, id)
+}
+
+func (sts *SessionTrackingServiceImpl) GetActivityTimeline(ctx context.Context, limit, offset int) ([]map[string]interface{}, int64, error) {
+	return make([]map[string]interface{}, 0), 0, nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetGeographicDistribution(ctx context.Context) (map[string]int64, error) {
+	return make(map[string]int64), nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetDeviceStats(ctx context.Context) (map[string]int64, error) {
+	return make(map[string]int64), nil
+}
+
+func (sts *SessionTrackingServiceImpl) CheckMaxConcurrentSessions(ctx context.Context, userID string) (int, error) {
+	sessions, _, err := sts.GetUserSessions(ctx, userID, 1000, 0)
+	if err != nil {
+		return 0, err
+	}
+	return len(sessions), nil
+}
+
+func (sts *SessionTrackingServiceImpl) TerminateOtherSessions(ctx context.Context, sessionID string) error {
+	return nil
+}
+
+func (sts *SessionTrackingServiceImpl) UpdateSessionPresence(ctx context.Context, sessionID string, req *SessionPresenceUpdateRequest) error {
+	return nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetSessionPresence(ctx context.Context, sessionID string) (map[string]interface{}, error) {
+	return make(map[string]interface{}), nil
+}
+
+func (sts *SessionTrackingServiceImpl) BroadcastPresenceUpdate(ctx context.Context, userID string, status string) error {
+	return nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetSessionsByDevice(ctx context.Context, deviceType string, limit, offset int) ([]*models.Session, int64, error) {
+	return make([]*models.Session, 0), 0, nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetSessionsByLocation(ctx context.Context, location string, limit, offset int) ([]*models.Session, int64, error) {
+	return make([]*models.Session, 0), 0, nil
+}
+
+func (sts *SessionTrackingServiceImpl) RevokeAllSessionsBeforeDate(ctx context.Context, beforeDate string) (int64, error) {
+	return 0, nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetSessionRiskScore(ctx context.Context, sessionID string) (int, error) {
+	return 0, nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetUserSessionRiskScore(ctx context.Context, userID string) (map[string]interface{}, error) {
+	return make(map[string]interface{}), nil
+}
+
+func (sts *SessionTrackingServiceImpl) FlagSessionAsRisky(ctx context.Context, sessionID string, reason string) error {
+	return nil
+}
+
+func (sts *SessionTrackingServiceImpl) SendSessionSecurityAlert(ctx context.Context, sessionID string) error {
+	return nil
+}
+
+func (sts *SessionTrackingServiceImpl) GetSessionSecurityEvents(ctx context.Context, userID string, limit, offset int) ([]map[string]interface{}, int64, error) {
+	return make([]map[string]interface{}, 0), 0, nil
+}

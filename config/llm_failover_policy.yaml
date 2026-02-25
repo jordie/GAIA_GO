@@ -1,0 +1,229 @@
+# LLM Failover Policy Configuration
+#
+# Defines routing rules, cost optimization, and use-case specific policies.
+
+# Use-Case Specific Policies
+# Different use cases may have different provider preferences
+use_cases:
+  # Code generation - prefer Claude for quality
+  code_generation:
+    preferred_order:
+      - claude
+      - openai
+      - ollama
+
+    quality_threshold: high
+    max_cost_per_request: 0.10  # USD
+
+    settings:
+      temperature: 0.7
+      max_tokens: 4096
+
+  # Code analysis - Ollama is often sufficient
+  code_analysis:
+    preferred_order:
+      - ollama
+      - claude
+      - openai
+
+    quality_threshold: medium
+    max_cost_per_request: 0.05
+
+    settings:
+      temperature: 0.3
+      max_tokens: 2048
+
+  # Chat/conversation - balanced approach
+  chat:
+    preferred_order:
+      - claude
+      - openai
+      - ollama
+
+    quality_threshold: medium
+    max_cost_per_request: 0.05
+
+    settings:
+      temperature: 1.0
+      max_tokens: 1024
+
+  # Web scraping/automation - cost-optimized
+  web_automation:
+    preferred_order:
+      - ollama
+      - claude
+      - openai
+
+    quality_threshold: low
+    max_cost_per_request: 0.02
+
+    settings:
+      temperature: 0.5
+      max_tokens: 2048
+
+  # Research/analysis - quality matters
+  research:
+    preferred_order:
+      - claude
+      - openai
+      - ollama
+
+    quality_threshold: high
+    max_cost_per_request: 0.15
+
+    settings:
+      temperature: 0.8
+      max_tokens: 4096
+
+# Routing Rules
+routing:
+  # Route by task type
+  by_task_type:
+    enabled: true
+
+    rules:
+      - match: "code|function|class|refactor|implement"
+        use_case: code_generation
+
+      - match: "analyze|review|explain|understand"
+        use_case: code_analysis
+
+      - match: "chat|help|question|clarify"
+        use_case: chat
+
+      - match: "scrape|browse|navigate|extract"
+        use_case: web_automation
+
+      - match: "research|investigate|explore|learn"
+        use_case: research
+
+  # Route by time of day (cost optimization)
+  by_time:
+    enabled: false
+
+    rules:
+      # Off-peak hours: prefer free Ollama
+      - hours: [0, 1, 2, 3, 4, 5, 6]
+        preferred_provider: ollama
+
+      # Business hours: prefer quality
+      - hours: [9, 10, 11, 12, 13, 14, 15, 16, 17]
+        preferred_provider: claude
+
+  # Route by project
+  by_project:
+    enabled: false
+
+    rules:
+      # Production projects: highest quality
+      - projects: ["architect", "critical-app"]
+        preferred_order: ["claude", "openai", "ollama"]
+
+      # Experimental projects: cost-optimized
+      - projects: ["experiments", "playground"]
+        preferred_order: ["ollama", "claude", "openai"]
+
+# Cost Optimization
+cost_optimization:
+  # Automatic provider selection based on budget
+  enabled: true
+
+  # When budget is low, prefer cheaper providers
+  budget_thresholds:
+    # At 90% of daily budget, prefer Ollama
+    - threshold: 0.90
+      action: prefer_free
+      providers: ["ollama"]
+
+    # At 80% of daily budget, avoid expensive providers
+    - threshold: 0.80
+      action: deprioritize
+      providers: ["openai"]
+
+    # At 95% of daily budget, block expensive providers
+    - threshold: 0.95
+      action: block
+      providers: ["openai", "claude"]
+
+  # Time-based optimization
+  prefer_free_during_low_priority: true
+  low_priority_hours: [0, 1, 2, 3, 4, 5, 6, 22, 23]
+
+  # Request batching (future)
+  enable_batching: false
+  batch_size: 10
+  batch_timeout: 5  # seconds
+
+# Quality Requirements
+quality:
+  # Minimum acceptable quality by use case
+  thresholds:
+    high: 0.90    # Critical work: only Claude/GPT-4
+    medium: 0.75  # Standard work: any provider
+    low: 0.60     # Simple tasks: Ollama is fine
+
+  # Model quality scores (subjective, adjust based on experience)
+  model_scores:
+    claude-sonnet-4-5: 0.95
+    claude-opus-4-5: 0.98
+    gpt-4-turbo: 0.93
+    gpt-4: 0.90
+    llama3.2: 0.70
+    codellama: 0.75
+
+# Fallback Behavior
+fallback:
+  # What to do when all providers fail
+  on_total_failure:
+    action: raise_error  # Options: raise_error, return_cached, return_default
+
+    # If return_default
+    default_response: "I apologize, but all LLM providers are currently unavailable. Please try again later."
+
+    # If return_cached
+    cache_max_age: 3600  # Only use cache if < 1 hour old
+
+  # Graceful degradation
+  allow_lower_quality: true  # If preferred provider fails, use lower quality
+  min_acceptable_quality: 0.60
+
+# Monitoring and Alerts
+monitoring:
+  # Alert on failover events
+  alert_on_failover: true
+  alert_threshold: 5  # Alert if failover happens N times in window
+  alert_window: 300   # seconds
+
+  # Alert on provider failures
+  alert_on_provider_failure: true
+
+  # Alert on budget thresholds
+  alert_on_budget: true
+  budget_alert_thresholds: [0.50, 0.80, 0.95]
+
+  # Webhook for alerts
+  alert_webhook: ${ALERT_WEBHOOK_URL:-null}
+
+  # Metrics collection
+  collect_metrics: true
+  metrics_retention: 7  # days
+
+# Experimental Features
+experimental:
+  # Smart routing based on past performance
+  adaptive_routing:
+    enabled: false
+    learning_rate: 0.1
+    exploration_rate: 0.2
+
+  # Response caching for identical requests
+  response_caching:
+    enabled: false
+    max_cache_size: 1000
+    ttl: 3600  # seconds
+
+  # Parallel requests to multiple providers (use fastest)
+  parallel_racing:
+    enabled: false
+    providers: ["claude", "openai"]
+    timeout: 30

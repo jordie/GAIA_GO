@@ -1,0 +1,131 @@
+# Task SLA Configuration
+# Version: 1.0
+# Description: Service Level Agreement targets for different task types
+
+version: "1.0"
+
+# SLA targets for each task type
+sla_targets:
+  shell:
+    target_minutes: 5
+    warning_percent: 80
+    critical_percent: 100
+    description: "Shell command execution"
+    notify_on_breach: true
+
+  python:
+    target_minutes: 10
+    warning_percent: 80
+    critical_percent: 100
+    description: "Python script execution"
+    notify_on_breach: true
+
+  git:
+    target_minutes: 3
+    warning_percent: 80
+    critical_percent: 100
+    description: "Git operations (clone, pull, push, commit)"
+    notify_on_breach: true
+
+  deploy:
+    target_minutes: 30
+    warning_percent: 70
+    critical_percent: 90
+    description: "Deployment tasks"
+    notify_on_breach: true
+
+  test:
+    target_minutes: 15
+    warning_percent: 80
+    critical_percent: 100
+    description: "Test execution"
+    notify_on_breach: true
+
+  build:
+    target_minutes: 20
+    warning_percent: 75
+    critical_percent: 95
+    description: "Build tasks"
+    notify_on_breach: true
+
+  tmux:
+    target_minutes: 1
+    warning_percent: 80
+    critical_percent: 100
+    description: "tmux operations"
+    notify_on_breach: false
+
+  claude_task:
+    target_minutes: 60
+    warning_percent: 80
+    critical_percent: 100
+    description: "AI agent tasks (Claude, Codex, etc.)"
+    notify_on_breach: true
+
+  web_crawl:
+    target_minutes: 5
+    warning_percent: 80
+    critical_percent: 100
+    description: "Web scraping and crawling tasks"
+    notify_on_breach: true
+
+  error_fix:
+    target_minutes: 30
+    warning_percent: 70
+    critical_percent: 90
+    description: "Error investigation and fixing"
+    notify_on_breach: true
+
+  maintenance:
+    target_minutes: 10
+    warning_percent: 80
+    critical_percent: 100
+    description: "System maintenance tasks"
+    notify_on_breach: false
+
+  default:
+    target_minutes: 10
+    warning_percent: 80
+    critical_percent: 100
+    description: "Default SLA for unclassified tasks"
+    notify_on_breach: true
+
+# Escalation rules
+escalation_rules:
+  - condition: "percent_used >= critical_percent"
+    severity: "critical"
+    action: "alert_user"
+    notification_channels: ["dashboard", "log"]
+    message: "Task {task_id} has breached SLA ({elapsed_minutes}/{target_minutes} min)"
+
+  - condition: "percent_used >= warning_percent"
+    severity: "warning"
+    action: "highlight_task"
+    color: "yellow"
+    message: "Task {task_id} is approaching SLA limit ({percent_used}%)"
+
+  - condition: "percent_used < warning_percent"
+    severity: "ok"
+    action: "normal_display"
+    color: "green"
+
+# Notification channels configuration
+notifications:
+  dashboard:
+    enabled: true
+    endpoint: "/api/alerts"
+
+  log:
+    enabled: true
+    level: "WARNING"
+
+  sms:
+    enabled: false
+    provider: "dialpad"
+    numbers: []
+
+# Performance tracking
+metrics:
+  track_sla_compliance: true
+  report_interval_minutes: 60
+  retention_days: 30

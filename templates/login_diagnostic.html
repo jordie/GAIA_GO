@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Diagnostic - Architect Dashboard</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0d1117;
+            color: #f0f6fc;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { color: #58a6ff; }
+        .test {
+            background: #161b22;
+            border: 1px solid #30363d;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+        }
+        .pass { color: #3fb950; }
+        .fail { color: #f85149; }
+        .info { color: #58a6ff; }
+        pre {
+            background: #0d1117;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        button {
+            background: #58a6ff;
+            color: #0d1117;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        button:hover { background: #79c0ff; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Login Diagnostic Tool</h1>
+
+    <div class="test">
+        <h3>Test 1: Page Load</h3>
+        <div id="test1" class="pass">✓ Page loaded successfully</div>
+    </div>
+
+    <div class="test">
+        <h3>Test 2: Fetch API Available</h3>
+        <div id="test2"></div>
+    </div>
+
+    <div class="test">
+        <h3>Test 3: Network Connectivity</h3>
+        <div id="test3">Testing...</div>
+    </div>
+
+    <div class="test">
+        <h3>Test 4: Login Endpoint</h3>
+        <button onclick="testLogin()">Test Login Now</button>
+        <div id="test4" style="margin-top: 10px;"></div>
+    </div>
+
+    <div class="test">
+        <h3>Browser Information</h3>
+        <pre id="browser-info"></pre>
+    </div>
+
+    <div class="test">
+        <h3>Console Errors</h3>
+        <pre id="console-errors">No errors captured yet</pre>
+    </div>
+
+    <script>
+        const errors = [];
+        const originalConsoleError = console.error;
+        console.error = function(...args) {
+            errors.push(args.join(' '));
+            document.getElementById('console-errors').textContent = errors.join('\n') || 'No errors';
+            originalConsoleError.apply(console, args);
+        };
+
+        // Test 2: Fetch API
+        if (typeof fetch === 'function') {
+            document.getElementById('test2').innerHTML = '<span class="pass">✓ Fetch API is available</span>';
+        } else {
+            document.getElementById('test2').innerHTML = '<span class="fail">✗ Fetch API not available</span>';
+        }
+
+        // Browser info
+        document.getElementById('browser-info').textContent =
+            'User Agent: ' + navigator.userAgent + '\n' +
+            'Platform: ' + navigator.platform + '\n' +
+            'Language: ' + navigator.language + '\n' +
+            'Online: ' + navigator.onLine + '\n' +
+            'Cookie Enabled: ' + navigator.cookieEnabled + '\n' +
+            'Protocol: ' + window.location.protocol + '\n' +
+            'Host: ' + window.location.host;
+
+        // Test 3: Network connectivity
+        async function testConnectivity() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                document.getElementById('test3').innerHTML =
+                    '<span class="pass">✓ Server reachable</span><br>' +
+                    '<span class="info">Status: ' + data.status + '</span>';
+            } catch (err) {
+                document.getElementById('test3').innerHTML =
+                    '<span class="fail">✗ Cannot reach server</span><br>' +
+                    '<span class="fail">Error: ' + err.message + '</span>';
+            }
+        }
+        testConnectivity();
+
+        // Test 4: Login
+        async function testLogin() {
+            const output = document.getElementById('test4');
+            output.innerHTML = '<span class="info">Testing login...</span>';
+
+            try {
+                console.log('Starting login test...');
+
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        username: 'architect',
+                        password: 'peace5'
+                    })
+                });
+
+                console.log('Response received:', response.status);
+
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (data.success) {
+                    output.innerHTML =
+                        '<span class="pass">✓ Login successful!</span><br>' +
+                        '<span class="info">Response: ' + JSON.stringify(data, null, 2) + '</span><br>' +
+                        '<a href="/" style="color: #58a6ff;">Go to Dashboard</a>';
+                } else {
+                    output.innerHTML =
+                        '<span class="fail">✗ Login failed</span><br>' +
+                        '<span class="fail">Error: ' + (data.error || 'Unknown error') + '</span>';
+                }
+            } catch (err) {
+                console.error('Login test error:', err);
+                output.innerHTML =
+                    '<span class="fail">✗ Login request failed</span><br>' +
+                    '<span class="fail">Error type: ' + err.name + '</span><br>' +
+                    '<span class="fail">Error message: ' + err.message + '</span><br>' +
+                    '<span class="fail">Stack: ' + err.stack + '</span>';
+            }
+        }
+    </script>
+</body>
+</html>

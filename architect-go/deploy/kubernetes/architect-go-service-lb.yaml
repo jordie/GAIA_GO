@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: architect-go-loadbalancer
+  labels:
+    app: architect-go
+  annotations:
+    description: "architect-go External LoadBalancer Service"
+spec:
+  type: LoadBalancer
+  selector:
+    app: architect-go
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+    nodePort: 30080
+  - name: https
+    port: 443
+    targetPort: http
+    protocol: TCP
+    nodePort: 30443
+  sessionAffinity: None
+  # Uncomment for cloud providers (AWS, GCP, Azure)
+  # loadBalancerIP: "x.x.x.x"
+  # externalIPs:
+  # - "x.x.x.x"

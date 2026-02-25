@@ -1,0 +1,410 @@
+package services
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/google/uuid"
+
+	"architect-go/pkg/models"
+	"architect-go/pkg/repository"
+)
+
+// NotificationServiceImpl implements NotificationService
+type NotificationServiceImpl struct {
+	repo repository.NotificationRepository
+}
+
+// NewNotificationService creates a new notification service
+func NewNotificationService(repo repository.NotificationRepository) NotificationService {
+	return &NotificationServiceImpl{repo: repo}
+}
+
+func (ns *NotificationServiceImpl) CreateNotification(ctx context.Context, req *CreateNotificationRequest) (*models.Notification, error) {
+	notification := &models.Notification{
+		ID:        uuid.New().String(),
+		UserID:    req.UserID,
+		Title:     req.Title,
+		Message:   req.Message,
+		Type:      req.Type,
+		Channel:   req.Channel,
+		Priority:  req.Priority,
+		Status:    "pending",
+		Read:      false,
+		CreatedAt: time.Now(),
+	}
+
+	if err := ns.repo.Create(ctx, notification); err != nil {
+		return nil, fmt.Errorf("failed to create notification: %w", err)
+	}
+
+	return notification, nil
+}
+
+func (ns *NotificationServiceImpl) GetNotification(ctx context.Context, id string) (*models.Notification, error) {
+	notification, err := ns.repo.Get(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get notification: %w", err)
+	}
+	return notification, nil
+}
+
+func (ns *NotificationServiceImpl) ListNotifications(ctx context.Context, userID string, limit, offset int) ([]*models.Notification, int64, error) {
+	notifications, total, err := ns.repo.ListByUser(ctx, userID, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to list notifications: %w", err)
+	}
+	return notifications, total, nil
+}
+
+func (ns *NotificationServiceImpl) ListUnreadNotifications(ctx context.Context, userID string, limit, offset int) ([]*models.Notification, int64, error) {
+	notifications, total, err := ns.repo.ListUnread(ctx, userID, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to list unread notifications: %w", err)
+	}
+	return notifications, total, nil
+}
+
+func (ns *NotificationServiceImpl) ListRecentNotifications(ctx context.Context, userID string, limit int) ([]*models.Notification, error) {
+	notifications, err := ns.repo.ListRecent(ctx, userID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list recent notifications: %w", err)
+	}
+	return notifications, nil
+}
+
+func (ns *NotificationServiceImpl) SendNotification(ctx context.Context, req *SendNotificationRequest) error {
+	notification := &models.Notification{
+		ID:        uuid.New().String(),
+		UserID:    req.UserID,
+		Title:     req.Title,
+		Message:   req.Message,
+		Type:      req.Type,
+		Channel:   req.Channel,
+		Priority:  req.Priority,
+		Status:    "sent",
+		Read:      false,
+		CreatedAt: time.Now(),
+	}
+
+	if err := ns.repo.Create(ctx, notification); err != nil {
+		return fmt.Errorf("failed to send notification: %w", err)
+	}
+
+	return nil
+}
+
+func (ns *NotificationServiceImpl) SendBulkNotifications(ctx context.Context, notificationID string, userIDs []string) error {
+	notification, err := ns.repo.Get(ctx, notificationID)
+	if err != nil {
+		return fmt.Errorf("notification not found: %w", err)
+	}
+
+	for _, userID := range userIDs {
+		newNotif := &models.Notification{
+			ID:        uuid.New().String(),
+			UserID:    userID,
+			Title:     notification.Title,
+			Message:   notification.Message,
+			Type:      notification.Type,
+			Channel:   notification.Channel,
+			Priority:  notification.Priority,
+			Status:    "sent",
+			Read:      false,
+			CreatedAt: time.Now(),
+		}
+
+		if err := ns.repo.Create(ctx, newNotif); err != nil {
+			return fmt.Errorf("failed to send bulk notification: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (ns *NotificationServiceImpl) UpdateNotification(ctx context.Context, id string, req *CreateNotificationRequest) (*models.Notification, error) {
+	notification, err := ns.repo.Get(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("notification not found: %w", err)
+	}
+
+	notification.Title = req.Title
+	notification.Message = req.Message
+	notification.Type = req.Type
+	notification.Channel = req.Channel
+	notification.Priority = req.Priority
+
+	if err := ns.repo.Update(ctx, notification); err != nil {
+		return nil, fmt.Errorf("failed to update notification: %w", err)
+	}
+
+	return notification, nil
+}
+
+func (ns *NotificationServiceImpl) DeleteNotification(ctx context.Context, id string) error {
+	if err := ns.repo.Delete(ctx, id); err != nil {
+		return fmt.Errorf("failed to delete notification: %w", err)
+	}
+	return nil
+}
+
+func (ns *NotificationServiceImpl) MarkAsRead(ctx context.Context, id string) error {
+	notification, err := ns.repo.Get(ctx, id)
+	if err != nil {
+		return fmt.Errorf("notification not found: %w", err)
+	}
+
+	notification.Read = true
+	notification.ReadAt = time.Now()
+
+	if err := ns.repo.Update(ctx, notification); err != nil {
+		return fmt.Errorf("failed to mark as read: %w", err)
+	}
+
+	return nil
+}
+
+func (ns *NotificationServiceImpl) MarkAllAsRead(ctx context.Context, userID string) error {
+	// In a real implementation, this would be a bulk update in the database
+	return nil
+}
+
+func (ns *NotificationServiceImpl) MarkAsUnread(ctx context.Context, id string) error {
+	notification, err := ns.repo.Get(ctx, id)
+	if err != nil {
+		return fmt.Errorf("notification not found: %w", err)
+	}
+
+	notification.Read = false
+	notification.ReadAt = time.Time{}
+
+	if err := ns.repo.Update(ctx, notification); err != nil {
+		return fmt.Errorf("failed to mark as unread: %w", err)
+	}
+
+	return nil
+}
+
+func (ns *NotificationServiceImpl) DismissNotification(ctx context.Context, id string) error {
+	notification, err := ns.repo.Get(ctx, id)
+	if err != nil {
+		return fmt.Errorf("notification not found: %w", err)
+	}
+
+	notification.Status = "dismissed"
+
+	if err := ns.repo.Update(ctx, notification); err != nil {
+		return fmt.Errorf("failed to dismiss notification: %w", err)
+	}
+
+	return nil
+}
+
+func (ns *NotificationServiceImpl) DismissAllNotifications(ctx context.Context, userID string) error {
+	// Bulk dismiss operation
+	return nil
+}
+
+func (ns *NotificationServiceImpl) GetUserPreferences(ctx context.Context, userID string) (*NotificationPreferencesRequest, error) {
+	return &NotificationPreferencesRequest{
+		EmailNotifications: true,
+		PushNotifications:  true,
+		SMSNotifications:   false,
+		DigestFrequency:    "daily",
+	}, nil
+}
+
+func (ns *NotificationServiceImpl) UpdateUserPreferences(ctx context.Context, userID string, req *NotificationPreferencesRequest) error {
+	// Store preferences
+	return nil
+}
+
+func (ns *NotificationServiceImpl) ResetPreferencesToDefaults(ctx context.Context, userID string) error {
+	return nil
+}
+
+func (ns *NotificationServiceImpl) GetPreferenceCategories(ctx context.Context) ([]string, error) {
+	return []string{"email", "push", "sms", "digest", "frequency"}, nil
+}
+
+func (ns *NotificationServiceImpl) GetNotificationSettings(ctx context.Context, userID string) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"email_enabled": true,
+		"push_enabled":  true,
+		"digest_frequency": "daily",
+	}, nil
+}
+
+func (ns *NotificationServiceImpl) CreateNotificationSetting(ctx context.Context, userID string, setting map[string]interface{}) (string, error) {
+	settingID := uuid.New().String()
+	return settingID, nil
+}
+
+func (ns *NotificationServiceImpl) UpdateNotificationSetting(ctx context.Context, userID string, settingID string, setting map[string]interface{}) error {
+	return nil
+}
+
+func (ns *NotificationServiceImpl) DeleteNotificationSetting(ctx context.Context, userID string, settingID string) error {
+	return nil
+}
+
+func (ns *NotificationServiceImpl) GetAvailableChannels(ctx context.Context) ([]string, error) {
+	return []string{"email", "push", "sms", "in-app", "slack", "webhook"}, nil
+}
+
+func (ns *NotificationServiceImpl) GetChannelStatus(ctx context.Context, channel string) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"channel": channel,
+		"status":  "operational",
+		"uptime":  99.9,
+	}, nil
+}
+
+func (ns *NotificationServiceImpl) TestChannel(ctx context.Context, channel string, userID string) error {
+	return nil
+}
+
+func (ns *NotificationServiceImpl) GetAvailableTemplates(ctx context.Context) ([]*models.NotificationTemplate, error) {
+	return make([]*models.NotificationTemplate, 0), nil
+}
+
+func (ns *NotificationServiceImpl) GetTemplateByID(ctx context.Context, templateID string) (*models.NotificationTemplate, error) {
+	template := &models.NotificationTemplate{
+		ID:      templateID,
+		Name:    "Default Template",
+		Subject: "Notification",
+		Body:    "{{message}}",
+	}
+	return template, nil
+}
+
+func (ns *NotificationServiceImpl) CreateTemplate(ctx context.Context, req *TemplateRequest) (*models.NotificationTemplate, error) {
+	template := &models.NotificationTemplate{
+		ID:      uuid.New().String(),
+		Name:    req.Name,
+		Subject: req.Subject,
+		Body:    req.Body,
+	}
+	return template, nil
+}
+
+func (ns *NotificationServiceImpl) UpdateTemplate(ctx context.Context, templateID string, req *TemplateRequest) (*models.NotificationTemplate, error) {
+	template := &models.NotificationTemplate{
+		ID:      templateID,
+		Name:    req.Name,
+		Subject: req.Subject,
+		Body:    req.Body,
+	}
+	return template, nil
+}
+
+func (ns *NotificationServiceImpl) DeleteTemplate(ctx context.Context, templateID string) error {
+	return nil
+}
+
+func (ns *NotificationServiceImpl) PreviewTemplate(ctx context.Context, templateID string, data map[string]interface{}) (string, error) {
+	return "Template preview rendered", nil
+}
+
+func (ns *NotificationServiceImpl) GetDeliveryStatus(ctx context.Context, notificationID string) ([]NotificationDeliveryResponse, error) {
+	return []NotificationDeliveryResponse{}, nil
+}
+
+func (ns *NotificationServiceImpl) GetDeliveryHistory(ctx context.Context, userID string, limit, offset int) ([]NotificationDeliveryResponse, int64, error) {
+	return []NotificationDeliveryResponse{}, 0, nil
+}
+
+func (ns *NotificationServiceImpl) GetNotificationStats(ctx context.Context, userID string) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"total":  0,
+		"read":   0,
+		"unread": 0,
+	}, nil
+}
+
+func (ns *NotificationServiceImpl) GetProjectNotifications(ctx context.Context, projectID string, limit, offset int) ([]*models.Notification, int64, error) {
+	return make([]*models.Notification, 0), 0, nil
+}
+
+func (ns *NotificationServiceImpl) GetUserNotifications(ctx context.Context, userID string, limit, offset int) ([]*models.Notification, int64, error) {
+	return ns.ListNotifications(ctx, userID, limit, offset)
+}
+
+func (ns *NotificationServiceImpl) GetNotificationsByType(ctx context.Context, notificationType string, limit, offset int) ([]*models.Notification, int64, error) {
+	return make([]*models.Notification, 0), 0, nil
+}
+
+func (ns *NotificationServiceImpl) GetNotificationsByPriority(ctx context.Context, priority string, limit, offset int) ([]*models.Notification, int64, error) {
+	return make([]*models.Notification, 0), 0, nil
+}
+
+func (ns *NotificationServiceImpl) ExportNotifications(ctx context.Context, format string) (*EventExportResponse, error) {
+	return &EventExportResponse{
+		Format:     format,
+		ExportedAt: time.Now(),
+		Count:      0,
+	}, nil
+}
+
+func (ns *NotificationServiceImpl) SearchNotifications(ctx context.Context, query string, limit, offset int) ([]*models.Notification, int64, error) {
+	return make([]*models.Notification, 0), 0, nil
+}
+
+func (ns *NotificationServiceImpl) RetryDelivery(ctx context.Context, deliveryID string) error {
+	return nil
+}
+
+func (ns *NotificationServiceImpl) ScheduleNotification(ctx context.Context, req *ScheduleNotificationRequest) (string, error) {
+	return uuid.New().String(), nil
+}
+
+func (ns *NotificationServiceImpl) GetScheduledNotifications(ctx context.Context, userID string, limit, offset int) ([]*models.Notification, int64, error) {
+	return make([]*models.Notification, 0), 0, nil
+}
+
+func (ns *NotificationServiceImpl) UpdateScheduledNotification(ctx context.Context, notificationID string, req *ScheduleNotificationRequest) error {
+	return nil
+}
+
+func (ns *NotificationServiceImpl) CancelScheduledNotification(ctx context.Context, notificationID string) error {
+	return nil
+}
+
+func (ns *NotificationServiceImpl) CreateRule(ctx context.Context, req *NotificationRuleRequest) (string, error) {
+	return uuid.New().String(), nil
+}
+
+func (ns *NotificationServiceImpl) GetRules(ctx context.Context, userID string, limit, offset int) ([]map[string]interface{}, int64, error) {
+	return make([]map[string]interface{}, 0), 0, nil
+}
+
+func (ns *NotificationServiceImpl) UpdateRule(ctx context.Context, userID string, ruleID string, req *NotificationRuleRequest) error {
+	return nil
+}
+
+func (ns *NotificationServiceImpl) DeleteRule(ctx context.Context, userID string, ruleID string) error {
+	return nil
+}
+
+func (ns *NotificationServiceImpl) GetDigestNotification(ctx context.Context, userID string, period string) (*models.Notification, error) {
+	return &models.Notification{
+		ID:      uuid.New().String(),
+		UserID:  userID,
+		Title:   fmt.Sprintf("%s Digest", period),
+		Message: "Your digest notification",
+		Type:    "digest",
+	}, nil
+}
+
+func (ns *NotificationServiceImpl) SubscribeToTopic(ctx context.Context, userID string, topic string) error {
+	return nil
+}
+
+func (ns *NotificationServiceImpl) UnsubscribeFromTopic(ctx context.Context, userID string, topic string) error {
+	return nil
+}
+
+func (ns *NotificationServiceImpl) GetUserTopics(ctx context.Context, userID string) ([]string, error) {
+	return []string{}, nil
+}

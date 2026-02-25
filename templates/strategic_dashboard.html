@@ -1,0 +1,806 @@
+<!-- Strategic Dashboard Panels - Insert into main dashboard -->
+
+<!-- Vision & Roadmap Section -->
+<div class="panel" id="strategic-vision-panel">
+    <div class="panel-header">
+        <h2>🎯 Strategic Vision & Roadmap Progress</h2>
+        <div class="panel-controls">
+            <button class="btn btn-sm" onclick="refreshStrategicDashboard()">↻ Refresh</button>
+        </div>
+    </div>
+    <div class="panel-body">
+        <!-- Vision Statement -->
+        <div class="strategic-card vision-card">
+            <h3>Vision</h3>
+            <p id="vision-statement" class="vision-text">
+                Build autonomous development capacity to create revenue streams through useful applications that serve real needs
+            </p>
+            <div class="vision-status">
+                <span class="status-badge" id="vision-alignment">Alignment: <strong>95%</strong></span>
+                <span class="status-badge">Last Review: <span id="vision-last-review">Today</span></span>
+            </div>
+        </div>
+
+        <!-- Roadmap Progress -->
+        <div class="strategic-card roadmap-card">
+            <h3>📍 Roadmap Progress</h3>
+            <div class="roadmap-phases">
+                <!-- Phase 1 -->
+                <div class="phase-item" data-phase="1">
+                    <div class="phase-header">
+                        <span class="phase-number">Phase 1</span>
+                        <span class="phase-title">Autonomous Task Execution</span>
+                        <span class="phase-timeline">Weeks 1-2</span>
+                    </div>
+                    <div class="phase-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="phase1-progress" style="width: 65%">65%</div>
+                        </div>
+                    </div>
+                    <div class="phase-tasks">
+                        <div class="task-item completed">✓ Browser automation framework</div>
+                        <div class="task-item completed">✓ Vault integration</div>
+                        <div class="task-item in-progress">⏳ Google Voice SMS integration</div>
+                        <div class="task-item pending">○ Daily task scheduler</div>
+                    </div>
+                </div>
+
+                <!-- Phase 2 -->
+                <div class="phase-item" data-phase="2">
+                    <div class="phase-header">
+                        <span class="phase-number">Phase 2</span>
+                        <span class="phase-title">Multi-Agent Development</span>
+                        <span class="phase-timeline">Weeks 3-4</span>
+                    </div>
+                    <div class="phase-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="phase2-progress" style="width: 15%">15%</div>
+                        </div>
+                    </div>
+                    <div class="phase-tasks">
+                        <div class="task-item in-progress">⏳ Developer profile system design</div>
+                        <div class="task-item pending">○ Task delegation & routing</div>
+                        <div class="task-item pending">○ Multi-profile coordination</div>
+                    </div>
+                </div>
+
+                <!-- Phase 3 -->
+                <div class="phase-item" data-phase="3">
+                    <div class="phase-header">
+                        <span class="phase-number">Phase 3</span>
+                        <span class="phase-title">Full Development Lifecycle</span>
+                        <span class="phase-timeline">Weeks 5-6</span>
+                    </div>
+                    <div class="phase-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="phase3-progress" style="width: 5%">5%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phases 4-6 collapsed -->
+                <div class="phase-item collapsed" data-phase="4-6">
+                    <div class="phase-header">
+                        <span class="phase-number">Phases 4-6</span>
+                        <span class="phase-title">Multi-Project, Voice, Learning</span>
+                        <span class="phase-timeline">Weeks 7-12</span>
+                    </div>
+                    <div class="phase-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resource Dashboard -->
+        <div class="strategic-card resources-card">
+            <h3>💰 Resources & Budget</h3>
+            <div class="resource-grid">
+                <div class="resource-item">
+                    <div class="resource-label">Monthly Cost</div>
+                    <div class="resource-value" id="monthly-cost">$60</div>
+                    <div class="resource-status">✅ On Budget</div>
+                </div>
+                <div class="resource-item">
+                    <div class="resource-label">LLMs Active</div>
+                    <div class="resource-value" id="llms-active">3</div>
+                    <div class="resource-status">Claude, Gemini, Ollama</div>
+                </div>
+                <div class="resource-item">
+                    <div class="resource-label">Services</div>
+                    <div class="resource-value" id="services-count">17</div>
+                    <div class="resource-status">Credentials in vault</div>
+                </div>
+            </div>
+
+            <div class="resource-requests">
+                <h4>⚠️ Pending Resource Requests</h4>
+                <div class="request-item" id="resource-requests-list">
+                    <div class="request">
+                        <span class="request-name">Google Voice API</span>
+                        <span class="request-cost">$0.0075/SMS</span>
+                        <button class="btn btn-sm btn-success" onclick="approveResource('google_voice_api')">Approve</button>
+                        <button class="btn btn-sm btn-danger" onclick="denyResource('google_voice_api')">Deny</button>
+                    </div>
+                    <div class="request">
+                        <span class="request-name">Stripe API</span>
+                        <span class="request-cost">Free</span>
+                        <button class="btn btn-sm btn-success" onclick="approveResource('stripe_api')">Approve</button>
+                        <button class="btn btn-sm btn-danger" onclick="denyResource('stripe_api')">Deny</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue & Projects -->
+        <div class="strategic-card revenue-card">
+            <h3>💵 Revenue Focus</h3>
+            <div id="revenue-details">
+                <!-- Will be populated by JavaScript -->
+                <div style="color: var(--text-secondary); font-style: italic;">Loading revenue data...</div>
+            </div>
+        </div>
+
+        <!-- Next Milestone -->
+        <div class="strategic-card milestone-card">
+            <h3>🎯 Next Milestone</h3>
+            <div id="next-milestone-details">
+                <!-- Will be populated by JavaScript -->
+                <div style="color: var(--text-secondary); font-style: italic;">Loading milestone...</div>
+            </div>
+        </div>
+
+        <!-- Recent Decisions -->
+        <div class="strategic-card decisions-card">
+            <h3>📋 Recent Decisions (Last 10)</h3>
+            <div id="recent-decisions-list">
+                <!-- Will be populated by JavaScript -->
+                <div style="color: var(--text-secondary); font-style: italic;">Loading decisions...</div>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="strategic-card system-status-card">
+            <h3>🤖 Autonomous System Status</h3>
+            <div class="system-stats">
+                <div class="stat-item">
+                    <span class="stat-icon">🔄</span>
+                    <div class="stat-content">
+                        <div class="stat-label">Orchestrator Status</div>
+                        <div class="stat-value" id="orchestrator-status">
+                            <span class="status-indicator running"></span> Running
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">⏱️</span>
+                    <div class="stat-content">
+                        <div class="stat-label">Uptime</div>
+                        <div class="stat-value" id="system-uptime">0h 0m</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">📊</span>
+                    <div class="stat-content">
+                        <div class="stat-label">Tasks Completed Today</div>
+                        <div class="stat-value" id="tasks-completed-today">0</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">⚡</span>
+                    <div class="stat-content">
+                        <div class="stat-label">Idle Detection</div>
+                        <div class="stat-value" id="idle-status">
+                            <span class="status-indicator active"></span> Active
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Work Section -->
+            <div class="active-work-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+                <h4 style="margin-bottom: 15px;">🔨 Currently Working On</h4>
+                <div id="active-tasks-container">
+                    <!-- Will be populated by JavaScript -->
+                    <div class="no-active-tasks" style="color: var(--text-secondary); font-style: italic;">
+                        Loading active tasks...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Strategic Dashboard Styles */
+.strategic-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.strategic-card h3 {
+    margin-top: 0;
+    color: var(--text-primary);
+    font-size: 1.2em;
+    margin-bottom: 15px;
+}
+
+.vision-card {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(88, 166, 255, 0.1) 100%);
+    border-left: 4px solid var(--accent);
+}
+
+.vision-text {
+    font-size: 1.1em;
+    line-height: 1.6;
+    color: var(--text-primary);
+    font-style: italic;
+    margin: 15px 0;
+}
+
+.vision-status {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.status-badge {
+    background: var(--bg-tertiary);
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+/* Roadmap Phases */
+.roadmap-phases {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.phase-item {
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    padding: 15px;
+    border-left: 4px solid var(--border);
+    transition: all 0.3s ease;
+}
+
+.phase-item:hover {
+    border-left-color: var(--accent);
+}
+
+.phase-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.phase-number {
+    background: var(--accent);
+    color: var(--bg-primary);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.phase-title {
+    flex: 1;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.phase-timeline {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+.phase-progress {
+    margin: 10px 0;
+}
+
+.progress-bar {
+    background: var(--bg-primary);
+    height: 24px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-hover) 100%);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 0.85em;
+    transition: width 0.5s ease;
+}
+
+.phase-tasks {
+    margin-top: 10px;
+    padding-left: 10px;
+}
+
+.task-item {
+    padding: 5px 0;
+    font-size: 0.9em;
+}
+
+.task-item.completed {
+    color: var(--success);
+}
+
+.task-item.in-progress {
+    color: var(--warning);
+}
+
+.task-item.pending {
+    color: var(--text-secondary);
+}
+
+/* Resource Grid */
+.resource-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.resource-item {
+    background: var(--bg-tertiary);
+    padding: 15px;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.resource-label {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.resource-value {
+    font-size: 2em;
+    font-weight: bold;
+    color: var(--accent);
+    margin: 10px 0;
+}
+
+.resource-status {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+}
+
+.resource-requests {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.request-item .request {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.request-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.request-cost {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+/* System Status */
+.system-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: var(--bg-tertiary);
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.stat-icon {
+    font-size: 2em;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-label {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.running {
+    background: var(--success);
+}
+
+.status-indicator.active {
+    background: var(--accent);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Project Revenue */
+.revenue-project {
+    background: var(--bg-tertiary);
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.project-name {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.project-priority {
+    font-size: 0.9em;
+}
+
+.project-stats .stat {
+    margin-bottom: 12px;
+}
+
+.project-stats label {
+    display: block;
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+}
+
+.project-next {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border);
+    font-size: 0.95em;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 500;
+}
+
+.badge-success {
+    background: var(--success);
+    color: white;
+}
+</style>
+
+<script>
+// Strategic Dashboard JavaScript
+function refreshStrategicDashboard() {
+    fetch('/api/strategic/dashboard')
+        .then(response => response.json())
+        .then(data => {
+            updateStrategicDashboard(data);
+        })
+        .catch(error => console.error('Error refreshing strategic dashboard:', error));
+}
+
+function updateStrategicDashboard(data) {
+    // Update vision alignment
+    if (data.vision_alignment) {
+        document.getElementById('vision-alignment').innerHTML = `Alignment: <strong>${data.vision_alignment}%</strong>`;
+    }
+
+    // Update phase progress
+    if (data.phases) {
+        data.phases.forEach(phase => {
+            const progressEl = document.getElementById(`phase${phase.number}-progress`);
+            if (progressEl) {
+                progressEl.style.width = `${phase.progress}%`;
+                progressEl.textContent = `${phase.progress}%`;
+            }
+        });
+    }
+
+    // Update system status
+    if (data.orchestrator) {
+        const uptime = data.orchestrator.uptime || '0h 0m';
+        const tasksToday = data.orchestrator.tasks_completed_today || 0;
+        const running = data.orchestrator.running;
+
+        document.getElementById('system-uptime').textContent = uptime;
+        document.getElementById('tasks-completed-today').textContent = tasksToday;
+
+        const statusEl = document.getElementById('orchestrator-status');
+        if (running) {
+            statusEl.innerHTML = '<span class="status-indicator running"></span> Running';
+        } else {
+            statusEl.innerHTML = '<span class="status-indicator stopped"></span> Stopped';
+        }
+    }
+
+    // Update active sessions
+    if (data.active_sessions) {
+        updateActiveSessions(data.active_sessions);
+    }
+
+    // Update revenue
+    if (data.revenue) {
+        updateRevenue(data.revenue);
+    }
+
+    // Update next milestone
+    if (data.next_milestone) {
+        updateNextMilestone(data.next_milestone);
+    }
+
+    // Update recent decisions
+    if (data.recent_decisions) {
+        updateRecentDecisions(data.recent_decisions);
+    }
+}
+
+function updateActiveSessions(sessions) {
+    const container = document.getElementById('active-tasks-container');
+
+    if (!sessions || sessions.length === 0) {
+        container.innerHTML = '<div class="no-active-tasks" style="color: var(--text-secondary); font-style: italic;">No active sessions</div>';
+        return;
+    }
+
+    let html = '';
+    sessions.forEach(session => {
+        const task = session.task;
+        const statusIcon = session.status === 'busy' ? '🔴' : session.status === 'waiting_input' ? '🟡' : '🟢';
+        const statusColor = session.status === 'busy' ? 'var(--danger)' : session.status === 'waiting_input' ? 'var(--warning)' : 'var(--success)';
+
+        if (task) {
+            const duration = calculateDuration(task.started_at);
+            html += `
+                <div class="active-task-item" style="background: var(--bg-tertiary); padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid ${statusColor};">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; margin-bottom: 4px;">
+                                <span style="margin-right: 8px;">${statusIcon}</span>
+                                ${session.name} <span style="font-size: 0.8em; color: var(--text-secondary);">(${session.status})</span>
+                            </div>
+                            <div style="font-size: 0.9em; color: var(--text-secondary);">
+                                ${task.content}
+                            </div>
+                        </div>
+                        <div style="text-align: right; font-size: 0.85em; color: var(--text-secondary);">
+                            <div>Priority: ${task.priority}</div>
+                            <div>${duration}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Session is idle
+            html += `
+                <div class="active-task-item" style="background: var(--bg-tertiary); padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid var(--border); opacity: 0.6;">
+                    <div style="font-weight: 600;">
+                        🟢 ${session.name} <span style="font-size: 0.8em; color: var(--text-secondary);">(idle)</span>
+                    </div>
+                </div>
+            `;
+        }
+    });
+
+    container.innerHTML = html;
+}
+
+function updateRevenue(revenue) {
+    const container = document.getElementById('revenue-details');
+    if (!container) return;
+
+    let html = '';
+    for (const [key, app] of Object.entries(revenue)) {
+        const priorityBadge = app.priority === 1 ? '⭐ PRIMARY' : '🔹 SECONDARY';
+        html += `
+            <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                    <div>
+                        <h4 style="margin: 0 0 5px 0;">${app.name}</h4>
+                        <span style="font-size: 0.85em; background: var(--accent); color: white; padding: 2px 8px; border-radius: 3px;">${priorityBadge}</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 1.5em; font-weight: bold; color: var(--accent);">${app.progress}%</div>
+                        <div style="font-size: 0.8em; color: var(--text-secondary);">Potential: ${app.potential}</div>
+                    </div>
+                </div>
+                ${app.projected_monthly ? `
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);">
+                        <div style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 5px;">Projected Revenue:</div>
+                        <div style="display: flex; gap: 15px; font-size: 0.85em;">
+                            <div>Month 3: <strong>$${app.projected_monthly.month_3}</strong></div>
+                            <div>Month 6: <strong>$${app.projected_monthly.month_6}</strong></div>
+                            <div>Month 12: <strong>$${app.projected_monthly.month_12}</strong></div>
+                        </div>
+                    </div>
+                ` : ''}
+                ${app.next_milestone ? `<div style="margin-top: 8px; font-size: 0.85em; color: var(--text-secondary);">🎯 ${app.next_milestone}</div>` : ''}
+                ${app.recommendation ? `<div style="margin-top: 8px; font-size: 0.85em; color: var(--warning); font-weight: 600;">⚠️ ${app.recommendation}</div>` : ''}
+            </div>
+        `;
+    }
+    container.innerHTML = html;
+}
+
+function updateNextMilestone(milestone) {
+    const container = document.getElementById('next-milestone-details');
+    if (!container) return;
+
+    const targetDate = new Date(milestone.target_date);
+    const daysRemaining = Math.ceil((targetDate - new Date()) / (1000 * 60 * 60 * 24));
+
+    container.innerHTML = `
+        <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 6px;">
+            <h4 style="margin: 0 0 10px 0;">${milestone.name}</h4>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 10px;">
+                <div>
+                    <div style="font-size: 0.8em; color: var(--text-secondary);">Target Date</div>
+                    <div style="font-weight: bold;">${milestone.target_date}</div>
+                    <div style="font-size: 0.85em; color: var(--text-secondary);">${daysRemaining} days</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.8em; color: var(--text-secondary);">Progress</div>
+                    <div style="font-weight: bold; font-size: 1.5em; color: var(--accent);">${milestone.progress}%</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.8em; color: var(--text-secondary);">Tasks Remaining</div>
+                    <div style="font-weight: bold; font-size: 1.5em;">${milestone.tasks_remaining}</div>
+                </div>
+            </div>
+            ${milestone.blockers && milestone.blockers.length > 0 ? `
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);">
+                    <div style="font-size: 0.8em; color: var(--danger); margin-bottom: 5px;">⚠️ Blockers:</div>
+                    ${milestone.blockers.map(b => `<div style="font-size: 0.85em; margin-left: 10px;">• ${b}</div>`).join('')}
+                </div>
+            ` : '<div style="margin-top: 10px; color: var(--success); font-size: 0.85em;">✅ No blockers</div>'}
+        </div>
+    `;
+}
+
+function updateRecentDecisions(decisions) {
+    const container = document.getElementById('recent-decisions-list');
+    if (!container) return;
+
+    if (!decisions || decisions.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-secondary); font-style: italic;">No recent decisions</div>';
+        return;
+    }
+
+    let html = '';
+    decisions.forEach(decision => {
+        const timeAgo = calculateDuration(decision.timestamp);
+        const typeIcon = decision.type === 'task_completed' ? '✅' :
+                        decision.type === 'milestone_reached' ? '🎯' :
+                        decision.type === 'decision' ? '💡' : '📝';
+        html += `
+            <div style="background: var(--bg-tertiary); padding: 10px; border-radius: 4px; margin-bottom: 8px; border-left: 3px solid var(--accent);">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="flex: 1;">
+                        <span style="margin-right: 8px;">${typeIcon}</span>
+                        <span style="font-size: 0.9em;">${decision.description}</span>
+                    </div>
+                    <div style="font-size: 0.75em; color: var(--text-secondary); white-space: nowrap; margin-left: 10px;">${timeAgo}</div>
+                </div>
+                ${decision.phase ? `<div style="font-size: 0.75em; color: var(--text-secondary); margin-left: 24px;">Phase ${decision.phase}</div>` : ''}
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+function calculateDuration(startTime) {
+    if (!startTime) return 'Unknown';
+
+    // Handle different date formats
+    let start;
+    if (typeof startTime === 'string') {
+        // Replace space with 'T' for ISO 8601 format if needed
+        const isoTime = startTime.includes('T') ? startTime : startTime.replace(' ', 'T');
+        start = new Date(isoTime);
+    } else {
+        start = new Date(startTime);
+    }
+
+    // Validate date
+    if (isNaN(start.getTime())) {
+        return 'Invalid date';
+    }
+
+    const now = new Date();
+    const diff = Math.floor((now - start) / 1000); // seconds
+
+    // Handle negative diff (future dates)
+    if (diff < 0) {
+        return 'In future';
+    }
+
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    const hours = Math.floor(diff / 3600);
+    const mins = Math.floor((diff % 3600) / 60);
+    return `${hours}h ${mins}m ago`;
+}
+
+function approveResource(resourceId) {
+    fetch(`/api/strategic/resources/${resourceId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`✅ Approved: ${resourceId}`);
+            refreshStrategicDashboard();
+        }
+    });
+}
+
+function denyResource(resourceId) {
+    fetch(`/api/strategic/resources/${resourceId}/deny`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`❌ Denied: ${resourceId}`);
+            refreshStrategicDashboard();
+        }
+    });
+}
+
+// Auto-refresh every 30 seconds
+setInterval(refreshStrategicDashboard, 30000);
+</script>

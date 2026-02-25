@@ -1,0 +1,37 @@
+#!/bin/bash
+#
+# Git post-merge hook for automatic deployment
+#
+# Triggered after: git merge, git pull
+#
+# Behavior:
+#   - If merging to dev branch -> trigger DEV deployment
+#   - Logs merge event for deploy_worker to process
+#
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
+LOG_FILE="$REPO_DIR/deploy_worker.log"
+DEPLOY_WORKER="$REPO_DIR/deploy_worker.py"
+
+# Get current branch
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# Log the merge
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] [HOOK] Post-merge on branch: $BRANCH" >> "$LOG_FILE"
+
+# Only trigger for dev branch
+if [ "$BRANCH" = "dev" ]; then
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [HOOK] Triggering DEV deployment..." >> "$LOG_FILE"
+
+    # Check if deploy_worker is available
+    if [ -f "$DEPLOY_WORKER" ]; then
+        # Run deployment in background
+        python3 "$DEPLOY_WORKER" deploy dev &
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] [HOOK] DEV deployment triggered" >> "$LOG_FILE"
+    else
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] [HOOK] Deploy worker not found: $DEPLOY_WORKER" >> "$LOG_FILE"
+    fi
+fi
+
+exit 0

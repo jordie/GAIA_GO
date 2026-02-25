@@ -1,0 +1,15 @@
+{
+  "system_status": "active",
+  "deployment_date": "2026-02-16T22:15:00Z",
+  "version": "1.0.0",
+  "prs_tracked": 7,
+  "total_cost": 6.24,
+  "estimated_monthly_cost": 124.80,
+  "estimated_monthly_savings": 265.20,
+  "provider_distribution": {
+    "claude": "40%",
+    "codex": "35%",
+    "ollama": "25%"
+  },
+  "active_sessions": 26
+}

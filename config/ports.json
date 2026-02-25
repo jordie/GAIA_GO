@@ -1,0 +1,294 @@
+{
+  "port_scheme": {
+    "description": "Standardized port pattern across all apps",
+    "pattern": "BASE + OFFSET where: x0=PROD, x1=DEV, x2=QA, x4-x8=FEATURE",
+    "apps": {
+      "edu_apps": {"base": 5050, "prod": 5050, "dev": 5051, "qa": 5052, "features": [5054, 5055, 5056, 5057, 5058]},
+      "kanbanflow": {"base": 6050, "prod": 6050, "dev": 6051, "qa": 6052, "features": [6054, 6055, 6056, 6057, 6058]},
+      "browser_auto": {"base": 7050, "prod": 7050, "dev": 7051, "qa": 7052, "features": [7054, 7055, 7056, 7057, 7058]},
+      "architect": {"base": 8080, "prod": 8080, "dev": 8081, "qa": 8082, "features": [8084, 8085, 8086, 8087, 8088]}
+    }
+  },
+  "services": {
+    "5050": {
+      "name": "Edu Apps",
+      "project": "edu_apps",
+      "type": "webapp",
+      "env": "PROD",
+      "protocol": "https",
+      "app": "unified_app.py",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final && USE_HTTPS=true APP_ENV=prod PORT=5050 python3 unified_app.py",
+      "health_endpoint": "/health",
+      "auto_restart": true,
+      "require_approval": true,
+      "description": "Basic Education Apps - Production"
+    },
+    "5051": {
+      "name": "Edu Apps",
+      "project": "edu_apps",
+      "type": "webapp",
+      "env": "DEV",
+      "protocol": "https",
+      "app": "unified_app.py",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final && USE_HTTPS=true APP_ENV=dev PORT=5051 python3 unified_app.py",
+      "health_endpoint": "/health",
+      "auto_restart": true,
+      "description": "Basic Education Apps - Development"
+    },
+    "5052": {
+      "name": "Edu Apps",
+      "project": "edu_apps",
+      "type": "webapp",
+      "env": "QA",
+      "protocol": "https",
+      "app": "unified_app.py",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final && USE_HTTPS=true APP_ENV=qa PORT=5052 python3 unified_app.py",
+      "health_endpoint": "/health",
+      "auto_restart": true,
+      "description": "Basic Education Apps - QA"
+    },
+    "5054": {
+      "name": "Edu Apps Feature 1",
+      "project": "edu_apps",
+      "type": "webapp",
+      "env": "FEATURE",
+      "feature": "journey-system",
+      "protocol": "https",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final/feature_environments/env_1",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final/feature_environments/env_1 && USE_HTTPS=true PORT=5054 python3 unified_app.py",
+      "health_endpoint": "/health",
+      "auto_restart": false,
+      "description": "Feature: Journey System"
+    },
+    "5055": {
+      "name": "Edu Apps Feature 2",
+      "project": "edu_apps",
+      "type": "webapp",
+      "env": "FEATURE",
+      "feature": "gamification",
+      "protocol": "https",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final/feature_environments/env_2",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final/feature_environments/env_2 && USE_HTTPS=true PORT=5055 python3 unified_app.py",
+      "health_endpoint": "/health",
+      "auto_restart": false,
+      "description": "Feature: Gamification"
+    },
+    "5056": {
+      "name": "Edu Apps Feature 3",
+      "project": "edu_apps",
+      "type": "webapp",
+      "env": "FEATURE",
+      "feature": "dark-mode",
+      "protocol": "https",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final/feature_environments/env_3",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final/feature_environments/env_3 && USE_HTTPS=true PORT=5056 python3 unified_app.py",
+      "health_endpoint": "/health",
+      "auto_restart": false,
+      "description": "Feature: Dark Mode"
+    },
+    "5057": {
+      "name": "Edu Apps Feature 4",
+      "project": "edu_apps",
+      "type": "webapp",
+      "env": "FEATURE",
+      "feature": "accessibility",
+      "protocol": "https",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final/feature_environments/env_4",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final/feature_environments/env_4 && USE_HTTPS=true PORT=5057 python3 unified_app.py",
+      "health_endpoint": "/health",
+      "auto_restart": false,
+      "description": "Feature: Accessibility"
+    },
+    "5058": {
+      "name": "Edu Apps Feature 5",
+      "project": "edu_apps",
+      "type": "webapp",
+      "env": "FEATURE",
+      "feature": "error-handling",
+      "protocol": "https",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final/feature_environments/env_5",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final/feature_environments/env_5 && USE_HTTPS=true PORT=5058 python3 unified_app.py",
+      "health_endpoint": "/health",
+      "auto_restart": false,
+      "description": "Feature: Error Handling"
+    },
+    "6050": {
+      "name": "KanbanFlow",
+      "project": "kanbanflow",
+      "type": "webapp",
+      "env": "PROD",
+      "protocol": "https",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/KanbanFlow",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/KanbanFlow && USE_HTTPS=true APP_ENV=prod PORT=6050 python3 app.py",
+      "health_endpoint": "/",
+      "auto_restart": true,
+      "require_approval": true,
+      "description": "KanbanFlow - Production"
+    },
+    "6051": {
+      "name": "KanbanFlow",
+      "project": "kanbanflow",
+      "type": "webapp",
+      "env": "DEV",
+      "protocol": "https",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/KanbanFlow",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/KanbanFlow && USE_HTTPS=true APP_ENV=dev PORT=6051 python3 app.py",
+      "health_endpoint": "/",
+      "auto_restart": true,
+      "description": "KanbanFlow - Development"
+    },
+    "6052": {
+      "name": "KanbanFlow",
+      "project": "kanbanflow",
+      "type": "webapp",
+      "env": "QA",
+      "protocol": "https",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/KanbanFlow",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/KanbanFlow && USE_HTTPS=true APP_ENV=qa PORT=6052 python3 app.py",
+      "health_endpoint": "/",
+      "auto_restart": true,
+      "description": "KanbanFlow - QA"
+    },
+    "6054": {
+      "name": "KanbanFlow Feature 1",
+      "project": "kanbanflow",
+      "type": "webapp",
+      "env": "FEATURE",
+      "protocol": "https",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/KanbanFlow",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/KanbanFlow && USE_HTTPS=true PORT=6054 python3 app.py",
+      "health_endpoint": "/",
+      "auto_restart": false,
+      "description": "KanbanFlow Feature Environment 1"
+    },
+    "7050": {
+      "name": "Browser Automation",
+      "project": "browser_auto",
+      "type": "webapp",
+      "env": "PROD",
+      "protocol": "http",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/claude_browser_agent",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/claude_browser_agent && python3 webapp/app.py --port 7050 --host 0.0.0.0",
+      "health_endpoint": "/",
+      "auto_restart": true,
+      "description": "Browser Automation - Production"
+    },
+    "7051": {
+      "name": "Browser Automation",
+      "project": "browser_auto",
+      "type": "webapp",
+      "env": "DEV",
+      "protocol": "http",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/claude_browser_agent",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/claude_browser_agent && python3 webapp/app.py --port 7051 --host 0.0.0.0",
+      "health_endpoint": "/",
+      "auto_restart": false,
+      "description": "Browser Automation - Development"
+    },
+    "8080": {
+      "name": "Architect Dashboard",
+      "project": "architect",
+      "type": "dashboard",
+      "env": "PROD",
+      "protocol": "https",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/architect && python3 app.py --port 8080 --ssl",
+      "health_endpoint": "/health",
+      "auto_restart": true,
+      "description": "Architect Dashboard - Production"
+    },
+    "8081": {
+      "name": "Architect Dashboard",
+      "project": "architect",
+      "type": "dashboard",
+      "env": "DEV",
+      "protocol": "https",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/architect && python3 app.py --port 8081 --ssl",
+      "health_endpoint": "/health",
+      "auto_restart": false,
+      "description": "Architect Dashboard - Development"
+    },
+    "8082": {
+      "name": "Architect Dashboard",
+      "project": "architect",
+      "type": "dashboard",
+      "env": "QA",
+      "protocol": "https",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/architect && python3 app.py --port 8082 --ssl",
+      "health_endpoint": "/health",
+      "auto_restart": false,
+      "description": "Architect Dashboard - QA"
+    },
+    "8084": {
+      "name": "Architect Feature 1",
+      "project": "architect",
+      "type": "dashboard",
+      "env": "FEATURE",
+      "protocol": "https",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/architect && APP_ENV=feature1 python3 app.py --port 8084 --ssl",
+      "health_endpoint": "/health",
+      "auto_restart": false,
+      "description": "Architect Feature Environment 1"
+    },
+    "8085": {
+      "name": "Architect Feature 2",
+      "project": "architect",
+      "type": "dashboard",
+      "env": "FEATURE",
+      "protocol": "https",
+      "app_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/architect && APP_ENV=env3 python3 app.py --port 8085 --ssl",
+      "health_endpoint": "/health",
+      "auto_restart": false,
+      "description": "Architect Feature Environment 2"
+    }
+  },
+  "workers": {
+    "health_monitor": {
+      "name": "Health Monitor",
+      "project": "architect",
+      "type": "worker",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/architect && python3 scripts/health_monitor.py",
+      "pid_file": "/tmp/health_monitor.pid",
+      "log_file": "/tmp/health_monitor.log",
+      "auto_restart": true
+    },
+    "delegator": {
+      "name": "Task Delegator",
+      "project": "architect",
+      "type": "worker",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/architect && python3 scripts/delegator.py",
+      "pid_file": "/tmp/delegator.pid",
+      "log_file": "/tmp/delegator.log",
+      "auto_restart": true
+    },
+    "error_daemon": {
+      "name": "Error Task Daemon",
+      "project": "architect",
+      "type": "worker",
+      "start_cmd": "cd /Users/jgirmay/Desktop/gitrepo/pyWork/architect && python3 workers/error_task_daemon.py",
+      "pid_file": "/tmp/error_task_daemon.pid",
+      "log_file": "/tmp/error_task_daemon.log",
+      "auto_restart": true
+    }
+  },
+  "monitoring": {
+    "health_check_interval": 120,
+    "alert_thresholds": {
+      "cpu": 90,
+      "memory": 85,
+      "disk": 80
+    }
+  },
+  "metadata": {
+    "created": "2025-12-25",
+    "updated": "2025-12-28",
+    "version": "2.0"
+  }
+}

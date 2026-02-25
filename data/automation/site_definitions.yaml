@@ -1,0 +1,290 @@
+# Site Automation Definitions
+# Data-driven browser automation for web portals
+
+sites:
+  iclasspro:
+    name: "iClassPro - Aquatech Alameda"
+    vault_key: "iclasspro"
+    base_url: "https://app.iclasspro.com/portal/aquatech/login"
+
+    # Login workflow
+    login:
+      steps:
+        - type: "navigate"
+          url: "https://portal.iclasspro.com/aquatech/login"
+          wait: 3
+
+        - type: "check_condition"
+          condition: "url_contains"
+          value: "login"
+          if_true:
+            # Switch to Alameda location if on Concord
+            - type: "click"
+              selectors:
+                - "button.btn.btn-pill.btn-secondary"  # Switch to Location button in Alameda card
+              wait: 2
+
+            # Confirm location switch
+            - type: "click"
+              selectors:
+                - ".modal-confirm-switch-location .btn.btn-pill.btn-primary"  # Continue button
+              wait: 2
+
+            # Click "Yes" (existing customer) to show login form
+            - type: "click"
+              selectors:
+                - "button.btn.btn-transparent.btn-pill.ui-large"  # Yes button
+              wait: 2
+
+        - type: "fill_field"
+          field: "email"
+          value: "{username}"
+          selectors:
+            - "input#emailForgot[name='email'][type='email']"
+            - "input[type='email']"
+            - "input[name='email']"
+
+        - type: "fill_field"
+          field: "password"
+          value: "{password}"
+          selectors:
+            - "input[type='password']"
+            - "input[name='password']"
+
+        - type: "click"
+          field: "submit"
+          selectors:
+            - "button[type='submit']"
+            - "input[type='submit']"
+          wait: 5
+
+    # Search workflow
+    search:
+      participant: "saba"
+      steps:
+        - type: "navigate_menu"
+          menu_items:
+            - "Students"
+            - "Enrollments"
+            - "My Students"
+            - "Participants"
+          wait: 2
+
+        - type: "search"
+          value: "{search_term}"
+          selectors:
+            - "input[type='search']"
+            - "input[placeholder*='search' i]"
+            - "input[name='search']"
+            - "#search"
+          submit_after: true
+          wait: 2
+
+        - type: "verify"
+          condition: "page_contains"
+          value: "{search_term}"
+
+    # Data extraction
+    extract:
+      - name: "enrollment_time"
+        description: "Class enrollment time"
+        selectors:
+          - "pattern: /\\b\\d{1,2}:\\d{2}\\s*[AP]M\\b/gi"
+          - "label: 'Time'"
+          - "label: 'Schedule'"
+          - "class: 'time'"
+          - "class: 'schedule'"
+
+      - name: "class_level"
+        description: "Class level"
+        selectors:
+          - "pattern: /Level\\s+\\d+/gi"
+          - "pattern: /Class\\s+\\d+/gi"
+          - "pattern: /\\b(Beginner|Intermediate|Advanced)\\b/gi"
+          - "label: 'Level'"
+          - "label: 'Class'"
+
+      - name: "enrollment_details"
+        description: "Full enrollment row/card"
+        selectors:
+          - "closest: 'tr'"
+          - "closest: '.enrollment'"
+          - "closest: '.class-info'"
+          - "closest: '.student-card'"
+
+  hoh_gymnastics:
+    name: "HOH Gymnastics - Active Communities"
+    vault_key: "hoh_gymnastics"
+    base_url: "https://anc.apm.activecommunities.com/hohgymnastics/signin"
+
+    # Login workflow
+    login:
+      steps:
+        - type: "navigate"
+          url: "https://anc.apm.activecommunities.com/hohgymnastics/signin"
+          wait: 3
+
+        - type: "fill_field"
+          field: "email"
+          value: "{username}"
+          selectors:
+            - "div.signin input[type='text'][aria-label='Email address Required']"
+            - "input[type='text'][placeholder='Enter your Email address']"
+            - "input[type='text']"
+
+        - type: "fill_field"
+          field: "password"
+          value: "{password}"
+          selectors:
+            - "div.signin input[type='password'][aria-label='Password Required']"
+            - "input[type='password']"
+
+        - type: "click"
+          field: "submit"
+          selectors:
+            - "div.signin__action button[type='submit'].btn-super"
+            - "button[type='submit'].btn.btn-super"
+            - "button[type='submit']:not(.activity-expand-btn)"
+          wait: 5
+
+    # Search workflow
+    search:
+      participant: "eden"
+      steps:
+        - type: "navigate_menu"
+          menu_items:
+            - "My Account"
+            - "Account"
+            - "Registrations"
+            - "My Registrations"
+            - "Participants"
+            - "Family Members"
+          wait: 2
+
+        - type: "search"
+          value: "{search_term}"
+          selectors:
+            - "input[type='search']"
+            - "input[placeholder*='search' i]"
+            - "input[name='search']"
+          submit_after: true
+          wait: 2
+          optional: true  # Search might not be needed if already visible
+
+        - type: "verify"
+          condition: "page_contains"
+          value: "{search_term}"
+
+    # Data extraction
+    extract:
+      - name: "current_classes"
+        description: "Currently enrolled classes"
+        selectors:
+          - "pattern: /class|level|gymnastics/gi"
+          - "closest: 'tr'"
+          - "closest: '.registration'"
+          - "closest: '.class-item'"
+          - "label: 'Class'"
+          - "label: 'Program'"
+
+      - name: "class_schedule"
+        description: "Class times and days"
+        selectors:
+          - "pattern: /\\b\\d{1,2}:\\d{2}\\s*[AP]M\\b/gi"
+          - "pattern: /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/gi"
+          - "label: 'Schedule'"
+          - "label: 'Time'"
+          - "label: 'Day'"
+
+      - name: "last_payment"
+        description: "Most recent payment date"
+        selectors:
+          - "pattern: /\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4}/g"
+          - "pattern: /\\$\\d+\\.\\d{2}/g"
+          - "label: 'Payment'"
+          - "label: 'Last Payment'"
+          - "label: 'Transaction Date'"
+          - "label: 'Paid'"
+          - "closest: 'tr'"
+          - "closest: '.payment'"
+          - "closest: '.transaction'"
+
+      - name: "payment_history"
+        description: "All payment records"
+        selectors:
+          - "table: 'payment'"
+          - "table: 'transaction'"
+          - "table: 'invoice'"
+          - "class: 'payment-history'"
+          - "id: 'payments'"
+
+  google_voice:
+    name: "Google Voice - Messages"
+    vault_key: "google_voice_peratlatservices"
+    base_url: "https://voice.google.com"
+
+    # Login workflow
+    login:
+      steps:
+        - type: "navigate"
+          url: "https://voice.google.com"
+          wait: 3
+
+        - type: "check_condition"
+          condition: "url_contains"
+          value: "ServiceLogin"
+          if_true:
+            # Need to login
+            - type: "fill_field"
+              field: "email"
+              selectors:
+                - "input[type='email']"
+                - "input#identifierId"
+              value: "{username}"
+              wait: 1
+
+            - type: "click"
+              selectors:
+                - "button#identifierNext"
+                - "div#identifierNext"
+              wait: 3
+
+            - type: "fill_field"
+              field: "password"
+              selectors:
+                - "input[type='password']"
+                - "input[name='password']"
+              value: "{password}"
+              wait: 1
+
+            - type: "click"
+              selectors:
+                - "button#passwordNext"
+                - "div#passwordNext"
+              wait: 5
+
+    # Extract messages
+    # Extract messages
+    extract:
+      - name: "messages"
+        description: "Recent Google Voice messages"
+        type: "list"
+        wait: 5
+        selectors:
+          - "gv-conversation-list-item"
+          - ".conversation-item"
+          - "[role='listitem']"
+        limit: 10
+        fields:
+          - name: "sender"
+            selectors:
+              - ".name"
+              - ".contact-name"
+          - name: "message"
+            selectors:
+              - ".snippet"
+              - ".message-preview"
+          - name: "time"
+            selectors:
+              - ".timestamp"
+              - ".time"

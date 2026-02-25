@@ -1,0 +1,15 @@
+TOPIC: Flights - Family of 6 to Ethiopia
+
+TIMESTAMP: 2026-02-13T05:11:55.262840
+
+PROMPT:
+Find the best flight prices for a family of 6 traveling to Ethiopia in mid-to-late June 2026:
+- Departure: Bay Area (SFO/OAK) or nearest major airport
+- Destination: Addis Ababa, Ethiopia (ADD)
+- Travel dates: Mid to late June 2026 (flexible within this range)
+- Return: Late July 2026 (1 month trip)
+- Passengers: 2 adults (ages 47, 46), 4 children (ages 13, 12, 11, 6)
+- Priority: Best price while maintaining reasonable comfort and safety
+- Preferences: Direct flights if possible, or minimal layovers
+- Budget considerations: Compare airlines, check for family discounts
+Output: Top 3-5 flight options with prices, airlines, layovers, and booking links

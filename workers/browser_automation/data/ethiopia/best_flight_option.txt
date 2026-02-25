@@ -1,0 +1,27 @@
+# Best Ethiopia Flight Option
+
+**Source**: Google Flights  
+**Booking URL**: https://www.google.com/travel/flights/booking?tfs=CBwQAhqGARIKMjAyNi0wNy0yMCIgCgNTRk8SCjIwMjYtMDctMjAaA0xBWCoCREwyBDIyNjciHgoDTEFYEgoyMDI2LTA3LTIwGgNKRUQqAlNWMgI0MiIfCgNKRUQSCjIwMjYtMDctMjIaA0FERCoCU1YyAzQyM2oMCAISCC9tLzBkNmxwcgcIARIDQUREGoYBEgoyMDI2LTA4LTIwIh8KA0FERBIKMjAyNi0wOC0yMBoDSkVEKgJTVjIDNDIwIh4KA0pFRBIKMjAyNi0wOC0yMBoDTEFYKgJTVjICNDEiIAoDTEFYEgoyMDI2LTA4LTIwGgNTRk8qAkRMMgQyMTk3agcIARIDQUREcgwIAhIIL20vMGQ2bHBAAUABQAFAAUABQAJIAXABggELCP___________wGYAQE
+
+## Flight Details
+
+**Outbound**: July 20, 2026  
+- SFO → LAX (Delta DL 2267)
+- LAX → JED (Saudia SV 42)  
+- JED → ADD (Saudia SV 423)
+
+**Return**: August 20, 2026  
+- ADD → JED (Saudia SV 420)
+- JED → LAX (Saudia SV 41)
+- LAX → SFO (Delta DL 2197)
+
+**Duration**: 1 month (July 20 - August 20, 2026)
+
+**Passengers**: Family of 6
+- 2 adults (ages 47, 46)
+- 4 children (ages 13, 12, 11, 6)
+
+**Notes**:
+- Routing via Los Angeles (LAX) and Jeddah (JED)
+- Mixed carriers: Delta domestic, Saudia international
+- This is the selected best option for the trip

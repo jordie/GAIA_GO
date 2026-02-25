@@ -1,0 +1,144 @@
+# Session Provider Configuration
+# ================================
+# Defines which LLM provider each session tier should use.
+# Codex (via Ollama) is the default for workers to minimize costs.
+# Claude is reserved for high-level coordination and complex tasks.
+
+# Default provider for unclassified sessions
+# Codex first to avoid Claude API limits
+default_provider: codex
+
+# Provider tier assignments
+tiers:
+  # High-level sessions: Strategic oversight, user interaction
+  # These sessions make architectural decisions and coordinate work
+  high_level:
+    provider: claude
+    sessions:
+      - architect
+      - foundation
+      - inspector
+      - claude_orchestrator
+      - wrapper_claude
+    patterns:
+      - "^architect"
+      - "^foundation"
+      - "^inspector"
+      - "orchestrator"
+
+  # Manager sessions: Tactical decisions, task delegation
+  # Break down complex tasks and coordinate workers
+  manager:
+    provider: claude
+    sessions:
+      - manager1
+      - manager2
+      - manager3
+      - claude-backend-agent
+      - claude-frontend-agent
+    patterns:
+      - "^manager\\d+"
+      - "^claude-.*-agent"
+
+  # Worker sessions: Implementation, code execution
+  # Use Codex first to avoid Claude API limits
+  worker:
+    provider: codex
+    sessions:
+      - codex
+      - dev_worker1
+      - dev_worker2
+      - dev_worker3
+      - claude_edu_worker1
+      - claude_task_worker1
+      - concurrent_worker1
+      - concurrent_worker2
+    patterns:
+      - "^dev_worker\\d+"
+      - "^worker\\d+"
+      - "^concurrent_worker\\d+"
+      - "_worker\\d*$"
+      - "^codex"
+
+  # QA/Testing sessions: Test execution, validation
+  # Use Codex first to avoid Claude API limits
+  qa:
+    provider: codex
+    sessions:
+      - qa_tester1
+      - qa_tester2
+      - qa_tester3
+    patterns:
+      - "^qa_"
+      - "_tester\\d+"
+
+  # MCP workers: Tool execution
+  # Use Codex first to avoid Claude API limits
+  mcp:
+    provider: codex
+    sessions:
+      - mcp_worker1
+      - mcp_worker2
+    patterns:
+      - "^mcp_"
+
+  # UI/Frontend sessions: Use Comet for UI-specific tasks
+  ui:
+    provider: comet
+    sessions:
+      - claude_comet
+      - ui_worker
+      - frontend_worker
+    patterns:
+      - "comet"
+      - "^ui_"
+      - "^frontend"
+
+# Provider priority for fallback (when preferred unavailable)
+# Order: codex → ollama → comet → claude (to avoid Claude API limits)
+fallback_chain:
+  codex:
+    - ollama
+    - comet
+    - claude
+  ollama:
+    - codex
+    - comet
+    - claude
+  comet:
+    - codex
+    - ollama
+    - claude
+  claude:
+    - codex
+    - ollama
+    - openai
+    - gemini
+
+# Cost estimates per 1M tokens
+costs:
+  claude: 15.00    # $15/1M tokens (average)
+  ollama: 0.00     # Free (local)
+  openai: 30.00    # $30/1M tokens (GPT-4)
+  gemini: 0.60     # $0.60/1M tokens (Flash)
+  comet: 0.00      # Local
+  codex: 0.00      # Using Ollama backend
+
+# Session routing rules
+routing:
+  # Route all unspecified tasks through codex/ollama by default
+  default_for_new_sessions: ollama
+
+  # Force certain task types to specific providers
+  task_type_overrides:
+    # Complex reasoning tasks still go to Claude
+    architecture_design: claude
+    code_review_critical: claude
+    security_audit: claude
+
+    # Everything else goes to Ollama
+    code_generation: ollama
+    bug_fix: ollama
+    test_writing: ollama
+    documentation: ollama
+    refactoring: ollama

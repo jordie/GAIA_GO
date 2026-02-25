@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: architect-go
+  namespace: architect-staging
+  labels:
+    app: architect-go
+    environment: staging
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+  - name: metrics
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app: architect-go
+    environment: staging
+  sessionAffinity: None
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800

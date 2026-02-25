@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Provider Metrics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0a0e1a;
+            color: #e4e4e7;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #1e293b;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-icon {
+            font-size: 2.5rem;
+        }
+
+        .refresh-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #2563eb;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 4px;
+        }
+
+        .metric-subtext {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #f8fafc;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+
+        th {
+            background: #0f172a;
+            color: #94a3b8;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            color: #e4e4e7;
+        }
+
+        .provider-name {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .provider-type {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .type-local {
+            background: #10b98120;
+            color: #10b981;
+        }
+
+        .type-remote {
+            background: #3b82f620;
+            color: #3b82f6;
+        }
+
+        .circuit-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .circuit-closed {
+            background: #10b98120;
+            color: #10b981;
+        }
+
+        .circuit-open {
+            background: #ef444420;
+            color: #ef4444;
+        }
+
+        .circuit-half-open {
+            background: #f59e0b20;
+            color: #f59e0b;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+            height: 400px;
+        }
+
+        canvas {
+            max-height: 100%;
+        }
+
+        .failover-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .failover-item {
+            padding: 16px;
+            border-bottom: 1px solid #334155;
+            transition: background 0.2s;
+        }
+
+        .failover-item:hover {
+            background: #0f172a;
+        }
+
+        .failover-item:last-child {
+            border-bottom: none;
+        }
+
+        .failover-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .failover-route {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .failover-arrow {
+            color: #3b82f6;
+            font-weight: 700;
+        }
+
+        .failover-time {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .failover-reason {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+
+        .error {
+            background: #ef444420;
+            border: 1px solid #ef4444;
+            color: #fecaca;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .success-rate-bar {
+            width: 100%;
+            height: 8px;
+            background: #334155;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .success-rate-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+            transition: width 0.3s;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>
+                <span class="header-icon">📊</span>
+                LLM Provider Metrics Dashboard
+            </h1>
+            <button class="refresh-btn" onclick="loadDashboard()">
+                ↻ Refresh
+            </button>
+        </div>
+
+        <div id="error-container"></div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Total Requests</div>
+                <div class="metric-value" id="total-requests">—</div>
+                <div class="metric-subtext">All providers combined</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Success Rate</div>
+                <div class="metric-value" id="success-rate">—</div>
+                <div class="metric-subtext" id="success-count">—</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Total Cost (USD)</div>
+                <div class="metric-value" id="total-cost">$—</div>
+                <div class="metric-subtext" id="savings-info">—</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Failover Events</div>
+                <div class="metric-value" id="failover-count">—</div>
+                <div class="metric-subtext">Provider fallbacks</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">🔧 Provider Comparison</div>
+            <table id="providers-table">
+                <thead>
+                    <tr>
+                        <th>Provider</th>
+                        <th>Type</th>
+                        <th>Requests</th>
+                        <th>Success Rate</th>
+                        <th>Cost (USD)</th>
+                        <th>Tokens</th>
+                        <th>Circuit</th>
+                    </tr>
+                </thead>
+                <tbody id="providers-body">
+                    <tr>
+                        <td colspan="7" class="loading">Loading providers...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-container">
+                <canvas id="cost-chart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="requests-chart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="tokens-chart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="trends-chart"></canvas>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">🔄 Failover History</div>
+            <div class="failover-list" id="failover-list">
+                <div class="loading">Loading failover history...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let costChart, requestsChart, tokensChart, trendsChart;
+
+        async function loadDashboard() {
+            try {
+                // Load all data
+                const [metrics, providers, costs, trends] = await Promise.all([
+                    fetch('/api/llm/metrics').then(r => r.json()),
+                    fetch('/api/llm/providers').then(r => r.json()),
+                    fetch('/api/llm/costs').then(r => r.json()),
+                    fetch('/api/llm/trends?days=7').then(r => r.json()).catch(() => ({success: false, trends: []}))
+                ]);
+
+                if (!metrics.success || !providers.success || !costs.success) {
+                    throw new Error('Failed to load dashboard data');
+                }
+
+                updateMetrics(metrics, costs);
+                updateProvidersTable(providers);
+                updateCharts(providers, costs, trends);
+                await loadFailoverHistory();
+
+                // Clear error
+                document.getElementById('error-container').innerHTML = '';
+            } catch (error) {
+                console.error('Dashboard load error:', error);
+                document.getElementById('error-container').innerHTML = `
+                    <div class="error">
+                        <strong>Error loading dashboard:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function updateMetrics(metricsData, costsData) {
+            const metrics = metricsData.metrics || [];
+            const costs = costsData.costs || {};
+
+            // Aggregate metrics from all providers
+            const totalRequests = metrics.reduce((sum, m) => sum + (m.total_requests || 0), 0);
+            const totalSuccessful = metrics.reduce((sum, m) => sum + (m.successful_requests || 0), 0);
+            const successRate = totalRequests > 0 ? (totalSuccessful / totalRequests * 100) : 0;
+
+            document.getElementById('total-requests').textContent = totalRequests.toLocaleString();
+            document.getElementById('success-rate').textContent = successRate.toFixed(1) + '%';
+            document.getElementById('success-count').textContent = `${totalSuccessful.toLocaleString()} successful`;
+
+            document.getElementById('total-cost').textContent = '$' + (costs.total_cost_usd || 0).toFixed(2);
+            document.getElementById('savings-info').textContent = costs.estimated_savings_usd
+                ? `$${costs.estimated_savings_usd.toFixed(2)} saved (${costs.savings_percentage?.toFixed(1)}%)`
+                : 'No savings data';
+
+            // Failover count (from metrics or calculate from fallback_count)
+            const failoverCount = metrics.reduce((sum, m) => sum + (m.fallback_count || 0), 0);
+            document.getElementById('failover-count').textContent = failoverCount.toLocaleString();
+        }
+
+        function updateProvidersTable(providersData) {
+            const providers = providersData.providers || [];
+            const tbody = document.getElementById('providers-body');
+
+            if (providers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="loading">No providers found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = providers.map(p => {
+                const successRate = p.total_requests > 0
+                    ? ((p.successful_requests / p.total_requests) * 100).toFixed(1)
+                    : 0;
+
+                const circuitClass = p.circuit_state === 'closed' ? 'circuit-closed' :
+                                   p.circuit_state === 'open' ? 'circuit-open' : 'circuit-half-open';
+
+                const typeClass = p.provider_type === 'local' ? 'type-local' : 'type-remote';
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="provider-name">
+                                ${p.display_name || p.name}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="provider-type ${typeClass}">
+                                ${p.provider_type}
+                            </span>
+                        </td>
+                        <td>${(p.total_requests || 0).toLocaleString()}</td>
+                        <td>
+                            ${successRate}%
+                            <div class="success-rate-bar">
+                                <div class="success-rate-fill" style="width: ${successRate}%"></div>
+                            </div>
+                        </td>
+                        <td>$${(p.total_cost_usd || 0).toFixed(4)}</td>
+                        <td>${(p.total_tokens || 0).toLocaleString()}</td>
+                        <td>
+                            <span class="circuit-badge ${circuitClass}">
+                                ● ${p.circuit_state || 'unknown'}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateCharts(providersData, costsData, trendsData) {
+            const providers = providersData.providers || [];
+            const costProviders = costsData.costs?.providers || [];
+            const trends = trendsData.trends || [];
+
+            // Cost chart
+            const ctx1 = document.getElementById('cost-chart');
+            if (costChart) costChart.destroy();
+
+            costChart = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: costProviders.map(p => p.display_name || p.name),
+                    datasets: [{
+                        data: costProviders.map(p => p.actual_cost_usd || 0),
+                        backgroundColor: [
+                            '#10b981',
+                            '#3b82f6',
+                            '#8b5cf6',
+                            '#f59e0b',
+                            '#ef4444'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#e4e4e7' }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Cost Distribution by Provider',
+                            color: '#f8fafc',
+                            font: { size: 16 }
+                        }
+                    }
+                }
+            });
+
+            // Requests chart
+            const ctx2 = document.getElementById('requests-chart');
+            if (requestsChart) requestsChart.destroy();
+
+            requestsChart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: providers.map(p => p.display_name || p.name),
+                    datasets: [{
+                        label: 'Successful',
+                        data: providers.map(p => p.successful_requests || 0),
+                        backgroundColor: '#10b981'
+                    }, {
+                        label: 'Failed',
+                        data: providers.map(p => p.failed_requests || 0),
+                        backgroundColor: '#ef4444'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#e4e4e7' }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Requests by Provider',
+                            color: '#f8fafc',
+                            font: { size: 16 }
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+                    }
+                }
+            });
+
+            // Token usage chart
+            const ctx3 = document.getElementById('tokens-chart');
+            if (tokensChart) tokensChart.destroy();
+
+            tokensChart = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: providers.map(p => p.display_name || p.name),
+                    datasets: [{
+                        label: 'Total Tokens',
+                        data: providers.map(p => (p.total_tokens || 0) / 1000),
+                        backgroundColor: '#8b5cf6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#e4e4e7' }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Token Usage by Provider (K)',
+                            color: '#f8fafc',
+                            font: { size: 16 }
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+                    }
+                }
+            });
+
+            // Trends chart
+            const ctx4 = document.getElementById('trends-chart');
+            if (trendsChart) trendsChart.destroy();
+
+            if (trends.length > 0) {
+                // Group trends by date
+                const dates = [...new Set(trends.map(t => t.date))].sort();
+                const providerNames = [...new Set(trends.map(t => t.provider_name))];
+
+                const datasets = providerNames.map((name, idx) => {
+                    const colors = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'];
+                    return {
+                        label: name,
+                        data: dates.map(date => {
+                            const trend = trends.find(t => t.date === date && t.provider_name === name);
+                            return trend ? trend.total_requests : 0;
+                        }),
+                        borderColor: colors[idx % colors.length],
+                        backgroundColor: colors[idx % colors.length] + '20',
+                        tension: 0.4
+                    };
+                });
+
+                trendsChart = new Chart(ctx4, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#e4e4e7' }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Request Trends (Last 7 Days)',
+                                color: '#f8fafc',
+                                font: { size: 16 }
+                            }
+                        },
+                        scales: {
+                            x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                            y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+                        }
+                    }
+                });
+            } else {
+                // No trends data available
+                ctx4.getContext('2d').fillStyle = '#64748b';
+                ctx4.getContext('2d').textAlign = 'center';
+                ctx4.getContext('2d').fillText('No trend data available', ctx4.width / 2, ctx4.height / 2);
+            }
+        }
+
+        async function loadFailoverHistory() {
+            const container = document.getElementById('failover-list');
+
+            try {
+                // Note: The API might not have a failover history endpoint yet
+                // This is a placeholder that will work when the endpoint is available
+                const response = await fetch('/api/llm/metrics').then(r => r.json());
+
+                // For now, show a message that this feature is coming
+                // When the API is ready, replace this with actual failover events
+                const metrics = response.metrics || [];
+                const hasFailovers = metrics.some(m => (m.fallback_count || 0) > 0);
+
+                if (!hasFailovers) {
+                    container.innerHTML = '<div class="no-data">No failover events recorded yet</div>';
+                    return;
+                }
+
+                // Generate sample failover display from metrics
+                container.innerHTML = metrics
+                    .filter(m => (m.fallback_count || 0) > 0)
+                    .map(m => `
+                        <div class="failover-item">
+                            <div>
+                                <div class="failover-header">
+                                    <div class="failover-route">
+                                        <span>${m.provider_name}</span>
+                                        <span class="failover-arrow">→</span>
+                                        <span>fallback</span>
+                                    </div>
+                                    <div class="failover-time">Recent</div>
+                                </div>
+                                <div class="failover-reason">
+                                    ${m.fallback_count} fallback event(s) recorded
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+
+            } catch (error) {
+                console.error('Error loading failover history:', error);
+                container.innerHTML = '<div class="no-data">Unable to load failover history</div>';
+            }
+        }
+
+        // Load dashboard on page load
+        loadDashboard();
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadDashboard, 30000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,1333 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Architect Dashboard API",
+    "description": "Comprehensive REST API for managing projects, tracking events, and coordinating development workflows",
+    "version": "3.2.0",
+    "contact": {
+      "name": "Support",
+      "url": "https://support.architect.example.com",
+      "email": "support@architect.example.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.architect.example.com",
+      "description": "Production"
+    },
+    {
+      "url": "https://staging.architect.example.com",
+      "description": "Staging"
+    },
+    {
+      "url": "http://localhost:8080",
+      "description": "Development"
+    }
+  ],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "User Login",
+        "description": "Authenticate user and create a session",
+        "operationId": "login",
+        "requestBody": {
+          "description": "Login credentials",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "password123"
+                  },
+                  "username": {
+                    "type": "string",
+                    "example": "architect"
+                  }
+                },
+                "required": [
+                  "username",
+                  "password"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful"
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "User Logout",
+        "description": "Invalidate the current session",
+        "operationId": "logout",
+        "responses": {
+          "204": {
+            "description": "Logout successful"
+          }
+        }
+      }
+    },
+    "/errors": {
+      "get": {
+        "tags": [
+          "Errors"
+        ],
+        "summary": "List Errors",
+        "description": "Get paginated list of error logs with filtering",
+        "operationId": "listErrors",
+        "parameters": [
+          {
+            "name": "error_type",
+            "in": "query",
+            "description": "Filter by error type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "description": "Filter by severity",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by status",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "description": "Filter by source",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Items per page",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Items to skip",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Error list"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Errors"
+        ],
+        "summary": "Create Error",
+        "description": "Create a new error log entry (no auth required)",
+        "operationId": "createError",
+        "requestBody": {
+          "description": "Error data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "error_type": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "severity": {
+                    "type": "string",
+                    "enum": [
+                      "critical",
+                      "high",
+                      "medium",
+                      "low",
+                      "info"
+                    ]
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "stack_trace": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "error_type",
+                  "message",
+                  "severity"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Error created"
+          }
+        }
+      }
+    },
+    "/errors/{error_id}": {
+      "get": {
+        "tags": [
+          "Errors"
+        ],
+        "summary": "Get Error",
+        "description": "Get a specific error log entry",
+        "operationId": "getError",
+        "parameters": [
+          {
+            "name": "error_id",
+            "in": "path",
+            "description": "Error ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Error details"
+          }
+        }
+      }
+    },
+    "/errors/{error_id}/resolve": {
+      "post": {
+        "tags": [
+          "Errors"
+        ],
+        "summary": "Resolve Error",
+        "description": "Mark an error as resolved",
+        "operationId": "resolveError",
+        "parameters": [
+          {
+            "name": "error_id",
+            "in": "path",
+            "description": "Error ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Resolution details",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "resolution": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "description": "Error resolved"
+          }
+        }
+      }
+    },
+    "/events": {
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "List Events",
+        "description": "Get paginated list of event logs with filtering",
+        "operationId": "listEvents",
+        "parameters": [
+          {
+            "name": "event_type",
+            "in": "query",
+            "description": "Filter by event type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "description": "Filter by source",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "description": "Filter by user ID",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "description": "Filter by project ID",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Items per page (1-1000)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Items to skip",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event list"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "Create Event",
+        "description": "Create a new event log entry",
+        "operationId": "createEvent",
+        "requestBody": {
+          "description": "Event data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object"
+                  },
+                  "event_type": {
+                    "type": "string",
+                    "example": "user_action"
+                  },
+                  "project_id": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string",
+                    "example": "api"
+                  },
+                  "user_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "event_type",
+                  "source"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Event created"
+          }
+        }
+      }
+    },
+    "/events/{event_id}": {
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "Get Event",
+        "description": "Get a specific event log entry",
+        "operationId": "getEvent",
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "description": "Event ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event details"
+          },
+          "404": {
+            "description": "Event not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "Delete Event",
+        "description": "Delete an event log entry",
+        "operationId": "deleteEvent",
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "description": "Event ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Event deleted"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health \u0026 Monitoring"
+        ],
+        "summary": "Health Check",
+        "description": "Get API health status",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Health status"
+          }
+        }
+      }
+    },
+    "/integrations": {
+      "get": {
+        "tags": [
+          "Integrations"
+        ],
+        "summary": "List Integrations",
+        "description": "Get list of configured integrations",
+        "operationId": "listIntegrations",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Filter by type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "description": "Filter by provider",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "enabled",
+            "in": "query",
+            "description": "Filter by enabled status",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Integration list"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Integrations"
+        ],
+        "summary": "Create Integration",
+        "description": "Create a new integration",
+        "operationId": "createIntegration",
+        "requestBody": {
+          "description": "Integration config",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "config": {
+                    "type": "object"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "provider"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Integration created"
+          }
+        }
+      }
+    },
+    "/integrations/{integration_id}": {
+      "put": {
+        "tags": [
+          "Integrations"
+        ],
+        "summary": "Update Integration",
+        "description": "Update an integration",
+        "operationId": "updateIntegration",
+        "parameters": [
+          {
+            "name": "integration_id",
+            "in": "path",
+            "description": "Integration ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Updated integration data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "config": {
+                    "type": "object"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Integration updated"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Integrations"
+        ],
+        "summary": "Delete Integration",
+        "description": "Delete an integration",
+        "operationId": "deleteIntegration",
+        "parameters": [
+          {
+            "name": "integration_id",
+            "in": "path",
+            "description": "Integration ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Integration deleted"
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "tags": [
+          "Health \u0026 Monitoring"
+        ],
+        "summary": "Get Metrics",
+        "description": "Get API metrics and statistics",
+        "operationId": "metrics",
+        "responses": {
+          "200": {
+            "description": "API metrics"
+          }
+        }
+      }
+    },
+    "/notifications": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "List Notifications",
+        "description": "Get notifications for the current user",
+        "operationId": "listNotifications",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Filter by type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "read",
+            "in": "query",
+            "description": "Filter by read status",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Items per page",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Items to skip",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification list"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Create Notification",
+        "description": "Create a notification for a user",
+        "operationId": "createNotification",
+        "requestBody": {
+          "description": "Notification data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "info",
+                      "warning",
+                      "error",
+                      "success"
+                    ]
+                  },
+                  "user_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "user_id",
+                  "type",
+                  "title",
+                  "message"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Notification created"
+          }
+        }
+      }
+    },
+    "/notifications/{notification_id}": {
+      "delete": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Delete Notification",
+        "description": "Delete a notification",
+        "operationId": "deleteNotification",
+        "parameters": [
+          {
+            "name": "notification_id",
+            "in": "path",
+            "description": "Notification ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Notification deleted"
+          }
+        }
+      }
+    },
+    "/notifications/{notification_id}/mark-read": {
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Mark Notification as Read",
+        "description": "Mark a notification as read",
+        "operationId": "markNotificationRead",
+        "parameters": [
+          {
+            "name": "notification_id",
+            "in": "path",
+            "description": "Notification ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification updated"
+          }
+        }
+      }
+    },
+    "/sessions": {
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "List Sessions",
+        "description": "List active sessions for the current user",
+        "operationId": "listSessions",
+        "responses": {
+          "200": {
+            "description": "Session list"
+          }
+        }
+      }
+    },
+    "/sessions/{session_id}": {
+      "delete": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Delete Session",
+        "description": "Invalidate a session (logout)",
+        "operationId": "deleteSession",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "description": "Session ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Session deleted"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorLog": {
+        "type": "object",
+        "title": "ErrorLog",
+        "description": "Error log entry",
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "error_type": {
+            "type": "string",
+            "description": "Type of error",
+            "example": "runtime_error"
+          },
+          "id": {
+            "type": "string",
+            "description": "Error ID"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "severity": {
+            "type": "string",
+            "description": "Error severity level",
+            "example": "high",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low",
+              "info"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "description": "Source of the error"
+          },
+          "stack_trace": {
+            "type": "string",
+            "description": "Stack trace of the error"
+          },
+          "status": {
+            "type": "string",
+            "description": "Error status",
+            "example": "new",
+            "enum": [
+              "new",
+              "acknowledged",
+              "resolved"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "error_type",
+          "message",
+          "severity",
+          "created_at"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "title": "ErrorResponse",
+        "description": "Standard error response",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code identifier",
+            "example": "INTERNAL_ERROR"
+          },
+          "details": {
+            "type": "object",
+            "description": "Additional error details",
+            "properties": {
+              "validation": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable error message",
+            "example": "An unexpected error occurred"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "EventLog": {
+        "type": "object",
+        "title": "EventLog",
+        "description": "Event log entry",
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "data": {
+            "type": "object",
+            "description": "Event data payload"
+          },
+          "event_type": {
+            "type": "string",
+            "description": "Type of event",
+            "example": "user_action"
+          },
+          "id": {
+            "type": "string",
+            "description": "Event ID"
+          },
+          "project_id": {
+            "type": "string",
+            "description": "Project ID associated with event"
+          },
+          "source": {
+            "type": "string",
+            "description": "Event source",
+            "example": "api"
+          },
+          "user_id": {
+            "type": "string",
+            "description": "User ID associated with event"
+          }
+        },
+        "required": [
+          "id",
+          "event_type",
+          "source",
+          "created_at"
+        ]
+      },
+      "HealthCheckResponse": {
+        "type": "object",
+        "title": "HealthCheckResponse",
+        "description": "Health check response",
+        "properties": {
+          "components": {
+            "type": "object",
+            "properties": {
+              "cache": {
+                "type": "string",
+                "description": "Cache status",
+                "example": "healthy"
+              },
+              "database": {
+                "type": "string",
+                "description": "Database status",
+                "example": "healthy"
+              },
+              "external_services": {
+                "type": "string",
+                "description": "External services status",
+                "example": "degraded"
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "description": "Overall health status",
+            "example": "healthy",
+            "enum": [
+              "healthy",
+              "degraded",
+              "unhealthy"
+            ]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Health check timestamp"
+          }
+        },
+        "required": [
+          "status",
+          "timestamp"
+        ]
+      },
+      "HealthStatus": {
+        "type": "string",
+        "enum": [
+          "healthy",
+          "degraded",
+          "unhealthy"
+        ]
+      },
+      "Integration": {
+        "type": "object",
+        "title": "Integration",
+        "description": "Third-party integration",
+        "properties": {
+          "config": {
+            "type": "object",
+            "description": "Integration configuration"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether integration is enabled"
+          },
+          "id": {
+            "type": "string",
+            "description": "Integration ID"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Integration provider",
+            "example": "slack"
+          },
+          "type": {
+            "type": "string",
+            "description": "Integration type",
+            "example": "slack"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "provider"
+        ]
+      },
+      "Notification": {
+        "type": "object",
+        "title": "Notification",
+        "description": "User notification",
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "id": {
+            "type": "string",
+            "description": "Notification ID"
+          },
+          "message": {
+            "type": "string",
+            "description": "Notification message"
+          },
+          "read": {
+            "type": "boolean",
+            "description": "Whether notification has been read"
+          },
+          "title": {
+            "type": "string",
+            "description": "Notification title"
+          },
+          "type": {
+            "type": "string",
+            "description": "Notification type",
+            "enum": [
+              "info",
+              "warning",
+              "error",
+              "success"
+            ]
+          },
+          "user_id": {
+            "type": "string",
+            "description": "User ID"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "type",
+          "title",
+          "message"
+        ]
+      },
+      "PaginatedResponse": {
+        "type": "object",
+        "title": "PaginatedResponse",
+        "description": "Paginated list response",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "List of items",
+            "items": {
+              "type": "object"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "description": "Number of items per page",
+                "example": 20
+              },
+              "offset": {
+                "type": "integer",
+                "description": "Number of items skipped",
+                "example": 0
+              },
+              "pages": {
+                "type": "integer",
+                "description": "Total number of pages",
+                "example": 5
+              },
+              "total": {
+                "type": "integer",
+                "description": "Total number of items",
+                "example": 100
+              }
+            }
+          }
+        },
+        "required": [
+          "data",
+          "pagination"
+        ]
+      },
+      "Timestamp": {
+        "type": "string",
+        "format": "date-time",
+        "description": "ISO 8601 timestamp",
+        "example": "2024-02-17T12:00:00Z"
+      },
+      "UUID": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID identifier",
+        "example": "550e8400-e29b-41d4-a716-446655440000"
+      },
+      "User": {
+        "type": "object",
+        "title": "User",
+        "description": "User object",
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User email",
+            "example": "admin@example.com"
+          },
+          "id": {
+            "type": "string",
+            "description": "User ID",
+            "example": "user-123"
+          },
+          "role": {
+            "type": "string",
+            "description": "User role",
+            "example": "admin",
+            "enum": [
+              "admin",
+              "user",
+              "guest"
+            ]
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          },
+          "username": {
+            "type": "string",
+            "description": "Username",
+            "example": "architect"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "email",
+          "role"
+        ]
+      },
+      "Webhook": {
+        "type": "object",
+        "title": "Webhook",
+        "description": "Webhook subscription",
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "description": "Whether webhook is active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "event_type": {
+            "type": "string",
+            "description": "Event type to trigger webhook",
+            "example": "event_log.created"
+          },
+          "headers": {
+            "type": "object",
+            "description": "Custom headers to include in webhook requests"
+          },
+          "id": {
+            "type": "string",
+            "description": "Webhook ID"
+          },
+          "retry_policy": {
+            "type": "object",
+            "properties": {
+              "max_retries": {
+                "type": "integer",
+                "description": "Maximum number of retries"
+              },
+              "retry_delay_seconds": {
+                "type": "integer",
+                "description": "Delay between retries in seconds"
+              }
+            }
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Webhook URL",
+            "example": "https://example.com/webhooks/events"
+          }
+        },
+        "required": [
+          "id",
+          "event_type",
+          "url"
+        ]
+      }
+    },
+    "securitySchemes": {
+      "bearerToken": {
+        "type": "http",
+        "description": "Bearer token authentication",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "sessionCookie": {
+        "type": "apiKey",
+        "description": "Session cookie set after login",
+        "name": "session",
+        "in": "cookie"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "User authentication and session management"
+    },
+    {
+      "name": "Events",
+      "description": "Event tracking and audit logging"
+    },
+    {
+      "name": "Errors",
+      "description": "Error tracking and aggregation"
+    },
+    {
+      "name": "Notifications",
+      "description": "User notifications and alerts"
+    },
+    {
+      "name": "Sessions",
+      "description": "Session tracking and management"
+    },
+    {
+      "name": "Integrations",
+      "description": "Third-party integrations"
+    },
+    {
+      "name": "Health \u0026 Monitoring",
+      "description": "Health checks and metrics"
+    }
+  ]
+}

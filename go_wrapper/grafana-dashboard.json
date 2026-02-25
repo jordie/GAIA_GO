@@ -1,0 +1,95 @@
+{
+  "dashboard": {
+    "title": "Go Wrapper - Agent Monitoring",
+    "tags": ["go-wrapper", "agents", "monitoring"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "Active Agents",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "go_wrapper_agents_running",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4}
+      },
+      {
+        "title": "Total Events",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "go_wrapper_events_total",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4}
+      },
+      {
+        "title": "Extractions",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "go_wrapper_extractions_total",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"x": 12, "y": 0, "w": 6, "h": 4}
+      },
+      {
+        "title": "Events Per Second",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(go_wrapper_events_total[1m])",
+            "refId": "A",
+            "legendFormat": "Events/sec"
+          }
+        ],
+        "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8}
+      },
+      {
+        "title": "Extractions by Type",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "go_wrapper_extractions_by_type",
+            "refId": "A",
+            "legendFormat": "{{type}}"
+          }
+        ],
+        "gridPos": {"x": 12, "y": 4, "w": 12, "h": 8}
+      },
+      {
+        "title": "Agent Log Lines",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "go_wrapper_agent_log_lines",
+            "refId": "A",
+            "legendFormat": "{{agent}}"
+          }
+        ],
+        "gridPos": {"x": 0, "y": 12, "w": 12, "h": 8}
+      },
+      {
+        "title": "Agent Extractions",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "go_wrapper_agent_extractions",
+            "refId": "A",
+            "legendFormat": "{{agent}}"
+          }
+        ],
+        "gridPos": {"x": 12, "y": 12, "w": 12, "h": 8}
+      }
+    ],
+    "refresh": "5s",
+    "time": {
+      "from": "now-15m",
+      "to": "now"
+    }
+  }
+}

@@ -1,0 +1,498 @@
+{
+  "id": "llm_full_lifecycle",
+  "name": "LLM Full Lifecycle Test",
+  "description": "Comprehensive test covering code generation, deployment, UI testing, and cleanup",
+  "target_service": "generated_app",
+  "tags": ["llm", "e2e", "deployment", "cleanup"],
+  "parallel": false,
+  "stop_on_failure": false,
+
+  "global_variables": {
+    "provider": "${LLM_PROVIDER}",
+    "test_run_id": "${TEST_RUN_ID}",
+    "app_name": "calculator",
+    "app_port": "5000",
+    "output_dir": "/tmp/llm_test_${provider}_${test_run_id}",
+    "deploy_url": "http://localhost:${app_port}",
+    "max_lines": 1000,
+    "test_user": "testuser",
+    "test_password": "testpass123"
+  },
+
+  "global_setup": [
+    {
+      "type": "store",
+      "target": "start_time",
+      "value": "${timestamp}",
+      "description": "Record test start time"
+    }
+  ],
+
+  "global_teardown": [
+    {
+      "type": "store",
+      "target": "end_time",
+      "value": "${timestamp}",
+      "description": "Record test end time"
+    }
+  ],
+
+  "test_cases": [
+    {
+      "id": "code_generation",
+      "name": "Code Generation",
+      "description": "Generate application code using LLM provider",
+      "tags": ["generation"],
+      "variables": {
+        "prompt": "Create a simple Calculator web application in ${output_dir} with:\\n\\nFiles to create:\\n1. calculator.html - Main HTML page with calculator interface\\n2. calculator.js - JavaScript for calculator logic\\n3. calculator.css - Styling\\n4. app.py - Python Flask API backend with /calculate endpoint\\n5. test_api.py - API tests\\n6. README.md - Setup and usage instructions\\n7. requirements.txt - Python dependencies\\n\\nRequirements:\\n- Basic arithmetic operations (add, subtract, multiply, divide)\\n- Display calculation history (last 5 calculations)\\n- Clear button to reset\\n- Responsive design\\n- User login (username/password, session management)\\n- API endpoint POST /calculate {operation, a, b}\\n- Keep it simple and functional\\n- Total implementation under ${max_lines} lines\\n\\nGenerate ALL files now in ${output_dir}."
+      },
+      "steps": [
+        {
+          "type": "api_post",
+          "target": "http://localhost:8080/api/assigner/send",
+          "value": {
+            "content": "${prompt}",
+            "priority": 10,
+            "target_session": "${provider}",
+            "timeout_minutes": 5,
+            "metadata": {"test_run_id": "${test_run_id}"}
+          },
+          "description": "Send generation request to LLM provider"
+        },
+        {
+          "type": "wait",
+          "value": 5,
+          "description": "Wait for generation to start"
+        },
+        {
+          "type": "wait_for",
+          "target": "generation_complete",
+          "options": {"max_wait": 300, "check_interval": 5},
+          "description": "Wait for code generation (max 5 minutes)"
+        },
+        {
+          "type": "assert_element",
+          "target": "${output_dir}",
+          "description": "Verify output directory exists"
+        }
+      ]
+    },
+
+    {
+      "id": "sop_compliance",
+      "name": "SOP Compliance Check",
+      "description": "Verify generated code meets SOP requirements",
+      "tags": ["validation", "sop"],
+      "steps": [
+        {
+          "type": "extract",
+          "target": "file_list",
+          "value": "${output_dir}/*",
+          "description": "Get list of generated files"
+        },
+        {
+          "type": "assert_element",
+          "target": "${output_dir}/calculator.html",
+          "description": "Verify calculator.html exists"
+        },
+        {
+          "type": "assert_element",
+          "target": "${output_dir}/calculator.js",
+          "description": "Verify calculator.js exists"
+        },
+        {
+          "type": "assert_element",
+          "target": "${output_dir}/calculator.css",
+          "description": "Verify calculator.css exists"
+        },
+        {
+          "type": "assert_element",
+          "target": "${output_dir}/app.py",
+          "description": "Verify app.py exists"
+        },
+        {
+          "type": "extract",
+          "target": "total_lines",
+          "value": "count_lines(${output_dir})",
+          "description": "Count total lines of code"
+        },
+        {
+          "type": "compare",
+          "target": "total_lines",
+          "value": "${max_lines}",
+          "options": {"operator": "<="},
+          "description": "Verify code is under line limit"
+        }
+      ]
+    },
+
+    {
+      "id": "deployment",
+      "name": "Deploy Application",
+      "description": "Deploy generated application to test environment",
+      "tags": ["deployment"],
+      "steps": [
+        {
+          "type": "api_post",
+          "target": "http://localhost:8080/api/tasks",
+          "value": {
+            "type": "shell",
+            "data": {
+              "command": "cd ${output_dir} && pip install -r requirements.txt && python3 app.py &"
+            },
+            "metadata": {"test_run_id": "${test_run_id}", "phase": "deployment"}
+          },
+          "description": "Install dependencies and start application"
+        },
+        {
+          "type": "wait",
+          "value": 5,
+          "description": "Wait for application to start"
+        },
+        {
+          "type": "api_get",
+          "target": "${deploy_url}/health",
+          "description": "Check application health endpoint"
+        },
+        {
+          "type": "assert_status",
+          "value": 200,
+          "description": "Verify application is running"
+        },
+        {
+          "type": "store",
+          "target": "app_pid",
+          "value": "${_response.headers.X-Process-Id}",
+          "optional": true,
+          "description": "Store application PID for cleanup"
+        }
+      ]
+    },
+
+    {
+      "id": "data_isolation",
+      "name": "Data Isolation Verification",
+      "description": "Verify test environment has independent data",
+      "tags": ["data", "isolation"],
+      "steps": [
+        {
+          "type": "api_get",
+          "target": "${deploy_url}/api/data/count",
+          "description": "Check initial data count"
+        },
+        {
+          "type": "assert_json",
+          "target": "count",
+          "value": 0,
+          "description": "Verify no existing data"
+        },
+        {
+          "type": "api_post",
+          "target": "${deploy_url}/api/data",
+          "value": {"test": "isolation_check"},
+          "description": "Create test data"
+        },
+        {
+          "type": "api_get",
+          "target": "${deploy_url}/api/data/count",
+          "description": "Check data count after creation"
+        },
+        {
+          "type": "assert_json",
+          "target": "count",
+          "value": 1,
+          "description": "Verify data was created in isolated environment"
+        }
+      ]
+    },
+
+    {
+      "id": "ui_login_flow",
+      "name": "UI: Login Flow",
+      "description": "Test user login and session management",
+      "tags": ["ui", "login", "session"],
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${deploy_url}",
+          "description": "Navigate to application"
+        },
+        {
+          "type": "wait_for",
+          "target": "input[name='username'], #username",
+          "description": "Wait for login form"
+        },
+        {
+          "type": "screenshot",
+          "value": "login_page_${provider}.png",
+          "description": "Capture login page"
+        },
+        {
+          "type": "fill",
+          "target": "input[name='username'], #username",
+          "value": "${test_user}",
+          "description": "Enter username"
+        },
+        {
+          "type": "fill",
+          "target": "input[name='password'], #password",
+          "value": "${test_password}",
+          "description": "Enter password"
+        },
+        {
+          "type": "click",
+          "target": "button[type='submit'], .login-btn, input[type='submit']",
+          "description": "Click login button"
+        },
+        {
+          "type": "wait_for",
+          "target": ".calculator, #calculator, .main-content",
+          "timeout": 10,
+          "description": "Wait for calculator interface"
+        },
+        {
+          "type": "assert_url",
+          "value": "dashboard|calculator|main",
+          "description": "Verify redirected to main application"
+        },
+        {
+          "type": "screenshot",
+          "value": "logged_in_${provider}.png",
+          "description": "Capture logged-in state"
+        }
+      ]
+    },
+
+    {
+      "id": "ui_calculator_operations",
+      "name": "UI: Calculator Operations",
+      "description": "Test calculator functionality",
+      "tags": ["ui", "calculator", "operations"],
+      "steps": [
+        {
+          "type": "click",
+          "target": "button:has-text('7'), .btn-7, [data-value='7']",
+          "description": "Click 7"
+        },
+        {
+          "type": "click",
+          "target": "button:has-text('+'), .btn-add, [data-operator='add']",
+          "description": "Click +"
+        },
+        {
+          "type": "click",
+          "target": "button:has-text('3'), .btn-3, [data-value='3']",
+          "description": "Click 3"
+        },
+        {
+          "type": "click",
+          "target": "button:has-text('='), .btn-equals, [data-action='calculate']",
+          "description": "Click ="
+        },
+        {
+          "type": "wait",
+          "value": 1,
+          "description": "Wait for calculation"
+        },
+        {
+          "type": "assert_text",
+          "target": ".display, #display, .result",
+          "value": "10",
+          "description": "Verify result is 10"
+        },
+        {
+          "type": "screenshot",
+          "value": "calculation_result_${provider}.png",
+          "description": "Capture calculation result"
+        },
+        {
+          "type": "assert_element",
+          "target": ".history, #history, .calculation-history",
+          "description": "Verify history panel exists"
+        },
+        {
+          "type": "assert_text",
+          "target": ".history, #history",
+          "value": "7 + 3 = 10",
+          "description": "Verify history shows calculation"
+        }
+      ]
+    },
+
+    {
+      "id": "ui_session_persistence",
+      "name": "UI: Session Persistence",
+      "description": "Test session management across page refreshes",
+      "tags": ["ui", "session", "persistence"],
+      "steps": [
+        {
+          "type": "extract",
+          "target": ".history, #history",
+          "value": "history_before",
+          "description": "Extract history before refresh"
+        },
+        {
+          "type": "navigate",
+          "target": "${deploy_url}",
+          "description": "Refresh page"
+        },
+        {
+          "type": "wait_for",
+          "target": ".calculator, #calculator",
+          "description": "Wait for calculator to load"
+        },
+        {
+          "type": "assert_element",
+          "target": ".calculator, #calculator",
+          "description": "Verify still logged in (not redirected to login)"
+        },
+        {
+          "type": "extract",
+          "target": ".history, #history",
+          "value": "history_after",
+          "description": "Extract history after refresh"
+        },
+        {
+          "type": "compare",
+          "target": "history_before",
+          "value": "${history_after}",
+          "options": {"operator": "=="},
+          "description": "Verify history persisted across refresh"
+        }
+      ]
+    },
+
+    {
+      "id": "api_calculate_endpoint",
+      "name": "API: Calculate Endpoint",
+      "description": "Test API calculation endpoint",
+      "tags": ["api", "calculator"],
+      "steps": [
+        {
+          "type": "api_post",
+          "target": "${deploy_url}/api/calculate",
+          "value": {
+            "operation": "add",
+            "a": 15,
+            "b": 25
+          },
+          "description": "Send calculation request"
+        },
+        {
+          "type": "assert_status",
+          "value": 200,
+          "description": "Verify success response"
+        },
+        {
+          "type": "assert_json",
+          "target": "result",
+          "value": 40,
+          "description": "Verify calculation result"
+        },
+        {
+          "type": "api_post",
+          "target": "${deploy_url}/api/calculate",
+          "value": {
+            "operation": "multiply",
+            "a": 6,
+            "b": 7
+          },
+          "description": "Test multiplication"
+        },
+        {
+          "type": "assert_json",
+          "target": "result",
+          "value": 42,
+          "description": "Verify multiplication result"
+        },
+        {
+          "type": "api_post",
+          "target": "${deploy_url}/api/calculate",
+          "value": {
+            "operation": "divide",
+            "a": 10,
+            "b": 0
+          },
+          "description": "Test division by zero"
+        },
+        {
+          "type": "assert_status",
+          "value": 400,
+          "description": "Verify error response for division by zero"
+        }
+      ]
+    },
+
+    {
+      "id": "cleanup",
+      "name": "Cleanup Deployment",
+      "description": "Clean up test environment",
+      "tags": ["cleanup"],
+      "steps": [
+        {
+          "type": "api_post",
+          "target": "http://localhost:8080/api/tasks",
+          "value": {
+            "type": "shell",
+            "data": {
+              "command": "kill ${app_pid} 2>/dev/null || pkill -f 'python3 ${output_dir}/app.py'"
+            },
+            "metadata": {"test_run_id": "${test_run_id}", "phase": "cleanup"}
+          },
+          "optional": true,
+          "description": "Stop application process"
+        },
+        {
+          "type": "wait",
+          "value": 2,
+          "description": "Wait for process to terminate"
+        },
+        {
+          "type": "api_post",
+          "target": "http://localhost:8080/api/tasks",
+          "value": {
+            "type": "shell",
+            "data": {
+              "command": "rm -rf ${output_dir}"
+            },
+            "metadata": {"test_run_id": "${test_run_id}", "phase": "cleanup"}
+          },
+          "description": "Delete output directory"
+        },
+        {
+          "type": "wait",
+          "value": 1,
+          "description": "Wait for cleanup to complete"
+        }
+      ]
+    },
+
+    {
+      "id": "cleanup_verification",
+      "name": "Verify Cleanup",
+      "description": "Verify environment is clean for next test",
+      "tags": ["cleanup", "verification"],
+      "steps": [
+        {
+          "type": "api_get",
+          "target": "${deploy_url}/health",
+          "optional": true,
+          "description": "Try to reach application (should fail)"
+        },
+        {
+          "type": "compare",
+          "target": "_status",
+          "value": 200,
+          "options": {"operator": "!="},
+          "description": "Verify application is no longer running"
+        },
+        {
+          "type": "assert_element",
+          "target": "${output_dir}",
+          "options": {"should_exist": false},
+          "description": "Verify output directory was deleted"
+        }
+      ]
+    }
+  ]
+}

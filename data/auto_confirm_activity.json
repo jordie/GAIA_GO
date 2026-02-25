@@ -1,0 +1,96 @@
+{
+  "prompts": [
+    {
+      "timestamp": "2026-02-14T19:08:21.388259",
+      "prompt": "Read file: data/ethiopia/ethiopia_prompts.json",
+      "action": "auto_approved",
+      "reasoning": "Safe read operation",
+      "tool": "read",
+      "risk_level": "safe",
+      "command": null
+    },
+    {
+      "timestamp": "2026-02-14T19:08:21.388549",
+      "prompt": "Bash command: ls -la",
+      "action": "auto_approved",
+      "reasoning": "Safe listing command",
+      "tool": "bash",
+      "risk_level": "low",
+      "command": "ls -la"
+    },
+    {
+      "timestamp": "2026-02-14T19:08:21.388674",
+      "prompt": "Write file: test.txt",
+      "action": "manually_confirmed",
+      "reasoning": "File write requires confirmation",
+      "tool": "write",
+      "risk_level": "medium",
+      "command": null
+    },
+    {
+      "timestamp": "2026-02-14T19:08:21.388795",
+      "prompt": "Bash command: rm -rf /",
+      "action": "rejected",
+      "reasoning": "Dangerous command blocked",
+      "tool": "bash",
+      "risk_level": "low",
+      "command": "rm -rf /"
+    },
+    {
+      "timestamp": "2026-02-14T19:08:21.388898",
+      "prompt": "Glob pattern: **/*.py",
+      "action": "auto_approved",
+      "reasoning": "Safe file pattern search",
+      "tool": "glob",
+      "risk_level": "safe",
+      "command": null
+    },
+    {
+      "timestamp": "2026-02-14T19:08:21.388992",
+      "prompt": "Edit file: config.py",
+      "action": "manually_confirmed",
+      "reasoning": "Code edit needs review",
+      "tool": "edit",
+      "risk_level": "medium",
+      "command": null
+    },
+    {
+      "timestamp": "2026-02-14T19:08:21.389112",
+      "prompt": "WebSearch: Ethiopia travel tips",
+      "action": "auto_approved",
+      "reasoning": "Safe web search",
+      "tool": "websearch",
+      "risk_level": "safe",
+      "command": null
+    },
+    {
+      "timestamp": "2026-02-14T19:08:21.389261",
+      "prompt": "Task: Deploy to production",
+      "action": "manually_confirmed",
+      "reasoning": "Deployment needs approval",
+      "tool": "task",
+      "risk_level": "safe",
+      "command": null
+    }
+  ],
+  "stats": {
+    "total_prompts": 8,
+    "auto_approved": 4,
+    "manually_confirmed": 3,
+    "rejected": 1,
+    "by_tool": {
+      "read": 1,
+      "bash": 2,
+      "write": 1,
+      "glob": 1,
+      "edit": 1,
+      "websearch": 1,
+      "task": 1
+    },
+    "by_risk_level": {
+      "safe": 4,
+      "low": 2,
+      "medium": 2
+    }
+  }
+}

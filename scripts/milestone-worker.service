@@ -1,0 +1,17 @@
+[Unit]
+Description=Architect Milestone Planning Worker
+After=network.target
+
+[Service]
+Type=forking
+User=jgirmay
+WorkingDirectory=/Users/jgirmay/Desktop/gitrepo/pyWork/architect
+Environment="TAILSCALE_IP=100.112.58.92"
+Environment="ARCHITECT_URL=http://100.112.58.92:8080"
+ExecStart=/usr/bin/python3 /Users/jgirmay/Desktop/gitrepo/pyWork/architect/workers/milestone_worker.py --daemon
+PIDFile=/tmp/architect_milestone_worker.pid
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

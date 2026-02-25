@@ -1,0 +1,11 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: architect-go-pdb
+  labels:
+    app: architect-go
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: architect-go

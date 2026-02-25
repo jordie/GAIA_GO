@@ -1,0 +1,220 @@
+{
+  "version": "1.0",
+  "description": "Process supervision configuration for critical services",
+  "global": {
+    "check_interval": 30,
+    "restart_delay": 5,
+    "max_restart_attempts": 3,
+    "restart_backoff": "exponential",
+    "alert_on_failure": true,
+    "log_directory": "/tmp/supervisor_logs",
+    "pid_directory": "/tmp/supervisor_pids"
+  },
+  "services": {
+    "architect-prod": {
+      "enabled": true,
+      "priority": 1,
+      "critical": true,
+      "name": "Architect Dashboard (Production)",
+      "description": "Main project management dashboard",
+      "command": "python3",
+      "args": [
+        "/Users/jgirmay/Desktop/gitrepo/pyWork/architect/app.py",
+        "--port",
+        "8080",
+        "--host",
+        "0.0.0.0"
+      ],
+      "working_directory": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect",
+      "environment": {
+        "APP_ENV": "prod",
+        "PORT": "8080",
+        "PYTHONUNBUFFERED": "1"
+      },
+      "health_check": {
+        "type": "http",
+        "endpoint": "http://localhost:8080/health",
+        "interval": 30,
+        "timeout": 10,
+        "expected_status": 200,
+        "expected_content": "healthy"
+      },
+      "restart_policy": {
+        "max_retries": 5,
+        "retry_delay": 10,
+        "backoff_multiplier": 2,
+        "max_backoff": 300
+      },
+      "resource_limits": {
+        "max_memory_mb": 1024,
+        "max_cpu_percent": 80
+      },
+      "auto_restart": true,
+      "restart_on_failure": true,
+      "restart_on_exit": true,
+      "graceful_shutdown": {
+        "enabled": true,
+        "timeout": 30,
+        "signal": "SIGTERM"
+      },
+      "dependencies": []
+    },
+    "architect-qa": {
+      "enabled": true,
+      "priority": 2,
+      "critical": false,
+      "name": "Architect Dashboard (QA)",
+      "description": "QA environment dashboard",
+      "command": "python3",
+      "args": [
+        "/Users/jgirmay/Desktop/gitrepo/pyWork/architect/app.py",
+        "--port",
+        "8081",
+        "--host",
+        "0.0.0.0"
+      ],
+      "working_directory": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect",
+      "environment": {
+        "APP_ENV": "qa",
+        "PORT": "8081",
+        "PYTHONUNBUFFERED": "1"
+      },
+      "health_check": {
+        "type": "http",
+        "endpoint": "http://localhost:8081/health",
+        "interval": 30,
+        "timeout": 10,
+        "expected_status": 200
+      },
+      "restart_policy": {
+        "max_retries": 3,
+        "retry_delay": 5,
+        "backoff_multiplier": 1.5,
+        "max_backoff": 120
+      },
+      "auto_restart": true,
+      "restart_on_failure": true,
+      "restart_on_exit": false,
+      "dependencies": []
+    },
+    "reading-app": {
+      "enabled": true,
+      "priority": 1,
+      "critical": true,
+      "name": "Reading App (Production)",
+      "description": "Educational reading application",
+      "command": "python3",
+      "args": [
+        "/Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final/unified_app.py",
+        "--port",
+        "5063"
+      ],
+      "working_directory": "/Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final",
+      "environment": {
+        "APP_ENV": "prod",
+        "PORT": "5063",
+        "PYTHONUNBUFFERED": "1"
+      },
+      "health_check": {
+        "type": "http",
+        "endpoint": "http://localhost:5063/health",
+        "interval": 30,
+        "timeout": 10,
+        "expected_status": 200
+      },
+      "restart_policy": {
+        "max_retries": 5,
+        "retry_delay": 10,
+        "backoff_multiplier": 2,
+        "max_backoff": 300
+      },
+      "resource_limits": {
+        "max_memory_mb": 512,
+        "max_cpu_percent": 70
+      },
+      "auto_restart": true,
+      "restart_on_failure": true,
+      "restart_on_exit": true,
+      "graceful_shutdown": {
+        "enabled": true,
+        "timeout": 30,
+        "signal": "SIGTERM"
+      },
+      "dependencies": []
+    },
+    "pharma": {
+      "enabled": false,
+      "priority": 1,
+      "critical": true,
+      "name": "Pharmacy System",
+      "description": "Selam Pharmacy management system",
+      "command": "python3",
+      "args": [
+        "/Users/jgirmay/Desktop/gitrepo/pyWork/selam_pharmacy/app.py"
+      ],
+      "working_directory": "/Users/jgirmay/Desktop/gitrepo/pyWork/selam_pharmacy",
+      "environment": {
+        "APP_ENV": "prod",
+        "PORT": "7085",
+        "HOST": "0.0.0.0",
+        "PYTHONUNBUFFERED": "1"
+      },
+      "health_check": {
+        "type": "http",
+        "endpoint": "http://localhost:7085/health",
+        "interval": 30,
+        "timeout": 10,
+        "expected_status": 200,
+        "fallback_check": {
+          "type": "tcp",
+          "port": 7085
+        }
+      },
+      "restart_policy": {
+        "max_retries": 5,
+        "retry_delay": 15,
+        "backoff_multiplier": 2,
+        "max_backoff": 300
+      },
+      "resource_limits": {
+        "max_memory_mb": 512,
+        "max_cpu_percent": 70
+      },
+      "auto_restart": true,
+      "restart_on_failure": true,
+      "restart_on_exit": true,
+      "graceful_shutdown": {
+        "enabled": true,
+        "timeout": 30,
+        "signal": "SIGTERM"
+      },
+      "dependencies": []
+    }
+  },
+  "notifications": {
+    "enabled": true,
+    "channels": {
+      "log": {
+        "enabled": true,
+        "level": "INFO"
+      },
+      "dashboard": {
+        "enabled": true,
+        "url": "http://localhost:8080/api/alerts"
+      },
+      "sms": {
+        "enabled": false,
+        "provider": "dialpad",
+        "numbers": []
+      }
+    }
+  },
+  "monitoring": {
+    "enabled": true,
+    "metrics_interval": 60,
+    "retain_metrics_hours": 168,
+    "dashboards": [
+      "http://localhost:8080"
+    ]
+  }
+}

@@ -1,0 +1,184 @@
+# Task Routing Rules Configuration
+# Version: 1.0
+# Description: Environment routing rules for task assignment to Claude sessions
+
+version: "1.0"
+
+# Environment routing rules based on task type
+environment_routing:
+  ui_improvement:
+    requires_env: true
+    preferred_sessions: ["claude_comet", "codex"]
+    port_range: [6001, 6010]
+    auto_create_env: true
+    merge_via_pr: true
+    priority: 5
+    timeout_minutes: 30
+    max_retries: 3
+    description: "UI/UX improvements and frontend changes"
+
+  performance_optimization:
+    requires_env: true
+    preferred_sessions: ["codex", "dev_worker1"]
+    port_range: [6001, 6010]
+    auto_create_env: true
+    merge_via_pr: true
+    priority: 7
+    timeout_minutes: 60
+    max_retries: 2
+    description: "Performance improvements and optimization"
+
+  bug_fix:
+    requires_env: false  # Use production for faster turnaround
+    preferred_sessions: ["dev_worker2", "codex"]
+    urgent: true
+    merge_via_pr: false
+    priority: 9
+    timeout_minutes: 30
+    max_retries: 3
+    description: "Bug fixes and error resolution"
+
+  feature_development:
+    requires_env: true
+    preferred_sessions: ["dev_worker1", "dev_worker2"]
+    port_range: [6001, 6010]
+    auto_create_env: true
+    merge_via_pr: true
+    priority: 5
+    timeout_minutes: 90
+    max_retries: 2
+    description: "New feature development"
+
+  infrastructure:
+    requires_env: false
+    preferred_sessions: ["architect", "dev_worker1"]
+    urgent: false
+    merge_via_pr: true
+    priority: 3
+    timeout_minutes: 60
+    max_retries: 2
+    description: "Infrastructure and DevOps tasks"
+
+  testing:
+    requires_env: true
+    preferred_sessions: ["qa_tester1", "qa_tester2"]
+    port_range: [6001, 6010]
+    auto_create_env: true
+    merge_via_pr: true
+    priority: 6
+    timeout_minutes: 45
+    max_retries: 3
+    description: "Testing and QA tasks"
+
+  refactoring:
+    requires_env: true
+    preferred_sessions: ["dev_worker1", "codex"]
+    port_range: [6001, 6010]
+    auto_create_env: true
+    merge_via_pr: true
+    priority: 4
+    timeout_minutes: 120
+    max_retries: 2
+    description: "Code refactoring and cleanup"
+
+  documentation:
+    requires_env: false
+    preferred_sessions: ["dev_worker2", "manager1"]
+    urgent: false
+    merge_via_pr: true
+    priority: 2
+    timeout_minutes: 30
+    max_retries: 1
+    description: "Documentation updates"
+
+# Session exclusion list (coordination/monitoring sessions)
+excluded_sessions:
+  - architect        # High-level coordination session
+  - arch_dev         # Development/testing session
+  - manager1         # Task coordination
+  - manager2         # Project management
+  - manager3         # Resource allocation
+
+# Provider configuration
+supported_providers:
+  - name: claude
+    cost_per_1m_tokens: 15.0
+    reliability_score: 0.95
+    max_concurrent_sessions: 10
+
+  - name: codex
+    cost_per_1m_tokens: 3.0
+    reliability_score: 0.90
+    max_concurrent_sessions: 20
+
+  - name: ollama
+    cost_per_1m_tokens: 0.0
+    reliability_score: 0.75
+    max_concurrent_sessions: 5
+
+  - name: comet
+    cost_per_1m_tokens: 5.0
+    reliability_score: 0.85
+    max_concurrent_sessions: 15
+
+  - name: gemini
+    cost_per_1m_tokens: 1.0
+    reliability_score: 0.80
+    max_concurrent_sessions: 25
+
+  - name: grok
+    cost_per_1m_tokens: 2.0
+    reliability_score: 0.82
+    max_concurrent_sessions: 15
+
+# Fallback strategies
+fallback_rules:
+  - condition: "no_sessions_available"
+    action: "queue_task"
+    retry_after_seconds: 60
+    max_queue_size: 100
+    notification: true
+
+  - condition: "all_preferred_sessions_busy"
+    action: "route_to_alternate"
+    alternate_selection: "least_busy"
+
+  - condition: "task_type_unknown"
+    action: "route_to_default"
+    default_session: "dev_worker1"
+
+  - condition: "timeout_exceeded"
+    action: "reassign_task"
+    reassign_to: "alternate_session"
+    max_reassignments: 2
+
+# Session health monitoring
+health_monitoring:
+  enabled: true
+  check_interval_seconds: 30
+  stale_threshold_minutes: 5
+  auto_remove_stale: false
+
+# Load balancing strategy
+load_balancing:
+  strategy: "weighted_round_robin"  # round_robin, least_loaded, weighted, random
+  weights:
+    claude: 10
+    codex: 8
+    gemini: 6
+    ollama: 4
+  max_tasks_per_session: 5
+
+# Environment creation settings
+environment_settings:
+  default_port_range: [6001, 6050]
+  cleanup_after_hours: 24
+  auto_cleanup_on_merge: true
+  branch_prefix: "env"
+
+# Metrics tracking
+metrics:
+  track_routing_decisions: true
+  track_session_utilization: true
+  report_interval_minutes: 15
+  retention_days: 30

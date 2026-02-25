@@ -1,0 +1,92 @@
+{
+  "id": "google_services_tests",
+  "name": "Google Services Extraction",
+  "description": "Extract from Gmail, Google Voice, and Calendar",
+  "target_service": "google",
+  "target_url": "https://accounts.google.com",
+  "tags": ["google", "email", "calendar", "voice", "extraction"],
+
+  "global_variables": {
+    "gmail_url": "https://mail.google.com",
+    "voice_url": "https://voice.google.com",
+    "calendar_url": "https://calendar.google.com"
+  },
+
+  "test_cases": [
+    {
+      "id": "gmail_unread_count",
+      "name": "Gmail Unread Count",
+      "description": "Get count of unread emails",
+      "tags": ["gmail", "extraction"],
+      "credentials": {
+        "google": "google/Google Account"
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${gmail_url}"
+        },
+        {
+          "type": "wait",
+          "value": 5
+        },
+        {
+          "type": "extract",
+          "target": ".aim [data-tooltip*='Inbox']",
+          "value": "unread_count",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "google_voice_messages",
+      "name": "Google Voice Messages",
+      "description": "Get recent voicemails and texts",
+      "tags": ["voice", "extraction"],
+      "credentials": {
+        "google": "google/Google Account"
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${voice_url}/u/0/messages"
+        },
+        {
+          "type": "wait",
+          "value": 3
+        },
+        {
+          "type": "extract",
+          "target": "[data-message-id], .message-row",
+          "value": "messages",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "calendar_today_events",
+      "name": "Today's Calendar Events",
+      "description": "Get today's scheduled events",
+      "tags": ["calendar", "extraction"],
+      "credentials": {
+        "google": "google/Google Account"
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${calendar_url}/r/day"
+        },
+        {
+          "type": "wait",
+          "value": 3
+        },
+        {
+          "type": "extract",
+          "target": "[data-eventid], .event-summary",
+          "value": "today_events",
+          "optional": true
+        }
+      ]
+    }
+  ]
+}

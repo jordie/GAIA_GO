@@ -1,45 +1,118 @@
-# Build artifacts
-build/
-dist/
-*.exe
-*.dll
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
 *.so
-*.dylib
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Test binaries
-*.test
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
 
-# Data and databases
-data/
-*.db
-*.db-shm
-*.db-wal
-
-# Profiling data
-profiling/
-*.prof
-*.pprof
-
-# IDE and editor files
+# IDE
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
-.DS_Store
 
-# Go build and dependency files
-vendor/
-go.sum.bak
+# Database files - DO NOT COMMIT
+data/*/architect.db
+data/architect.db
+data/ticktick_cache.db
+*.db-journal
+*.db-wal
+*.db-shm
 
-# Environment files
-.env
-.env.local
-.env.*.local
+# Keep data directory structure
+!data/.gitkeep
+!data/*/.gitkeep
 
 # Logs
 *.log
+/tmp/
 
-# Temporary files
-*.tmp
+# PID files
+*.pid
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Secrets/credentials
+.env
+.env.*
+secrets.json
+credentials.json
+.config/
+token.json
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+test_results/
+
+# Backup files
 *.bak
+*.backup
+backups/
+
+# SSL certificates (generated)
+*.pem
+*.crt
+*.key
+ssl/
+data/*/server.crt
+data/*/server.key
+
+# Environment-specific data
+data/feature*/
+data/prod/
+data/env*/
+data/locks/
+data/queue/
+data/exports/
+data/command_log.db
+data/response_log.db
+data/task_delegator.db
+data/services.json
+
+# Generated docs
+IMPLEMENTATION_SUMMARY.md
+NAVIGATION_FIX.md
+
+# Data directories (runtime/training data)
+data/extraction/
+data/feedback/
+data/patterns/
+data/status/
+data/training/
+
+# Go wrapper data and config
+go_wrapper/data/feedback/
+go_wrapper/data/training/
+go_wrapper/claude-settings.json
+go_wrapper/config/environment_changes.jsonl
+go_wrapper/config/notifications/
+
+# Local environment config
+.architect_env

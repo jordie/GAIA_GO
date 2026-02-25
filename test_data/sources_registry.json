@@ -1,0 +1,130 @@
+{
+  "description": "Registry of all data sources for automation",
+  "tailscale_ip": "100.112.58.92",
+  "vault_url": "http://100.112.58.92:9000",
+
+  "categories": {
+    "kids_activities": {
+      "description": "Kids sports, classes, and activities",
+      "sources": ["aquatech", "head_over_heels", "starland"]
+    },
+    "healthcare": {
+      "description": "Medical and dental appointments",
+      "sources": ["orthodontist", "dentist", "chiropractor"]
+    },
+    "shopping": {
+      "description": "Online shopping and pharmacy",
+      "sources": ["amazon", "walgreens"]
+    },
+    "communication": {
+      "description": "Email, SMS, and messaging",
+      "sources": ["gmail", "google_voice", "sms"]
+    },
+    "library": {
+      "description": "Library services",
+      "sources": ["alameda_library"]
+    },
+    "education": {
+      "description": "School systems",
+      "sources": ["bentley_canvas"]
+    },
+    "calendar": {
+      "description": "Calendar and scheduling",
+      "sources": ["google_calendar"]
+    }
+  },
+
+  "sources": {
+    "aquatech": {
+      "name": "Aquatech Swimming",
+      "base_url": "https://app.iclasspro.com/portal/aquatech",
+      "category": "kids_activities",
+      "login_type": "multi_step",
+      "data_types": ["class_schedule", "tokens", "enrollments"]
+    },
+    "head_over_heels": {
+      "name": "Head Over Heels Gymnastics",
+      "base_url": "https://app.iclasspro.com/portal/headoverheels",
+      "category": "kids_activities",
+      "login_type": "multi_step",
+      "data_types": ["class_schedule", "enrollments"]
+    },
+    "starland": {
+      "name": "Starland Skating",
+      "base_url": "https://www.starlandskating.com",
+      "category": "kids_activities",
+      "login_type": "standard",
+      "data_types": ["sessions", "bookings"]
+    },
+    "orthodontist": {
+      "name": "Orthodontist",
+      "base_url": null,
+      "category": "healthcare",
+      "login_type": "patient_portal",
+      "data_types": ["appointments", "treatment_plan"]
+    },
+    "dentist": {
+      "name": "Dentist",
+      "base_url": null,
+      "category": "healthcare",
+      "login_type": "patient_portal",
+      "data_types": ["appointments", "reminders"]
+    },
+    "chiropractor": {
+      "name": "Chiropractor",
+      "base_url": null,
+      "category": "healthcare",
+      "login_type": "patient_portal",
+      "data_types": ["appointments"]
+    },
+    "amazon": {
+      "name": "Amazon",
+      "base_url": "https://www.amazon.com",
+      "category": "shopping",
+      "login_type": "2fa",
+      "data_types": ["orders", "subscriptions", "tracking"]
+    },
+    "walgreens": {
+      "name": "Walgreens Pharmacy",
+      "base_url": "https://www.walgreens.com",
+      "category": "shopping",
+      "login_type": "standard",
+      "data_types": ["prescriptions", "refills", "photos"]
+    },
+    "gmail": {
+      "name": "Gmail",
+      "base_url": "https://mail.google.com",
+      "category": "communication",
+      "login_type": "oauth",
+      "data_types": ["unread_count", "important_emails", "labels"]
+    },
+    "google_voice": {
+      "name": "Google Voice",
+      "base_url": "https://voice.google.com",
+      "category": "communication",
+      "login_type": "oauth",
+      "data_types": ["messages", "voicemails", "calls"]
+    },
+    "google_calendar": {
+      "name": "Google Calendar",
+      "base_url": "https://calendar.google.com",
+      "category": "calendar",
+      "login_type": "oauth",
+      "data_types": ["events", "reminders"]
+    },
+    "alameda_library": {
+      "name": "Alameda Free Library",
+      "base_url": "https://vegacatalog.alamedafree.org",
+      "category": "library",
+      "login_type": "standard",
+      "data_types": ["holds", "checkouts", "fines"]
+    },
+    "bentley_canvas": {
+      "name": "Bentley School Canvas",
+      "base_url": "https://bentleyschool.instructure.com",
+      "category": "education",
+      "login_type": "standard",
+      "data_types": ["assignments", "grades", "announcements"]
+    }
+  }
+}

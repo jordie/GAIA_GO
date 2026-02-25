@@ -1,0 +1,1902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- Cache control removed - using background fetch instead -->
+    <title>Basic Edu Apps - Live Task Monitor</title>
+
+    <!-- iOS-specific meta tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Task Monitor">
+    <meta name="format-detection" content="telephone=no">
+
+    <!-- Theme color for browser chrome -->
+    <meta name="theme-color" content="#667eea">
+
+    <!-- Disable iOS call/email auto-detection -->
+    <meta name="format-detection" content="telephone=no, email=no">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 20px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overscroll-behavior: none;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* iOS Safe Area Support */
+        @supports (padding-top: env(safe-area-inset-top)) {
+            body {
+                padding-top: calc(20px + env(safe-area-inset-top));
+                padding-left: calc(20px + env(safe-area-inset-left));
+                padding-right: calc(20px + env(safe-area-inset-right));
+                padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            }
+        }
+
+        /* Error Banner */
+        .error-banner {
+            background: #ef4444;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            animation: slideDown 0.3s;
+        }
+        .success-banner {
+            background: #10b981;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            animation: slideDown 0.3s;
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+        }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 14px; margin-bottom: 15px; }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        .controls button, .controls select {
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+            touch-action: manipulation;
+            min-height: 44px;
+        }
+        .controls button:hover, .controls select:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .controls button:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .controls select {
+            background-image: url('data:image/svg+xml;utf8,<svg fill="white" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 20px;
+            padding-right: 35px;
+        }
+        .controls label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .controls input[type="checkbox"] {
+            cursor: pointer;
+        }
+
+        .tab-bar {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+        .tab-button {
+            padding: 10px 18px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+            color: #e2e8f0;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            min-height: 40px;
+        }
+        .tab-button.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: #fff;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        .stat-card h3 { font-size: 14px; color: #94a3b8; margin-bottom: 8px; }
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .stat-card.updated .value {
+            animation: pulse 0.5s;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); color: #3b82f6; }
+        }
+
+        .tasks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        .task-card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #334155;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .task-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        .task-card.updated {
+            animation: highlight 0.5s;
+        }
+        @keyframes highlight {
+            0%, 100% { border-color: #334155; }
+            50% { border-color: #3b82f6; box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .task-id {
+            background: #3b82f6;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .task-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-working { background: #10b981; color: white; }
+        .status-idle { background: #3b82f6; color: white; }
+        .status-error { background: #ef4444; color: white; }
+        .status-completed { background: #6b7280; color: white; }
+        .status-pending { background: #f59e0b; color: white; }
+
+        .task-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #f1f5f9;
+        }
+        .task-session {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 10px;
+        }
+        .task-session strong { color: #3b82f6; }
+
+        .live-view {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 100%;
+        }
+        .live-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 20px;
+            width: 100%;
+            padding: 20px;
+        }
+        .live-card {
+            background: #111827;
+            border-radius: 12px;
+            padding: 16px;
+            border: 2px solid #1f2937;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.4);
+            transition: all 0.3s ease;
+        }
+        .live-card.active-session {
+            border-color: #10b981;
+            background: linear-gradient(135deg, #111827 0%, #0d2818 100%);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+        .live-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .live-session {
+            font-size: 16px;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+        .live-meta {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .live-badge {
+            padding: 3px 10px;
+            border-radius: 999px;
+            background: #1e293b;
+            color: #e2e8f0;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .live-badge.active {
+            background: #10b981;
+            color: #fff;
+        }
+        .live-output {
+            background: #0b1220;
+            border: 1px solid #1f2937;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            max-height: 320px;
+            overflow: auto;
+            color: #e2e8f0;
+        }
+        .live-task {
+            font-size: 12px;
+            color: #cbd5f5;
+            margin-bottom: 8px;
+        }
+        .live-task strong {
+            color: #f8fafc;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #334155;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            transition: width 0.5s ease;
+            position: relative;
+        }
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .task-step {
+            font-size: 13px;
+            color: #cbd5e1;
+            font-style: italic;
+            margin-top: 10px;
+            padding: 10px;
+            background: #0f172a;
+            border-radius: 4px;
+        }
+
+        .refresh-info {
+            text-align: center;
+            margin-top: 30px;
+            color: #64748b;
+            font-size: 12px;
+        }
+        .refresh-info .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: blink 2s infinite;
+        }
+        .status-dot.connected { background: #10b981; }
+        .status-dot.disconnected { background: #ef4444; }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+        .type-codex { background: #7c3aed; color: white; }
+        .type-claude { background: #059669; color: white; }
+        .type-comet { background: #dc2626; color: white; }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        /* Pull-to-refresh indicator */
+        .pull-to-refresh {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%) translateY(-60px);
+            transition: transform 0.3s;
+            background: rgba(59, 130, 246, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 999;
+            backdrop-filter: blur(10px);
+        }
+        .pull-to-refresh.visible {
+            transform: translateX(-50%) translateY(20px);
+        }
+
+        /* Improved scrolling for iOS */
+        .tasks-grid {
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+        }
+
+        /* Prevent iOS zoom on select */
+        select:focus, button:focus {
+            font-size: 16px !important;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                padding-bottom: calc(10px + env(safe-area-inset-bottom, 20px));
+            }
+            .header h1 { font-size: 20px; }
+            .header p { font-size: 12px; }
+            .tasks-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                padding-bottom: 20px;
+            }
+            .stat-card .value { font-size: 24px; }
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+            .controls button, .controls select, .controls label {
+                width: 100%;
+                justify-content: center;
+                min-height: 48px;
+                font-size: 16px;
+            }
+            .refresh-info {
+                padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .stat-card {
+                padding: 15px;
+            }
+            .stat-card .value { font-size: 20px; }
+            .task-card {
+                padding: 15px;
+            }
+            .header {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+        }
+
+        /* iOS Dark mode status bar */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #0f172a;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Basic Edu Apps - Live Task Monitor</h1>
+        <p id="connection-status">Connecting...</p>
+
+        <div class="controls">
+            <button id="refresh-btn" onclick="loadTasks()">&#8634; Refresh Now</button>
+            <label>
+                <input type="checkbox" id="auto-refresh" onchange="toggleAutoRefresh()">
+                Auto-refresh (30s)
+            </label>
+            <label>
+                <input type="checkbox" id="working-only" onchange="filterSessions()" title="Check to show only active sessions">
+                🔴 Working Only (Show only active sessions)
+            </label>
+            <select id="filter-status" onchange="filterTasks()">
+                <option value="all">All Tasks</option>
+                <option value="pending">Pending</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="failed">Failed</option>
+            </select>
+            <label>
+                <input type="checkbox" id="show-archived" onchange="toggleArchived()">
+                📦 Show Archived
+            </label>
+            <button onclick="bulkArchiveCompleted()">📦 Archive All Completed</button>
+            <button onclick="bulkArchiveFailed()">📦 Archive All Failed</button>
+        </div>
+
+        <div class="tab-bar">
+            <button class="tab-button active" data-tab="tasks">Tasks</button>
+            <button class="tab-button" data-tab="live">Live View</button>
+        </div>
+    </div>
+
+    <div id="tasks-view">
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Total Tasks</h3>
+                <div class="value" id="total-tasks">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>In Progress</h3>
+                <div class="value" id="in-progress">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Completed</h3>
+                <div class="value" id="completed">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Pending</h3>
+                <div class="value" id="pending">-</div>
+            </div>
+        </div>
+
+        <!-- Task Health Alerts -->
+        <div id="health-alerts" style="margin: 20px 0; display: none;">
+            <div style="background: #1e293b; border-radius: 8px; padding: 15px; border-left: 4px solid #f59e0b;">
+                <h3 style="margin-bottom: 12px; color: #f59e0b; font-size: 16px;">⚠️ Tasks Needing Attention</h3>
+                <div id="health-alerts-content"></div>
+            </div>
+        </div>
+
+        <div class="tasks-grid" id="tasks-grid">
+            <div class="loading">Loading tasks</div>
+        </div>
+
+        <div class="refresh-info">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="connection-text">Disconnected</span> •
+            Last updated: <span id="last-update">Never</span>
+        </div>
+    </div>
+
+    <div id="live-view" class="live-view" style="display: none;">
+        <div class="live-grid" id="live-grid">
+            <div class="loading">Loading live sessions</div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefreshEnabled = false; // Disabled by default to prevent aggressive refreshing
+        let autoRefreshInterval = null;
+        let allTasks = [];
+        let currentFilter = 'all';
+        let showArchived = false;
+        let activeTab = 'tasks';
+        let liveRefreshInterval = null;
+        const LIVE_REFRESH_MS = 30000; // 30 seconds - prevents page reload perception
+        const TASK_REFRESH_MS = 30000; // 30 seconds for task refresh
+        let wsConnection = null;
+        let reconnectAttempts = 0;
+        const MAX_RECONNECT_ATTEMPTS = 5;
+        let lastUpdateTime = 0;
+        let updateDebounceTimer = null;
+        const UPDATE_DEBOUNCE_MS = 2000; // Debounce updates to max once per 2 seconds
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('[Monitor] Page loaded - initializing');
+            loadTasks();
+            // Don't start auto-refresh automatically - user must enable it
+            // setupAutoRefresh();
+            setupWebSocket();
+            setupTabs();
+
+            // Setup time-based auto-refresh selector
+            const refreshInterval = document.getElementById('refresh-interval');
+            if (refreshInterval) {
+                refreshInterval.addEventListener('change', (e) => {
+                    const interval = e.target.value;
+                    if (parseInt(interval) > 0) {
+                        setupAutoRefresh(interval);
+                        showBanner(`Auto-refresh set to every ${parseInt(interval) / 1000}s`, 'success');
+                    } else {
+                        stopTasksAutoRefresh();
+                        updateAutoRefreshStatus(false);
+                        showBanner('Auto-refresh disabled', 'success');
+                    }
+                });
+
+                // Start with default interval (5s)
+                setupAutoRefresh('5000');
+            }
+        });
+
+        // WebSocket Setup
+        function setupWebSocket() {
+            try {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/ws/tasks`;
+                wsConnection = new WebSocket(wsUrl);
+
+                wsConnection.onopen = () => {
+                    console.log('WebSocket connected');
+                    updateConnectionStatus(true);
+                    reconnectAttempts = 0;
+                };
+
+                wsConnection.onmessage = (event) => {
+                    try {
+                        const update = JSON.parse(event.data);
+                        handleTaskUpdate(update);
+                    } catch (e) {
+                        console.error('Failed to parse WebSocket message:', e);
+                    }
+                };
+
+                wsConnection.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    updateConnectionStatus(false);
+                };
+
+                wsConnection.onclose = () => {
+                    console.log('WebSocket disconnected');
+                    updateConnectionStatus(false);
+
+                    // Attempt to reconnect
+                    if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                        reconnectAttempts++;
+                        setTimeout(() => {
+                            console.log(`Reconnecting... Attempt ${reconnectAttempts}`);
+                            setupWebSocket();
+                        }, 5000 * reconnectAttempts); // Exponential backoff
+                    }
+                };
+            } catch (e) {
+                console.log('WebSocket not available, using polling');
+                updateConnectionStatus(false);
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const statusDot = document.getElementById('status-dot');
+            const statusText = document.getElementById('connection-text');
+            const connectionStatus = document.getElementById('connection-status');
+
+            if (connected) {
+                statusDot.className = 'status-dot connected';
+                statusText.textContent = 'Live Updates Active';
+                connectionStatus.textContent = 'Real-time monitoring active';
+            } else {
+                statusDot.className = 'status-dot disconnected';
+                statusText.textContent = 'Manual Refresh';
+                connectionStatus.textContent = 'Enable auto-refresh for background updates (30s interval)';
+            }
+        }
+
+        function handleTaskUpdate(update) {
+            const taskIndex = allTasks.findIndex(t => t.id === update.id);
+            if (taskIndex !== -1) {
+                allTasks[taskIndex] = { ...allTasks[taskIndex], ...update };
+            }
+
+            // Debounce UI updates to prevent excessive re-rendering
+            debouncedUIUpdate();
+        }
+
+        function debouncedUIUpdate() {
+            // Clear existing timer
+            if (updateDebounceTimer) {
+                clearTimeout(updateDebounceTimer);
+            }
+
+            // Schedule update after debounce period
+            updateDebounceTimer = setTimeout(() => {
+                const now = Date.now();
+                // Only update if enough time has passed since last update
+                if (now - lastUpdateTime >= UPDATE_DEBOUNCE_MS) {
+                    renderFilteredTasks();
+                    updateStats(allTasks);
+                    lastUpdateTime = now;
+                    console.log('[Monitor] UI updated (debounced)');
+                }
+            }, 500); // Wait 500ms for batching multiple updates
+        }
+
+        function setupTabs() {
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    setActiveTab(button.dataset.tab);
+                });
+            });
+        }
+
+        function setActiveTab(tab) {
+            if (activeTab === tab) return;
+            activeTab = tab;
+
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.toggle('active', button.dataset.tab === tab);
+            });
+
+            const tasksView = document.getElementById('tasks-view');
+            const liveView = document.getElementById('live-view');
+
+            if (tab === 'live') {
+                tasksView.style.display = 'none';
+                liveView.style.display = 'block';
+                stopTasksAutoRefresh();
+                startLiveRefresh();
+            } else {
+                liveView.style.display = 'none';
+                tasksView.style.display = 'block';
+                stopLiveRefresh();
+                if (autoRefreshEnabled) {
+                    setupAutoRefresh();
+                }
+            }
+        }
+
+        function startLiveRefresh() {
+            if (liveRefreshInterval) return;
+            console.log(`[Monitor] Starting live refresh (${LIVE_REFRESH_MS / 1000}s interval)`);
+            loadLiveSessions();
+            liveRefreshInterval = setInterval(() => {
+                console.log('[Monitor] Live refresh: Loading sessions');
+                loadLiveSessions();
+            }, LIVE_REFRESH_MS);
+        }
+
+        function stopLiveRefresh() {
+            if (liveRefreshInterval) {
+                console.log('[Monitor] Stopping live refresh');
+                clearInterval(liveRefreshInterval);
+                liveRefreshInterval = null;
+            }
+        }
+
+        function stopTasksAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+        }
+
+        async function loadLiveSessions() {
+            const grid = document.getElementById('live-grid');
+            if (!grid) return;
+
+            grid.innerHTML = '<div class="loading">Loading live sessions</div>';
+
+            try {
+                const response = await fetch(`http://100.112.58.92:8080/api/sessions/live`);
+                if (!response.ok) {
+                    const error = await response.json();
+                    grid.innerHTML = `<div class="loading">Error: ${escapeHtml(error.error || 'Failed to load sessions')}</div>`;
+                    return;
+                }
+
+                const data = await response.json();
+                allSessions = data.sessions || [];
+
+                // Apply filter if enabled
+                const workingOnly = document.getElementById('working-only')?.checked;
+                if (workingOnly) {
+                    const filtered = allSessions.filter(s => s.is_active);
+                    renderLiveSessions(filtered);
+                } else {
+                    renderLiveSessions(allSessions);
+                }
+
+                // Update connection status
+                const statusDot = document.getElementById('status-dot');
+                const connectionText = document.getElementById('connection-text');
+                if (statusDot && connectionText) {
+                    statusDot.className = 'status-dot active';
+                    connectionText.textContent = 'Connected';
+                }
+            } catch (error) {
+                grid.innerHTML = `<div class="loading">Error: ${escapeHtml(error.message)}</div>`;
+
+                // Update connection status
+                const statusDot = document.getElementById('status-dot');
+                const connectionText = document.getElementById('connection-text');
+                if (statusDot && connectionText) {
+                    statusDot.className = 'status-dot';
+                    connectionText.textContent = 'Error';
+                }
+            }
+        }
+
+        let allSessions = []; // Store all sessions for filtering
+
+        function filterSessions() {
+            const workingOnly = document.getElementById('working-only').checked;
+
+            if (workingOnly) {
+                const filtered = allSessions.filter(s => s.is_active);
+                renderLiveSessions(filtered);
+            } else {
+                renderLiveSessions(allSessions);
+            }
+        }
+
+        function renderLiveSessions(sessions) {
+            const grid = document.getElementById('live-grid');
+            if (!grid) return;
+
+            // Store sessions for filtering
+            if (sessions && sessions.length > 0) {
+                allSessions = sessions;
+            }
+
+            if (!sessions || sessions.length === 0) {
+                if (grid.innerHTML !== '<div class="loading">No active tmux sessions found</div>') {
+                    grid.innerHTML = '<div class="loading">No active tmux sessions found</div>';
+                }
+                return;
+            }
+
+            // Use DocumentFragment for smooth updates without flash
+            const fragment = document.createDocumentFragment();
+            const tempDiv = document.createElement('div');
+
+            tempDiv.innerHTML = sessions.map(session => {
+                const sessionName = session.session_name || session.session || 'Unknown';
+                const isActive = session.is_active;
+                const currentWork = session.current_work || 'Idle';
+                const lastActivity = session.last_activity ?
+                    new Date(session.last_activity).toLocaleTimeString() : '—';
+                const outputLines = session.output_lines || [];
+                const statusBadge = isActive ? 'active' : '';
+                const statusText = isActive ? 'Working' : 'Idle';
+
+                // Format output - show last 15 lines
+                const displayLines = outputLines.slice(-15);
+                const outputHtml = displayLines.length > 0 ?
+                    displayLines.map(line => escapeHtml(line)).join('\n') :
+                    'No output captured yet.';
+
+                return `
+                    <div class="live-card ${isActive ? 'active-session' : ''}">
+                        <div class="live-header">
+                            <div class="live-session">${escapeHtml(sessionName)}</div>
+                            <span class="live-badge ${statusBadge}">${statusText}</span>
+                        </div>
+                        <div class="live-meta">
+                            <span>Last Activity: ${lastActivity}</span>
+                            <span>Windows: ${session.windows ?? 0}</span>
+                            <span>${session.attached ? '📎 Attached' : '🔓 Detached'}</span>
+                        </div>
+                        <div class="live-task">
+                            <strong>Current Work:</strong> ${escapeHtml(currentWork)}
+                        </div>
+                        <div class="live-output">${outputHtml}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Append children from tempDiv to fragment
+            while (tempDiv.firstChild) {
+                fragment.appendChild(tempDiv.firstChild);
+            }
+
+            // Use requestAnimationFrame for smooth update without page flash
+            requestAnimationFrame(() => {
+                // Clear and update in one repaint cycle to prevent visible flash
+                grid.innerHTML = '';
+                grid.appendChild(fragment);
+            });
+        }
+
+        function formatDuration(totalSeconds) {
+            if (totalSeconds == null) return '—';
+            const seconds = Math.max(0, Math.floor(totalSeconds));
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            if (hours > 0) {
+                return `${hours}h ${minutes}m`;
+            }
+            if (minutes > 0) {
+                return `${minutes}m ${secs}s`;
+            }
+            return `${secs}s`;
+        }
+
+        function escapeHtml(value) {
+            if (value === null || value === undefined) return '';
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // Load Tasks from API
+        async function loadTasks() {
+            // Prevent too frequent refresh calls
+            const now = Date.now();
+            if (now - lastUpdateTime < 3000 && lastUpdateTime > 0) {
+                console.log('[Monitor] Skipping refresh - too soon since last update');
+                return;
+            }
+
+            const refreshBtn = document.getElementById('refresh-btn');
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = 'Loading...';
+
+            console.log('[Monitor] Loading tasks from API');
+
+            try {
+                // Fetch from dashboard API with archived filter
+                // Add timestamp to prevent caching issues
+                const timestamp = new Date().getTime();
+                // Use explicit port 8080 for API (monitor may be served on different port)
+                const apiUrl = `http://100.112.58.92:8080/api/tasks/monitor?archived=${showArchived}&_=${timestamp}`;
+                console.log('[Monitor] Fetching from:', apiUrl);
+
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    },
+                    cache: 'no-store',
+                    mode: 'cors'
+                });
+
+                console.log('[Monitor] Response status:', response.status, response.statusText);
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Ensure data is an array
+                    if (Array.isArray(data)) {
+                        allTasks = data;
+                    } else if (data && typeof data === 'object' && data.tasks) {
+                        // Handle wrapped response {tasks: [...]}
+                        console.warn('[Monitor] Unwrapping tasks from object');
+                        allTasks = data.tasks;
+                    } else {
+                        console.error('[Monitor] Unexpected data structure:', typeof data, data);
+                        allTasks = [];
+                    }
+
+                    console.log('[Monitor] Tasks loaded:', allTasks.length, 'tasks');
+
+                    // Log task breakdown by status
+                    const statusCounts = allTasks.reduce((acc, t) => {
+                        const status = t.status || 'unknown';
+                        acc[status] = (acc[status] || 0) + 1;
+                        return acc;
+                    }, {});
+                    console.log('[Monitor] Task statuses:', statusCounts);
+
+                    // Show detailed info for pending tasks
+                    const pendingTasks = allTasks.filter(t => t.status === 'pending');
+                    if (pendingTasks.length > 0) {
+                        console.log(`[Monitor] ${pendingTasks.length} pending tasks found:`,
+                            pendingTasks.map(t => ({id: t.id, desc: t.desc?.substring(0, 50)})));
+                    }
+
+                    showBanner(`Loaded ${allTasks.length} tasks from API (${pendingTasks.length} pending)`, 'success');
+                } else {
+                    // Fallback to static data
+                    const errorText = await response.text();
+                    console.error('[Monitor] API returned error:', response.status, response.statusText, errorText);
+                    allTasks = getStaticTasks();
+                    showBanner(`API error ${response.status} - Using offline data`, 'error');
+                }
+
+                renderFilteredTasks();
+                updateStats(allTasks);
+                updateLastUpdate();
+                lastUpdateTime = Date.now();
+
+            } catch (error) {
+                console.error('[Monitor] Fetch error:', error.name, error.message);
+                console.error('[Monitor] Full error:', error);
+                // Use static data as fallback
+                allTasks = getStaticTasks();
+                renderFilteredTasks();
+                updateStats(allTasks);
+                showBanner(`Network error: ${error.message} - Using offline data`, 'error');
+            } finally {
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = '\u21BB Refresh Now';
+            }
+
+            // Also load task health
+            loadTaskHealth();
+        }
+
+        async function loadTaskHealth() {
+            try {
+                const response = await fetch('http://100.112.58.92:8080/api/assigner/tasks/health', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    mode: 'cors'
+                });
+
+                if (response.ok) {
+                    const health = await response.json();
+                    renderHealthAlerts(health);
+                } else {
+                    console.error('Failed to load task health:', response.status);
+                }
+            } catch (error) {
+                console.error('Error loading task health:', error);
+            }
+        }
+
+        function renderHealthAlerts(health) {
+            const alertsContainer = document.getElementById('health-alerts');
+            const alertsContent = document.getElementById('health-alerts-content');
+
+            if (!health.issues || health.issues.length === 0) {
+                alertsContainer.style.display = 'none';
+                return;
+            }
+
+            alertsContainer.style.display = 'block';
+
+            alertsContent.innerHTML = health.issues.map(issue => {
+                const alert = issue.alerts[0]; // Show first alert
+                const severityColor = {
+                    'critical': '#ef4444',
+                    'high': '#f59e0b',
+                    'medium': '#eab308',
+                    'warning': '#6b7280'
+                }[alert.severity] || '#6b7280';
+
+                return `
+                    <div style="background: #0f172a; border-radius: 6px; padding: 12px; margin-bottom: 10px; border-left: 3px solid ${severityColor};">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                            <div>
+                                <strong style="color: #e2e8f0;">Task #${issue.task_id}</strong>
+                                <span style="color: #94a3b8; margin-left: 10px; font-size: 13px;">${issue.session}</span>
+                            </div>
+                            <span style="background: ${severityColor}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">
+                                ${alert.severity.toUpperCase()}
+                            </span>
+                        </div>
+                        <div style="color: #cbd5e1; font-size: 14px; margin-bottom: 8px;">
+                            ${alert.message}
+                        </div>
+                        ${alert.output_preview ? `
+                            <details style="margin-top: 8px;">
+                                <summary style="cursor: pointer; color: #94a3b8; font-size: 12px;">Show output</summary>
+                                <pre style="margin-top: 8px; padding: 8px; background: #000; border-radius: 4px; font-size: 11px; overflow-x: auto; color: #94a3b8;">${alert.output_preview}</pre>
+                            </details>
+                        ` : ''}
+                        ${alert.action === 'needs_response' ? `
+                            <div style="margin-top: 10px; display: flex; gap: 8px;">
+                                <button onclick="unblockTask(${issue.task_id}, 'accept')" style="padding: 6px 12px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">✓ Accept</button>
+                                <button onclick="unblockTask(${issue.task_id}, 'reject')" style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">✗ Reject</button>
+                                <button onclick="viewSession('${issue.session}')" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">👁 View</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function unblockTask(taskId, action) {
+            try {
+                const response = await fetch(`http://100.112.58.92:8080/api/assigner/tasks/${taskId}/unblock`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showBanner(`Sent ${action} to task #${taskId}`, 'success');
+
+                    // Reload health after 2 seconds
+                    setTimeout(loadTaskHealth, 2000);
+                } else {
+                    showBanner(`Failed to unblock task #${taskId}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error unblocking task:', error);
+                showBanner('Error: ' + error.message, 'error');
+            }
+        }
+
+        function viewSession(sessionName) {
+            // Show session modal
+            showSessionModal(sessionName);
+        }
+
+        function getStaticTasks() {
+            return [
+                {id: 1, desc: "Fix template rendering", session: "codex", type: "codex", status: "completed", progress: 100, step: "Completed successfully"},
+                {id: 2, desc: "Align database schemas", session: "codex_edu", type: "codex", status: "completed", progress: 100, step: "Completed successfully"},
+                {id: 3, desc: "Fix blueprint routing", session: "codex", type: "codex", status: "completed", progress: 100, step: "Completed successfully"},
+                {id: 4, desc: "Anchor database paths", session: "concurrent_worker1", type: "claude", status: "completed", progress: 100, step: "Completed successfully"},
+                {id: 5, desc: "Fix math sessions", session: "concurrent_worker2", type: "claude", status: "completed", progress: 100, step: "Completed successfully"},
+                {id: 6, desc: "Debug save_session errors", session: "claude", type: "claude", status: "completed", progress: 100, step: "Completed successfully"},
+                {id: 7, desc: "Environment variables", session: "claude", type: "claude", status: "completed", progress: 100, step: "Completed successfully"},
+                {id: 8, desc: "Centralize secrets", session: "claude", type: "claude", status: "completed", progress: 100, step: "Completed successfully"},
+                {id: 9, desc: "Dashboard styling", session: "comet", type: "comet", status: "completed", progress: 100, step: "Completed successfully"},
+                {id: 10, desc: "User profile view", session: "concurrent_worker3", type: "comet", status: "completed", progress: 100, step: "Completed successfully"},
+                {id: 11, desc: "Word tracking", session: "codex", type: "codex", status: "completed", progress: 100, step: "Completed successfully"},
+                {id: 12, desc: "Adaptive practice", session: "codex", type: "codex", status: "completed", progress: 100, step: "Completed successfully"}
+            ];
+        }
+
+        function renderFilteredTasks() {
+            let filtered;
+            if (currentFilter === 'all') {
+                filtered = allTasks;
+            } else if (currentFilter === 'in_progress') {
+                // Include assigned, in_progress, and working statuses
+                filtered = allTasks.filter(t => ['assigned', 'in_progress', 'working'].includes(t.status));
+            } else {
+                filtered = allTasks.filter(t => t.status === currentFilter);
+            }
+
+            console.log(`[Monitor] Rendering ${filtered.length} tasks (filter: ${currentFilter}, total: ${allTasks.length})`);
+
+            renderTasks(filtered);
+        }
+
+        function renderTasks(tasks) {
+            const grid = document.getElementById('tasks-grid');
+
+            if (!Array.isArray(tasks)) {
+                console.error('[Monitor] renderTasks received non-array:', tasks);
+                grid.innerHTML = '<div class="loading">Error: Invalid task data</div>';
+                return;
+            }
+
+            if (tasks.length === 0) {
+                const filterMsg = currentFilter !== 'all' ? ` with status "${currentFilter}"` : '';
+                const archivedMsg = showArchived ? ' (showing archived)' : '';
+                grid.innerHTML = `<div class="loading">No tasks found${filterMsg}${archivedMsg}</div>`;
+                console.log(`[Monitor] No tasks to display (filter: ${currentFilter}, archived: ${showArchived})`);
+                return;
+            }
+
+            console.log(`[Monitor] Rendering ${tasks.length} task cards`);
+
+            // Get existing cards to avoid unnecessary re-renders
+            const existingCards = Array.from(grid.querySelectorAll('.task-card'));
+            const existingIds = new Set(existingCards.map(c => c.dataset.taskId));
+            const currentIds = new Set(tasks.map(t => String(t.id)));
+
+            // Remove cards that are no longer in the list
+            existingCards.forEach(card => {
+                if (!currentIds.has(card.dataset.taskId)) {
+                    card.remove();
+                }
+            });
+
+            // Update or create cards
+            tasks.forEach(task => {
+                const taskId = task.id || 'unknown';
+                const taskDesc = task.desc || task.content || 'No description';
+                const taskStatus = task.status || 'unknown';
+                const taskSession = task.session || task.assigned_session || 'Unassigned';
+                const taskType = task.type || 'unknown';
+                const taskProgress = task.progress || 0;
+                const taskStep = task.step || `Status: ${taskStatus}`;
+
+                let card = grid.querySelector(`[data-task-id="${taskId}"]`);
+
+                const cardHTML = `
+                    <div class="task-header">
+                        <span class="task-id">Task #${taskId}</span>
+                        <span class="task-status status-${taskStatus}">${taskStatus}</span>
+                    </div>
+                    <div class="task-title">${taskDesc}</div>
+                    <div class="task-session">
+                        Session: <strong>${taskSession}</strong>
+                        <span class="type-badge type-${taskType}">${taskType.toUpperCase()}</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${taskProgress}%"></div>
+                    </div>
+                    <div class="task-step">${taskStep}</div>
+                    <div style="margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end;">
+                        ${showArchived ?
+                            `<button onclick="unarchiveTask(${taskId}, event)" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">↩ Unarchive</button>` :
+                            `<button onclick="archiveTask(${taskId}, event)" style="padding: 6px 12px; background: #6b7280; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">📦 Archive</button>`
+                        }
+                    </div>
+                `;
+
+                if (card) {
+                    // Update existing card only if content changed
+                    if (card.innerHTML !== cardHTML) {
+                        card.innerHTML = cardHTML;
+                        card.classList.add('updated');
+                        setTimeout(() => card.classList.remove('updated'), 500);
+                    }
+                } else {
+                    // Create new card
+                    card = document.createElement('div');
+                    card.className = 'task-card';
+                    card.dataset.taskId = taskId;
+                    card.innerHTML = cardHTML;
+                    grid.appendChild(card);
+                }
+            });
+        }
+
+        function updateStats(tasks) {
+            if (!Array.isArray(tasks)) {
+                console.error('[Monitor] updateStats received non-array:', tasks);
+                tasks = [];
+            }
+
+            const stats = {
+                total: tasks.length,
+                working: tasks.filter(t => ['assigned', 'in_progress', 'working'].includes(t.status)).length,
+                completed: tasks.filter(t => t.status === 'completed').length,
+                pending: tasks.filter(t => t.status === 'pending').length
+            };
+
+            console.log('[Monitor] Stats update:', stats);
+
+            animateStatUpdate('total-tasks', stats.total);
+            animateStatUpdate('in-progress', stats.working);
+            animateStatUpdate('completed', stats.completed);
+            animateStatUpdate('pending', stats.pending);
+        }
+
+        function animateStatUpdate(elementId, newValue) {
+            const element = document.getElementById(elementId);
+            const oldValue = element.textContent;
+            if (oldValue !== String(newValue)) {
+                element.parentElement.classList.add('updated');
+                element.textContent = newValue;
+                setTimeout(() => {
+                    element.parentElement.classList.remove('updated');
+                }, 500);
+            }
+        }
+
+        function updateLastUpdate() {
+            document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+        }
+
+        function filterTasks() {
+            const select = document.getElementById('filter-status');
+            currentFilter = select.value;
+            renderFilteredTasks();
+        }
+
+        function clearCompleted() {
+            allTasks = allTasks.filter(t => t.status !== 'completed');
+            renderFilteredTasks();
+            updateStats(allTasks);
+            showBanner('Completed tasks cleared', 'success');
+        }
+
+        function setupAutoRefresh(interval = null) {
+            const refreshInterval = interval || document.getElementById('refresh-interval')?.value || '5000';
+            const intervalMs = parseInt(refreshInterval);
+
+            if (intervalMs > 0) {
+                stopTasksAutoRefresh();
+                autoRefreshInterval = setInterval(() => {
+                    if (activeTab === 'tasks') {
+                        console.log('[Monitor] Auto-refresh: Loading tasks');
+                        loadTasks();
+                    }
+                }, intervalMs);
+                console.log(`[Monitor] Auto-refresh enabled (${intervalMs / 1000}s interval)`);
+                updateAutoRefreshStatus(true, intervalMs);
+            } else {
+                updateAutoRefreshStatus(false);
+            }
+        }
+
+        function updateAutoRefreshStatus(active, intervalMs = null) {
+            const status = document.getElementById('auto-refresh-status');
+            if (status) {
+                if (active) {
+                    status.style.color = '#10b981';
+                    status.textContent = `✓ Active (${intervalMs / 1000}s)`;
+                } else {
+                    status.style.color = '#999';
+                    status.textContent = '○ Manual';
+                }
+            }
+        }
+
+        function toggleAutoRefresh() {
+            autoRefreshEnabled = document.getElementById('auto-refresh').checked;
+            if (autoRefreshEnabled) {
+                if (activeTab === 'tasks') {
+                    setupAutoRefresh();
+                }
+                showBanner('Auto-refresh enabled', 'success');
+            } else {
+                stopTasksAutoRefresh();
+                showBanner('Auto-refresh disabled', 'success');
+            }
+        }
+
+        function showBanner(message, type = 'error') {
+            const banner = document.createElement('div');
+            banner.className = type === 'success' ? 'success-banner' : 'error-banner';
+            banner.textContent = message;
+            document.body.insertBefore(banner, document.body.firstChild);
+
+            setTimeout(() => {
+                banner.style.animation = 'slideDown 0.3s reverse';
+                setTimeout(() => banner.remove(), 300);
+            }, 3000);
+        }
+
+        // Archive Functions
+        function toggleArchived() {
+            showArchived = document.getElementById('show-archived').checked;
+            loadTasks();
+        }
+
+        async function archiveTask(taskId, event) {
+            event.stopPropagation(); // Prevent card click
+
+            try {
+                const response = await fetch(`http://100.112.58.92:8080/api/tasks/monitor/${taskId}/archive`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    showBanner(`Task #${taskId} archived`, 'success');
+                    // Remove from current view
+                    allTasks = allTasks.filter(t => t.id !== taskId);
+                    renderFilteredTasks();
+                    updateStats(allTasks);
+                } else {
+                    const error = await response.json();
+                    showBanner(`Failed to archive: ${error.error}`, 'error');
+                }
+            } catch (error) {
+                showBanner(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function unarchiveTask(taskId, event) {
+            event.stopPropagation(); // Prevent card click
+
+            try {
+                const response = await fetch(`http://100.112.58.92:8080/api/tasks/monitor/${taskId}/unarchive`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    showBanner(`Task #${taskId} unarchived`, 'success');
+                    // Remove from current view
+                    allTasks = allTasks.filter(t => t.id !== taskId);
+                    renderFilteredTasks();
+                    updateStats(allTasks);
+                } else {
+                    const error = await response.json();
+                    showBanner(`Failed to unarchive: ${error.error}`, 'error');
+                }
+            } catch (error) {
+                showBanner(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function bulkArchiveCompleted() {
+            const completedCount = allTasks.filter(t => t.status === 'completed').length;
+
+            if (completedCount === 0) {
+                showBanner('No completed tasks to archive', 'error');
+                return;
+            }
+
+            const confirmed = confirm(`Archive ${completedCount} completed task(s)?\n\nThis will hide them from the default view.`);
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch('http://100.112.58.92:8080/api/tasks/monitor/archive/bulk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'completed' })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showBanner(`Archived ${result.count} completed task(s)`, 'success');
+                    loadTasks(); // Reload to reflect changes
+                } else {
+                    const error = await response.json();
+                    showBanner(`Failed to archive: ${error.error}`, 'error');
+                }
+            } catch (error) {
+                showBanner(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function bulkArchiveFailed() {
+            const failedCount = allTasks.filter(t => t.status === 'failed').length;
+
+            if (failedCount === 0) {
+                showBanner('No failed tasks to archive', 'error');
+                return;
+            }
+
+            const confirmed = confirm(`Archive ${failedCount} failed task(s)?\n\nThis will hide them from the default view.`);
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch('http://100.112.58.92:8080/api/tasks/monitor/archive/bulk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'failed' })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showBanner(`Archived ${result.count} failed task(s)`, 'success');
+                    loadTasks(); // Reload to reflect changes
+                } else {
+                    const error = await response.json();
+                    showBanner(`Failed to archive: ${error.error}`, 'error');
+                }
+            } catch (error) {
+                showBanner(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        // iOS Pull-to-Refresh
+        let pullStartY = 0;
+        let pullMoveY = 0;
+        let isPulling = false;
+        let pullIndicator = null;
+
+        function initPullToRefresh() {
+            // Create pull indicator
+            pullIndicator = document.createElement('div');
+            pullIndicator.className = 'pull-to-refresh';
+            pullIndicator.textContent = 'Pull to refresh...';
+            document.body.appendChild(pullIndicator);
+
+            // Touch events for pull-to-refresh
+            document.addEventListener('touchstart', (e) => {
+                if (window.scrollY === 0) {
+                    pullStartY = e.touches[0].clientY;
+                    isPulling = true;
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchmove', (e) => {
+                if (!isPulling) return;
+
+                pullMoveY = e.touches[0].clientY;
+                const pullDistance = pullMoveY - pullStartY;
+
+                if (pullDistance > 0 && pullDistance < 150) {
+                    pullIndicator.textContent = 'Pull to refresh...';
+                    if (pullDistance > 50) {
+                        pullIndicator.classList.add('visible');
+                    }
+                } else if (pullDistance >= 150) {
+                    pullIndicator.textContent = 'Release to refresh';
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchend', (e) => {
+                if (!isPulling) return;
+
+                const pullDistance = pullMoveY - pullStartY;
+
+                if (pullDistance >= 150) {
+                    pullIndicator.textContent = 'Refreshing...';
+                    loadTasks().then(() => {
+                        setTimeout(() => {
+                            pullIndicator.classList.remove('visible');
+                            pullIndicator.textContent = 'Pull to refresh...';
+                        }, 500);
+                    });
+                } else {
+                    pullIndicator.classList.remove('visible');
+                }
+
+                isPulling = false;
+                pullStartY = 0;
+                pullMoveY = 0;
+            }, { passive: true });
+        }
+
+        // iOS-specific enhancements
+        function setupIOSEnhancements() {
+            const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+
+            if (isIOS) {
+                // Initialize pull-to-refresh
+                initPullToRefresh();
+
+                // Prevent bounce scrolling on body
+                document.body.addEventListener('touchmove', (e) => {
+                    if (e.target === document.body) {
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+
+                // Add haptic feedback on button press (vibration)
+                document.querySelectorAll('button').forEach(button => {
+                    button.addEventListener('touchstart', () => {
+                        if (navigator.vibrate) {
+                            navigator.vibrate(10);
+                        }
+                    }, { passive: true });
+                });
+
+                // Prevent iOS double-tap zoom on buttons
+                let lastTouchEnd = 0;
+                document.addEventListener('touchend', (e) => {
+                    const now = Date.now();
+                    if (now - lastTouchEnd <= 300) {
+                        e.preventDefault();
+                    }
+                    lastTouchEnd = now;
+                }, false);
+
+                // Handle iOS keyboard appearance
+                window.addEventListener('resize', () => {
+                    // Scroll to keep focused element visible when keyboard appears
+                    if (document.activeElement.tagName === 'SELECT') {
+                        document.activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
+
+                console.log('iOS enhancements enabled');
+            }
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (wsConnection) {
+                wsConnection.close();
+            }
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        });
+
+        // Initialize iOS features after DOM load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupIOSEnhancements);
+        } else {
+            setupIOSEnhancements();
+        }
+    </script>
+
+    <!-- Session Detail Modal -->
+    <div id="session-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 9999; padding: 20px; overflow: auto;">
+        <div style="max-width: 1200px; margin: 40px auto; background: #1e1e2e; border-radius: 12px; padding: 24px; position: relative;">
+            <button onclick="closeSessionModal()" style="position: absolute; top: 16px; right: 16px; background: #dc3545; color: white; border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer; font-size: 14px;">✕ Close</button>
+
+            <h2 style="color: #667eea; margin-bottom: 20px;" id="modal-title">Session Details</h2>
+
+            <div style="background: #2a2a3e; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                <p style="margin: 8px 0;"><strong>Task ID:</strong> <span id="modal-task-id"></span></p>
+                <p style="margin: 8px 0;"><strong>Session:</strong> <span id="modal-session"></span></p>
+                <p style="margin: 8px 0;"><strong>Status:</strong> <span id="modal-status"></span></p>
+                <p style="margin: 8px 0;"><strong>Description:</strong> <span id="modal-desc"></span></p>
+            </div>
+
+            <div id="session-buttons" style="margin-bottom: 12px; display: flex; gap: 12px; flex-wrap: wrap;">
+                <button onclick="refreshSessionOutput()" id="refresh-btn" style="background: #28a745; color: white; border: none; border-radius: 6px; padding: 10px 20px; cursor: pointer; font-size: 14px;">↻ Refresh Output</button>
+                <button onclick="captureScreenshot()" id="screenshot-btn" style="background: #17a2b8; color: white; border: none; border-radius: 6px; padding: 10px 20px; cursor: pointer; font-size: 14px; display: none;">📷 View Screenshot</button>
+                <button onclick="sendYes()" style="background: #007bff; color: white; border: none; border-radius: 6px; padding: 10px 20px; cursor: pointer; font-size: 14px;">Yes (y)</button>
+                <button onclick="sendNo()" style="background: #6c757d; color: white; border: none; border-radius: 6px; padding: 10px 20px; cursor: pointer; font-size: 14px;">No (n)</button>
+                <button onclick="sendEnter()" style="background: #ffc107; color: #000; border: none; border-radius: 6px; padding: 10px 20px; cursor: pointer; font-size: 14px;">↵ Enter</button>
+            </div>
+
+            <div id="session-auto-refresh" style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center;">
+                <label style="color: #999; font-size: 14px;">Auto-refresh:</label>
+                <select id="refresh-interval" style="padding: 8px 12px; border: 1px solid #444; border-radius: 6px; background: #2a2a3e; color: #fff; font-size: 14px; cursor: pointer;">
+                    <option value="0">Manual</option>
+                    <option value="2000">Every 2s</option>
+                    <option value="5000" selected>Every 5s</option>
+                    <option value="10000">Every 10s</option>
+                    <option value="30000">Every 30s</option>
+                </select>
+                <span id="auto-refresh-status" style="color: #10b981; font-size: 12px; margin-left: 10px;">✓ Active</span>
+            </div>
+
+            <div id="session-content" style="background: #000; color: #0f0; font-family: 'Courier New', monospace; padding: 16px; border-radius: 8px; overflow-x: auto; max-height: 500px; overflow-y: auto; white-space: pre-wrap; font-size: 13px; line-height: 1.4;">
+                Loading session output...
+            </div>
+
+            <div id="pending-message" style="display: none; background: #ffc107; color: #000; padding: 20px; border-radius: 8px; text-align: center; font-size: 16px;">
+                <p style="margin: 0; font-weight: bold;">⏳ Task is waiting for assignment</p>
+                <p style="margin: 10px 0 0 0; font-size: 14px;">This task will be picked up by an available session soon.</p>
+            </div>
+
+            <div id="screenshot-content" style="display: none; text-align: center; margin-top: 20px;">
+                <img id="screenshot-img" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);" />
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentModalSession = null;
+        let currentModalTask = null;
+
+        // Make task cards clickable
+        document.addEventListener('click', function(e) {
+            const taskCard = e.target.closest('.task-card');
+            if (taskCard) {
+                const taskId = taskCard.dataset.taskId;
+                const task = allTasks.find(t => t.id == taskId);
+                if (task) {
+                    showSessionModal(task);
+                }
+            }
+        });
+
+        function showSessionModal(task) {
+            currentModalTask = task;
+            currentModalSession = task.session;
+
+            document.getElementById('modal-task-id').textContent = task.id;
+            document.getElementById('modal-session').textContent = task.session;
+            document.getElementById('modal-status').textContent = task.status;
+            document.getElementById('modal-desc').textContent = task.content || task.desc;
+            document.getElementById('modal-title').textContent = `Session: ${task.session}`;
+
+            // Check if task is unassigned/pending
+            const isUnassigned = !task.session || task.session === 'Unassigned' || task.status === 'pending';
+
+            const sessionContent = document.getElementById('session-content');
+            const sessionButtons = document.getElementById('session-buttons');
+            const sessionInteract = document.getElementById('session-interact');
+            const pendingMessage = document.getElementById('pending-message');
+            const screenshotContent = document.getElementById('screenshot-content');
+
+            if (isUnassigned) {
+                // Show pending message, hide session content
+                sessionContent.style.display = 'none';
+                sessionButtons.style.display = 'none';
+                sessionInteract.style.display = 'none';
+                screenshotContent.style.display = 'none';
+                pendingMessage.style.display = 'block';
+            } else {
+                // Show session content, hide pending message
+                sessionContent.style.display = 'block';
+                sessionButtons.style.display = 'flex';
+                pendingMessage.style.display = 'none';
+                screenshotContent.style.display = 'none';
+
+                // Show screenshot button for comet sessions
+                const screenshotBtn = document.getElementById('screenshot-btn');
+                if (task.type === 'comet' || task.session.toLowerCase().includes('comet')) {
+                    screenshotBtn.style.display = 'inline-block';
+                } else {
+                    screenshotBtn.style.display = 'none';
+                }
+
+                // Load session output
+                refreshSessionOutput();
+            }
+
+            document.getElementById('session-modal').style.display = 'block';
+        }
+
+        function closeSessionModal() {
+            document.getElementById('session-modal').style.display = 'none';
+            currentModalSession = null;
+            currentModalTask = null;
+        }
+
+        async function refreshSessionOutput() {
+            if (!currentModalSession || currentModalSession === 'Unassigned') {
+                document.getElementById('session-content').textContent = 'No session assigned yet.';
+                return;
+            }
+
+            const content = document.getElementById('session-content');
+            content.textContent = 'Loading...';
+
+            try {
+                const response = await fetch(`http://100.112.58.92:8080/api/tasks/monitor/session/${currentModalSession}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    content.textContent = data.output || 'No output captured.';
+
+                    // Check if session appears stuck or waiting for input
+                    const output = data.output.toLowerCase();
+                    if (output.includes('(y/n)') || output.includes('[y/n]') || output.includes('continue?') || output.includes('press enter')) {
+                        content.style.borderLeft = '4px solid #ffc107';
+                        content.insertAdjacentHTML('beforebegin', '<div style="background: #ffc107; color: #000; padding: 8px; border-radius: 4px; margin-bottom: 8px; font-weight: bold;">⚠️ Session appears to be waiting for input</div>');
+                    } else {
+                        content.style.borderLeft = '';
+                    }
+                } else {
+                    content.textContent = 'Error: Could not capture session output. Session may not exist or is not accessible.';
+                    content.style.color = '#f88';
+                }
+            } catch (error) {
+                content.textContent = `Error: ${error.message}`;
+                content.style.color = '#f88';
+            }
+        }
+
+        async function captureScreenshot() {
+            if (!currentModalSession) return;
+
+            const screenshotDiv = document.getElementById('screenshot-content');
+            const img = document.getElementById('screenshot-img');
+
+            screenshotDiv.style.display = 'block';
+            img.src = '';
+            img.alt = 'Loading screenshot...';
+
+            try {
+                const response = await fetch(`http://100.112.58.92:8080/api/tasks/monitor/screenshot/${currentModalSession}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    img.src = data.screenshot;
+                    img.alt = `Screenshot from ${data.filename}`;
+
+                    // Show warning if screenshot is old
+                    if (data.age_minutes > 5) {
+                        screenshotDiv.innerHTML = `
+                            <div style="background: #ffc107; color: #000; padding: 12px; border-radius: 6px; margin-bottom: 12px; text-align: left;">
+                                <strong>⚠️ Warning:</strong> Screenshot is ${data.age_minutes} minutes old (from ${data.filename}).<br>
+                                This may not reflect current session state. Use terminal output for real-time status.
+                            </div>
+                            <img src="${data.screenshot}" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);" />
+                        `;
+                    }
+                } else {
+                    const errorData = await response.json();
+                    screenshotDiv.innerHTML = `
+                        <div style="background: #2a2a3e; color: #ffc107; padding: 20px; border-radius: 8px; text-align: center;">
+                            <p style="margin: 0; font-size: 16px; font-weight: bold;">📷 Screenshots Not Available</p>
+                            <p style="margin: 10px 0 0 0; font-size: 14px; color: #ccc;">
+                                ${errorData.message || 'Comet sessions do not currently capture screenshots automatically.'}<br>
+                                Use the terminal output above to see session status.
+                            </p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                screenshotDiv.innerHTML = `<p style="color: #f88;">Error loading screenshot: ${error.message}</p>`;
+            }
+        }
+
+        // Session interaction functions
+        async function sendToSession(text, sendEnter = true) {
+            if (!currentModalSession || currentModalSession === 'Unassigned') {
+                alert('No session assigned to this task yet.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://100.112.58.92:8080/api/tasks/monitor/session/${currentModalSession}/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text, send_enter: sendEnter })
+                });
+
+                if (response.ok) {
+                    // Clear input
+                    const input = document.getElementById('session-input');
+                    if (input) input.value = '';
+
+                    // Show feedback
+                    showBanner(`Sent to ${currentModalSession}: ${text}`, 'success');
+
+                    // Refresh output after a short delay
+                    setTimeout(() => refreshSessionOutput(), 1000);
+                } else {
+                    const error = await response.json();
+                    showBanner(`Error: ${error.error}`, 'error');
+                }
+            } catch (error) {
+                showBanner(`Failed to send: ${error.message}`, 'error');
+            }
+        }
+
+        function sendYes() {
+            sendToSession('y');
+        }
+
+        function sendNo() {
+            sendToSession('n');
+        }
+
+        function sendEnter() {
+            sendToSession('');
+        }
+
+        function sendCustomInput() {
+            const input = document.getElementById('session-input');
+            const text = input.value.trim();
+            if (text) {
+                sendToSession(text);
+            }
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && document.getElementById('session-modal').style.display === 'block') {
+                closeSessionModal();
+            }
+        });
+    </script>
+</body>
+</html>
+
+<!-- Add this script at the end to show session status -->
+<script>
+// Add session status info to stats area
+async function updateSessionStatus() {
+    try {
+        const response = await fetch('http://100.112.58.92:8080/api/assigner/status');
+        if (response.ok) {
+            const data = await response.json();
+            // Add session info to page
+            const statsDiv = document.querySelector('.stats');
+            let sessionCard = document.getElementById('session-status-card');
+            if (!sessionCard) {
+                sessionCard = document.createElement('div');
+                sessionCard.id = 'session-status-card';
+                sessionCard.className = 'stat-card';
+                sessionCard.innerHTML = `
+                    <div class="label">Available Sessions</div>
+                    <div class="value" id="available-sessions">0</div>
+                    <div style="font-size: 12px; margin-top: 5px; color: #888;">
+                        <span id="busy-sessions">0</span> busy
+                    </div>
+                `;
+                statsDiv.appendChild(sessionCard);
+            }
+            document.getElementById('available-sessions').textContent = data.available_sessions || 0;
+            document.getElementById('busy-sessions').textContent = data.busy_sessions || 0;
+        }
+    } catch (e) {
+        console.debug('Session status unavailable');
+    }
+}
+
+// Call on load and with refresh
+const originalLoadTasks = loadTasks;
+loadTasks = async function() {
+    await originalLoadTasks();
+    await updateSessionStatus();
+};
+</script>

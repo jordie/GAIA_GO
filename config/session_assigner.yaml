@@ -1,0 +1,353 @@
+#################################################################################
+# Session Assigner Configuration - Phase 3
+#
+# Defines:
+# - Development environments (dev1-dev5) with sub-environments
+# - PR agent groups (Review, Implementation, Integration)
+# - Task assignment strategies
+# - Standard operating procedures
+#################################################################################
+
+# Global configuration
+global:
+  base_dir: "/Users/jgirmay/Desktop/gitrepo/pyWork"
+  main_repo: "architect"
+  max_retries: 3
+  timeout_minutes: 30
+  session_timeout_minutes: 60
+
+# Development environments configuration
+environments:
+  dev_environments:
+    name: "Development Environments"
+    description: "5 isolated development directories with 3 sub-environments each"
+    num_environments: 5
+    base_port: 8081
+
+    environments:
+      dev1:
+        number: 1
+        port: 8081
+        branch: "env/dev1"
+        directory: "architect-dev1"
+        worker_session: "dev1_worker"
+        provider: "ollama"
+
+        sub_environments:
+          dev:
+            name: "Development"
+            port: 8081
+            purpose: "Feature development and testing"
+
+          qa:
+            name: "Quality Assurance"
+            port: 8091
+            purpose: "Integration and system testing"
+
+          staging:
+            name: "Staging"
+            port: 8101
+            purpose: "Production readiness validation"
+
+        sop_rules:
+          - "ALWAYS work in your assigned dev environment directory"
+          - "NEVER modify files outside your environment"
+          - "COMMIT changes frequently to your feature branch"
+          - "Pull changes from main weekly to stay in sync"
+          - "Create feature branches with timestamp: feature/description-MMDD"
+
+      dev2:
+        number: 2
+        port: 8082
+        branch: "env/dev2"
+        directory: "architect-dev2"
+        worker_session: "dev2_worker"
+        provider: "ollama"
+        sub_environments:
+          dev:
+            port: 8082
+          qa:
+            port: 8092
+          staging:
+            port: 8102
+
+      dev3:
+        number: 3
+        port: 8083
+        branch: "env/dev3"
+        directory: "architect-dev3"
+        worker_session: "dev3_worker"
+        provider: "ollama"
+        sub_environments:
+          dev:
+            port: 8083
+          qa:
+            port: 8093
+          staging:
+            port: 8103
+
+      dev4:
+        number: 4
+        port: 8084
+        branch: "env/dev4"
+        directory: "architect-dev4"
+        worker_session: "dev4_worker"
+        provider: "ollama"
+        sub_environments:
+          dev:
+            port: 8084
+          qa:
+            port: 8094
+          staging:
+            port: 8104
+
+      dev5:
+        number: 5
+        port: 8085
+        branch: "env/dev5"
+        directory: "architect-dev5"
+        worker_session: "dev5_worker"
+        provider: "ollama"
+        sub_environments:
+          dev:
+            port: 8085
+          qa:
+            port: 8095
+          staging:
+            port: 8105
+
+# PR Agent Groups configuration
+pr_agent_groups:
+
+  # PR Review Group - High-quality code review
+  pr_review_group:
+    name: "PR Review Group (PRR)"
+    abbreviation: "PRR"
+    purpose: "Provide high-quality code review and architectural feedback"
+
+    sessions:
+      pr_review1:
+        name: "pr_review1"
+        provider: "claude"
+        priority: "high"
+        responsibilities:
+          - "Security and architectural review"
+          - "Code quality assessment"
+          - "Performance analysis"
+
+      pr_review2:
+        name: "pr_review2"
+        provider: "claude"
+        priority: "high"
+        responsibilities:
+          - "API design review"
+          - "Testing strategy"
+          - "Documentation review"
+
+      pr_review3:
+        name: "pr_review3"
+        provider: "ollama"
+        priority: "medium"
+        responsibilities:
+          - "Automated code formatting checks"
+          - "Linting and style verification"
+          - "Quick syntax validation"
+
+    assignment_strategy: "round_robin"  # Distribute reviews evenly
+    description: "3 sessions: 2 Claude (quality), 1 Ollama (automated checks)"
+
+  # PR Implementation Group - Cost-effective implementation
+  pr_implementation_group:
+    name: "PR Implementation Group (PRI)"
+    abbreviation: "PRI"
+    purpose: "Implement approved PR changes cost-effectively"
+
+    sessions:
+      pr_impl1:
+        name: "pr_impl1"
+        provider: "codex"
+        priority: "high"
+        responsibilities:
+          - "Feature implementation"
+          - "Bug fixes"
+          - "Code generation"
+
+      pr_impl2:
+        name: "pr_impl2"
+        provider: "codex"
+        priority: "high"
+        responsibilities:
+          - "Backend implementation"
+          - "API development"
+          - "Database changes"
+
+      pr_impl3:
+        name: "pr_impl3"
+        provider: "ollama"
+        priority: "medium"
+        responsibilities:
+          - "Simple refactoring"
+          - "Documentation updates"
+          - "Configuration changes"
+
+      pr_impl4:
+        name: "pr_impl4"
+        provider: "ollama"
+        priority: "medium"
+        responsibilities:
+          - "Test implementation"
+          - "Mock data generation"
+          - "Helper functions"
+
+    assignment_strategy: "load_balanced"  # Assign to least busy worker
+    description: "4 sessions: 2 Codex (primary), 2 Ollama (secondary)"
+
+  # PR Integration Group - Fast local testing and merging
+  pr_integration_group:
+    name: "PR Integration Group (PRIG)"
+    abbreviation: "PRIG"
+    purpose: "Test, validate, and merge PRs efficiently"
+
+    sessions:
+      pr_integ1:
+        name: "pr_integ1"
+        provider: "ollama"
+        priority: "high"
+        responsibilities:
+          - "Unit test execution"
+          - "Integration test runs"
+          - "Test report generation"
+
+      pr_integ2:
+        name: "pr_integ2"
+        provider: "ollama"
+        priority: "high"
+        responsibilities:
+          - "E2E testing"
+          - "Performance testing"
+          - "Regression detection"
+
+      pr_integ3:
+        name: "pr_integ3"
+        provider: "ollama"
+        priority: "high"
+        responsibilities:
+          - "PR merge coordination"
+          - "Conflict resolution"
+          - "Branch cleanup"
+
+    assignment_strategy: "sequential"  # One test at a time to avoid conflicts
+    description: "3 sessions: All Ollama (fast local processing, zero cost)"
+
+# Task routing configuration
+task_routing:
+  # Pattern matching for task type detection
+  patterns:
+    pr_review:
+      keywords: ["review pr", "code review", "review code", "review the pr", "pull request review"]
+      route_to_group: "pr_review_group"
+      assignment: "round_robin"
+
+    pr_implementation:
+      keywords: ["implement pr", "address review", "fix pr", "implement changes", "apply review feedback"]
+      route_to_group: "pr_implementation_group"
+      assignment: "load_balanced"
+
+    pr_integration:
+      keywords: ["test pr", "merge pr", "integrate pr", "verify pr", "test merge"]
+      route_to_group: "pr_integration_group"
+      assignment: "sequential"
+
+    dev_environment:
+      keywords: ["dev1", "dev2", "dev3", "dev4", "dev5", "feature", "bug fix in dev"]
+      route_to_group: "dev_workers"
+      assignment: "environment_specific"
+
+  # Complex task detection (high-level Claude)
+  complexity_indicators:
+    high:
+      keywords: ["architectural", "design", "refactor", "migrate", "security"]
+      route_to: ["architect", "claude_architect", "foundation"]
+
+    medium:
+      keywords: ["implement", "feature", "optimization", "testing"]
+      route_to: ["pr_implementation_group", "pr_review_group"]
+
+    low:
+      keywords: ["fix", "update", "documentation", "formatting"]
+      route_to: ["pr_implementation_group", "dev_workers"]
+
+# Cost tracking and optimization
+cost_tracking:
+  monthly_budget: 500  # $500 per month
+  session_costs:
+    claude:
+      hourly: 3.00      # $3 per hour for Claude
+      session_limit: 350  # $350/month per session
+      sessions: 6       # architect, foundation, inspector, manager1, claude_architect, pr_review1, pr_review2
+
+    codex:
+      hourly: 0.87      # $0.87 per hour for Codex
+      session_limit: 26  # $26/month per session
+      sessions: 4       # pr_impl1, pr_impl2, codex_worker1, additional
+
+    ollama:
+      hourly: 0.00      # $0.00 per hour (local, free)
+      session_limit: 0
+      sessions: 13      # dev1_worker through dev5_worker, pr_review3, pr_impl3, pr_impl4, pr_integ1-3
+
+  monthly_estimate: 376  # Total: ~$376/month vs $1200 baseline
+
+# High-level session management
+high_level_sessions:
+  architect:
+    name: "System Architect"
+    provider: "claude"
+    tier: "high-level"
+    responsibilities: ["Strategic decisions", "System oversight"]
+
+  foundation:
+    name: "Foundation"
+    provider: "claude"
+    tier: "high-level"
+    responsibilities: ["Core infrastructure", "System foundation"]
+
+  inspector:
+    name: "Inspector"
+    provider: "claude"
+    tier: "high-level"
+    responsibilities: ["Code inspection", "Quality gates"]
+
+  manager1:
+    name: "Manager"
+    provider: "claude"
+    tier: "manager"
+    responsibilities: ["Task coordination", "Delegation"]
+
+  claude_architect:
+    name: "Claude Architect"
+    provider: "claude"
+    tier: "manager"
+    responsibilities: ["Technical planning", "Implementation review"]
+
+# Existing worker sessions (for reference)
+existing_workers:
+  dev_worker1:
+    provider: "ollama"
+    purpose: "General development tasks"
+
+  dev_worker2:
+    provider: "ollama"
+    purpose: "Concurrent development"
+
+  edu_worker1:
+    provider: "ollama"
+    purpose: "Educational content"
+
+  codex_worker1:
+    provider: "codex"
+    purpose: "Code generation"
+
+  qa_worker1:
+    provider: "ollama"
+    purpose: "Testing and QA"

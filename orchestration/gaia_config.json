@@ -1,0 +1,297 @@
+{
+  "gaia_home": "/Users/jgirmay/Desktop/gitrepo/GAIA_HOME",
+  "initialized_at": "2026-02-21T04:05:43.313560",
+  "architect_groups": [
+    {
+      "group_name": "Architect-Strategic",
+      "role": "strategic",
+      "sessions": [
+        "arch_lead",
+        "claude_architect",
+        "gaia_orchestrator"
+      ],
+      "created_at": "2026-02-21T04:05:43.313767",
+      "status": "initialized"
+    },
+    {
+      "group_name": "Architect-Oversight",
+      "role": "oversight",
+      "sessions": [
+        "inspector",
+        "gaia_linter",
+        "pr_review1",
+        "pr_review2",
+        "pr_review3"
+      ],
+      "created_at": "2026-02-21T04:05:43.313782",
+      "status": "initialized"
+    },
+    {
+      "group_name": "Architect-Coordination",
+      "role": "tactical",
+      "sessions": [
+        "foundation",
+        "comparison",
+        "codex_worker"
+      ],
+      "created_at": "2026-02-21T04:05:43.313793",
+      "status": "initialized"
+    }
+  ],
+  "manager_groups": [
+    {
+      "group_name": "Manager-Reading",
+      "module": "reading",
+      "manager_sessions": [
+        "manager_reading",
+        "dev_reading_1",
+        "dev_reading_2",
+        "tester_reading"
+      ],
+      "architect_oversight": [
+        "reading_architect",
+        "reading_impl1",
+        "reading_impl2",
+        "reading_test"
+      ],
+      "created_at": "2026-02-21T04:05:43.313815",
+      "status": "initialized"
+    },
+    {
+      "group_name": "Manager-Math",
+      "module": "math",
+      "manager_sessions": [
+        "manager_math",
+        "dev_math_1",
+        "dev_math_2",
+        "tester_math"
+      ],
+      "architect_oversight": [
+        "inspector",
+        "dev_math_1",
+        "dev_math_2"
+      ],
+      "created_at": "2026-02-21T04:05:43.313828",
+      "status": "initialized"
+    },
+    {
+      "group_name": "Manager-Piano",
+      "module": "piano",
+      "manager_sessions": [
+        "manager_piano",
+        "dev_piano_1",
+        "dev_piano_2",
+        "tester_piano"
+      ],
+      "architect_oversight": [
+        "foundation",
+        "dev_piano_1",
+        "dev_piano_2"
+      ],
+      "created_at": "2026-02-21T04:05:43.313840",
+      "status": "initialized"
+    },
+    {
+      "group_name": "Manager-Typing",
+      "module": "typing",
+      "manager_sessions": [
+        "manager_typing",
+        "dev_typing_1",
+        "dev_typing_2",
+        "tester_typing"
+      ],
+      "architect_oversight": [
+        "comparison",
+        "dev_typing_1",
+        "dev_typing_2"
+      ],
+      "created_at": "2026-02-21T04:05:43.313851",
+      "status": "initialized"
+    },
+    {
+      "group_name": "Manager-Dashboard",
+      "module": "dashboard",
+      "manager_sessions": [
+        "manager_dashboard",
+        "dev_dashboard_1",
+        "dev_dashboard_2",
+        "tester_dashboard"
+      ],
+      "architect_oversight": [
+        "claude_architect",
+        "dev_dashboard_1",
+        "dev_dashboard_2"
+      ],
+      "created_at": "2026-02-21T04:05:43.313862",
+      "status": "initialized"
+    },
+    {
+      "group_name": "Manager-Rando",
+      "module": "rando",
+      "project_path": "/Users/jgirmay/Desktop/gitrepo/pyWork/rando",
+      "description": "Rando - 61 free online tools, lean and fast. Phase 0 complete: Unit testing infrastructure with Vitest",
+      "manager_sessions": [
+        "manager_rando",
+        "dev_rando_1",
+        "dev_rando_2",
+        "tester_rando"
+      ],
+      "architect_oversight": [
+        "foundation",
+        "codex_worker",
+        "dev_rando_1"
+      ],
+      "status": "active",
+      "current_phase": "Phase 1: Theme.js Tests",
+      "phases_completed": ["Phase 0: Testing Infrastructure"],
+      "next_milestones": [
+        "Phase 1: Implement 22 theme.js tests",
+        "Phase 2: Implement 37 error-boundary.js tests",
+        "Phase 3: Implement 25 keyboard.js tests",
+        "Phase 4: Implement 52+ common-helpers.js tests",
+        "Phase 5: Implement 20 performance.js tests"
+      ],
+      "last_updated": "2026-02-23T18:11:00.000000",
+      "created_at": "2026-02-23T18:11:00.000000"
+    }
+  ],
+  "worker_pools": [
+    {
+      "pool_name": "Claude-Workers",
+      "provider": "claude",
+      "session_count": 5,
+      "base_name": "dev_worker",
+      "sessions": [
+        "dev_worker_1",
+        "dev_worker_2",
+        "dev_worker_3",
+        "dev_worker_4",
+        "dev_worker_5"
+      ],
+      "architect_oversight": [
+        "gaia_linter",
+        "inspector"
+      ],
+      "created_at": "2026-02-21T04:05:43.313884",
+      "status": "initialized"
+    },
+    {
+      "pool_name": "Codex-Workers",
+      "provider": "codex",
+      "session_count": 3,
+      "base_name": "codex_worker",
+      "sessions": [
+        "codex_worker_1",
+        "codex_worker_2",
+        "codex_worker_3"
+      ],
+      "architect_oversight": [
+        "gaia_linter",
+        "inspector"
+      ],
+      "created_at": "2026-02-21T04:05:43.313895",
+      "status": "initialized"
+    },
+    {
+      "pool_name": "PR-Implementation",
+      "provider": "codex",
+      "session_count": 4,
+      "base_name": "pr_impl",
+      "sessions": [
+        "pr_impl_1",
+        "pr_impl_2",
+        "pr_impl_3",
+        "pr_impl_4"
+      ],
+      "architect_oversight": [
+        "pr_review1",
+        "pr_review2",
+        "pr_review3",
+        "inspector"
+      ],
+      "created_at": "2026-02-21T04:05:43.313906",
+      "status": "initialized"
+    },
+    {
+      "pool_name": "PR-Integration",
+      "provider": "claude",
+      "session_count": 3,
+      "base_name": "pr_integ",
+      "sessions": [
+        "pr_integ_1",
+        "pr_integ_2",
+        "pr_integ_3"
+      ],
+      "architect_oversight": [
+        "foundation",
+        "comparison",
+        "gaia_linter"
+      ],
+      "created_at": "2026-02-21T04:05:43.313917",
+      "status": "initialized"
+    }
+  ],
+  "lock_system": {
+    "enabled": true,
+    "locks_dir": "/Users/jgirmay/Desktop/gitrepo/GAIA_HOME/locks",
+    "auto_cleanup": true,
+    "lock_timeout_hours": 2
+  },
+  "metrics": {
+    "enabled": true,
+    "metrics_dir": "/Users/jgirmay/Desktop/gitrepo/GAIA_HOME/metrics",
+    "collection_interval": 60
+  },
+  "auto_confirm": {
+    "enabled": true,
+    "strategic_sessions": {
+      "auto_confirm": false,
+      "require_approval_for": ["deploy", "release", "breaking_changes", "data_migration"]
+    },
+    "manager_sessions": {
+      "auto_confirm": true,
+      "exceptions": ["architectural_decisions", "security_changes", "schema_migrations"]
+    },
+    "oversight_sessions": {
+      "auto_confirm": true,
+      "auto_confirm_for": ["formatting", "linting", "test_fixes", "documentation"]
+    },
+    "worker_sessions": {
+      "auto_confirm": true,
+      "auto_confirm_for": ["file_operations", "code_edits", "test_execution", "building"],
+      "require_approval_for": ["data_operations", "system_changes"]
+    },
+    "rando_session": {
+      "auto_confirm": true,
+      "auto_confirm_for": ["all"],
+      "require_approval_for": [],
+      "description": "Rando development session - full auto-confirm enabled"
+    },
+    "protected_sessions": {
+      "rando": {
+        "auto_confirm": true,
+        "auto_confirm_for": ["all"],
+        "require_approval_for": [],
+        "description": "Rando execution session"
+      },
+      "architect": {
+        "auto_confirm": true,
+        "auto_confirm_for": ["all"],
+        "require_approval_for": [],
+        "description": "Architect session"
+      },
+      "inspector": {
+        "auto_confirm": true,
+        "auto_confirm_for": ["all"],
+        "require_approval_for": [],
+        "description": "Inspector session"
+      },
+      "foundation": {
+        "auto_confirm": true,
+        "auto_confirm_for": ["all"],
+        "require_approval_for": [],
+        "description": "Foundation session"
+      }
+    }
+  }
+}

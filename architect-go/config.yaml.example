@@ -1,0 +1,190 @@
+# Architect Go Application Configuration
+# Copy this file to config.yaml and update values for your environment
+
+# Server configuration
+server:
+  host: "0.0.0.0"
+  port: 8080
+  read_timeout_seconds: 15
+  write_timeout_seconds: 15
+  idle_timeout_seconds: 60
+  max_header_bytes: 1048576  # 1MB
+
+# Database configuration
+database:
+  # Database type: postgres or sqlite
+  type: "postgres"
+
+  # For PostgreSQL
+  host: "localhost"
+  port: 5432
+  user: "architect"
+  password: "architect-dev"
+  name: "architect"
+  ssl_mode: "disable"  # disable, require, verify-ca, verify-full
+
+  # Connection pool settings
+  max_open_conns: 25
+  max_idle_conns: 5
+  conn_max_lifetime_minutes: 5
+
+  # Migration settings
+  auto_migrate: true
+  migration_path: "migrations/"
+
+# Logging configuration
+logging:
+  level: "info"  # debug, info, warn, error
+  format: "json"  # json or text
+  output: "stdout"  # stdout, stderr, or file path
+
+# Authentication
+auth:
+  # JWT configuration
+  jwt_secret: "your-secret-key-change-me"
+  jwt_expiry_hours: 24
+  refresh_token_expiry_hours: 168  # 7 days
+
+  # Session configuration
+  session_timeout_minutes: 60
+  session_cookie_secure: false  # Set to true in production with HTTPS
+  session_cookie_http_only: true
+  session_cookie_same_site: "Lax"  # Lax, Strict, or None
+
+# CORS configuration
+cors:
+  allowed_origins:
+    - "http://localhost:3000"
+    - "http://localhost:8080"
+  allowed_methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "OPTIONS"
+  allowed_headers:
+    - "Content-Type"
+    - "Authorization"
+  allow_credentials: true
+  max_age_seconds: 86400
+
+# Metrics configuration
+metrics:
+  enabled: true
+  path: "/metrics"
+  # Prometheus metric collection
+  prometheus:
+    enabled: true
+    namespace: "architect"
+    subsystem: "api"
+
+# Health check configuration
+health:
+  enabled: true
+  path: "/health"
+  detailed: false  # Include detailed health info in response
+
+# API configuration
+api:
+  base_path: "/api"
+  version: "v1"
+  # Enable API documentation
+  docs:
+    enabled: true
+    path: "/docs"
+    swagger: true
+
+# WebSocket configuration
+websocket:
+  enabled: true
+  path: "/ws"
+  read_buffer_size: 1024
+  write_buffer_size: 1024
+  max_connections: 1000
+
+# Rate limiting
+rate_limiting:
+  enabled: false
+  requests_per_second: 100
+  burst_size: 200
+
+# Feature flags
+features:
+  autopilot_enabled: true
+  task_queue_enabled: true
+  error_aggregation_enabled: true
+  metrics_enabled: true
+
+# File upload configuration
+upload:
+  max_file_size_mb: 100
+  allowed_extensions:
+    - ".json"
+    - ".yaml"
+    - ".yml"
+    - ".csv"
+  temp_directory: "/tmp/architect-uploads"
+
+# Cache configuration
+cache:
+  enabled: true
+  type: "in-memory"  # in-memory or redis
+  ttl_seconds: 3600
+
+  # Redis cache (if type: redis)
+  redis:
+    host: "localhost"
+    port: 6379
+    password: ""
+    db: 0
+
+# Email configuration (optional)
+email:
+  enabled: false
+  provider: "smtp"  # smtp or sendgrid
+  smtp:
+    host: "smtp.gmail.com"
+    port: 587
+    user: "your-email@gmail.com"
+    password: "your-app-password"
+    from_address: "noreply@architect.local"
+
+# External services
+external_services:
+  # GitHub integration
+  github:
+    enabled: false
+    api_token: ""
+    base_url: "https://api.github.com"
+
+  # Slack integration
+  slack:
+    enabled: false
+    webhook_url: ""
+    channel: "#architect"
+
+# Backup configuration
+backup:
+  enabled: false
+  schedule: "0 2 * * *"  # 2 AM daily (cron format)
+  retention_days: 30
+  destination: "/backups"
+
+# Observability configuration
+observability:
+  # Tracing (optional)
+  tracing:
+    enabled: false
+    provider: "jaeger"  # jaeger, zipkin
+    endpoint: "http://localhost:14268/api/traces"
+    sample_rate: 0.1
+
+  # Structured logging
+  structured_logging: true
+
+  # Request logging
+  request_logging:
+    enabled: true
+    skip_paths:
+      - "/health"
+      - "/metrics"

@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Query Builder - Go Wrapper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #48bb78;
+            --error-color: #f56565;
+            --warning-color: #ed8936;
+            --info-color: #4299e1;
+            --dark-bg: #1a202c;
+            --card-bg: #2d3748;
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --border-color: #4a5568;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #2d3748 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(45, 55, 72, 0.95);
+            border-bottom: 2px solid var(--primary-color);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--card-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+            min-height: calc(100vh - 100px);
+        }
+
+        .panel {
+            background: rgba(45, 55, 72, 0.8);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+        }
+
+        .panel-header {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--info-color);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .filter-item {
+            background: var(--dark-bg);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .filter-remove {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--error-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: 1fr 100px 1fr;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .add-filter-btn {
+            width: 100%;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px dashed var(--primary-color);
+            border-radius: 6px;
+            color: var(--primary-color);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .add-filter-btn:hover {
+            background: rgba(102, 126, 234, 0.3);
+        }
+
+        .results-container {
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .results-table th {
+            background: var(--card-bg);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--primary-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .results-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .results-table tr:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .chart-container {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            height: 300px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-success { background: var(--success-color); color: white; }
+        .badge-error { background: var(--error-color); color: white; }
+        .badge-warning { background: var(--warning-color); color: white; }
+        .badge-info { background: var(--info-color); color: white; }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .code-block {
+            background: var(--dark-bg);
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .agg-item {
+            background: var(--dark-bg);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .agg-remove {
+            background: var(--error-color);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 Advanced Query Builder</h1>
+        <div class="header-controls">
+            <button class="btn btn-secondary" onclick="clearQuery()">Clear</button>
+            <button class="btn btn-success" onclick="executeQuery()">Execute Query</button>
+            <button class="btn btn-secondary" onclick="location.href='/'">🏠 Dashboard</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="grid">
+            <!-- Left Panel: Query Builder -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>⚙️ Query Builder</span>
+                </div>
+
+                <!-- Basic Filters -->
+                <div class="section">
+                    <div class="section-title">Basic Filters</div>
+
+                    <div class="form-group">
+                        <label class="form-label">Agent Name</label>
+                        <input type="text" class="form-input" id="agentName" placeholder="my-agent">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Session ID</label>
+                        <input type="text" class="form-input" id="sessionId" placeholder="session-123">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Event Type</label>
+                        <select class="form-select" id="eventType">
+                            <option value="">All Types</option>
+                            <option value="code_block">Code Block</option>
+                            <option value="error">Error</option>
+                            <option value="warning">Warning</option>
+                            <option value="metric">Metric</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Risk Level</label>
+                        <select class="form-select" id="riskLevel">
+                            <option value="">All Levels</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Advanced Filters -->
+                <div class="section">
+                    <div class="section-title">Advanced Filters</div>
+                    <div id="filtersContainer"></div>
+                    <button class="add-filter-btn" onclick="addFilter()">+ Add Filter</button>
+                </div>
+
+                <!-- Logic & Sorting -->
+                <div class="section">
+                    <div class="section-title">Query Options</div>
+
+                    <div class="form-group">
+                        <label class="form-label">Filter Logic</label>
+                        <select class="form-select" id="logic">
+                            <option value="AND">AND (all must match)</option>
+                            <option value="OR">OR (any must match)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Sort By</label>
+                        <select class="form-select" id="sortField">
+                            <option value="timestamp">Timestamp</option>
+                            <option value="event_type">Event Type</option>
+                            <option value="pattern">Pattern</option>
+                            <option value="line_number">Line Number</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Sort Order</label>
+                        <select class="form-select" id="sortOrder">
+                            <option value="desc">Descending</option>
+                            <option value="asc">Ascending</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Limit</label>
+                        <input type="number" class="form-input" id="limit" value="100" min="1" max="10000">
+                    </div>
+                </div>
+
+                <!-- Aggregations -->
+                <div class="section">
+                    <div class="section-title">Aggregations</div>
+                    <div id="aggregationsContainer"></div>
+                    <button class="add-filter-btn" onclick="addAggregation()">+ Add Aggregation</button>
+                </div>
+
+                <!-- Group By -->
+                <div class="section">
+                    <div class="section-title">Group By</div>
+                    <select class="form-select" id="groupBy" multiple size="4">
+                        <option value="event_type">Event Type</option>
+                        <option value="pattern">Pattern</option>
+                        <option value="risk_level">Risk Level</option>
+                        <option value="agent_name">Agent Name</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Right Panel: Results -->
+            <div class="panel">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('results')">Results</button>
+                    <button class="tab" onclick="switchTab('aggregations')">Aggregations</button>
+                    <button class="tab" onclick="switchTab('json')">JSON</button>
+                    <button class="tab" onclick="switchTab('sql')">Query</button>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statTotal">0</div>
+                        <div class="stat-label">Total Results</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statTime">0ms</div>
+                        <div class="stat-label">Query Time</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statFilters">0</div>
+                        <div class="stat-label">Active Filters</div>
+                    </div>
+                </div>
+
+                <!-- Results Tab -->
+                <div id="tabResults" class="tab-content">
+                    <div class="results-container">
+                        <table class="results-table" id="resultsTable">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Type</th>
+                                    <th>Pattern</th>
+                                    <th>Value</th>
+                                    <th>Line</th>
+                                    <th>Risk</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsBody">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                                        Build and execute a query to see results
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Aggregations Tab -->
+                <div id="tabAggregations" class="tab-content" style="display: none;">
+                    <div id="aggregationsResults"></div>
+                </div>
+
+                <!-- JSON Tab -->
+                <div id="tabJson" class="tab-content" style="display: none;">
+                    <div class="code-block" id="jsonOutput">
+                        <pre>Execute a query to see JSON response</pre>
+                    </div>
+                </div>
+
+                <!-- SQL Tab -->
+                <div id="tabSql" class="tab-content" style="display: none;">
+                    <div class="code-block" id="sqlOutput">
+                        <pre>Build a query to see generated parameters</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let filters = [];
+        let aggregations = [];
+        let lastQueryResponse = null;
+
+        // Add filter
+        function addFilter() {
+            const id = Date.now();
+            filters.push({ id, field: 'event_type', operator: 'eq', value: '' });
+            renderFilters();
+        }
+
+        // Remove filter
+        function removeFilter(id) {
+            filters = filters.filter(f => f.id !== id);
+            renderFilters();
+        }
+
+        // Render filters
+        function renderFilters() {
+            const container = document.getElementById('filtersContainer');
+            container.innerHTML = filters.map(filter => `
+                <div class="filter-item">
+                    <button class="filter-remove" onclick="removeFilter(${filter.id})">×</button>
+                    <div class="filter-row">
+                        <select class="form-select" onchange="updateFilter(${filter.id}, 'field', this.value)">
+                            <option value="event_type" ${filter.field === 'event_type' ? 'selected' : ''}>Event Type</option>
+                            <option value="pattern" ${filter.field === 'pattern' ? 'selected' : ''}>Pattern</option>
+                            <option value="risk_level" ${filter.field === 'risk_level' ? 'selected' : ''}>Risk Level</option>
+                            <option value="line_number" ${filter.field === 'line_number' ? 'selected' : ''}>Line Number</option>
+                            <option value="matched_value" ${filter.field === 'matched_value' ? 'selected' : ''}>Value</option>
+                        </select>
+                        <select class="form-select" onchange="updateFilter(${filter.id}, 'operator', this.value)">
+                            <option value="eq" ${filter.operator === 'eq' ? 'selected' : ''}>Equals</option>
+                            <option value="ne" ${filter.operator === 'ne' ? 'selected' : ''}>Not Equals</option>
+                            <option value="gt" ${filter.operator === 'gt' ? 'selected' : ''}>Greater Than</option>
+                            <option value="gte" ${filter.operator === 'gte' ? 'selected' : ''}>Greater or Equal</option>
+                            <option value="lt" ${filter.operator === 'lt' ? 'selected' : ''}>Less Than</option>
+                            <option value="lte" ${filter.operator === 'lte' ? 'selected' : ''}>Less or Equal</option>
+                            <option value="like" ${filter.operator === 'like' ? 'selected' : ''}>Contains</option>
+                        </select>
+                        <input type="text" class="form-input" value="${filter.value}"
+                               onchange="updateFilter(${filter.id}, 'value', this.value)" placeholder="Value">
+                    </div>
+                </div>
+            `).join('');
+
+            updateStats();
+        }
+
+        // Update filter
+        function updateFilter(id, field, value) {
+            const filter = filters.find(f => f.id === id);
+            if (filter) {
+                filter[field] = value;
+            }
+        }
+
+        // Add aggregation
+        function addAggregation() {
+            const id = Date.now();
+            aggregations.push({ id, name: 'agg_' + id, type: 'count', field: '' });
+            renderAggregations();
+        }
+
+        // Remove aggregation
+        function removeAggregation(id) {
+            aggregations = aggregations.filter(a => a.id !== id);
+            renderAggregations();
+        }
+
+        // Render aggregations
+        function renderAggregations() {
+            const container = document.getElementById('aggregationsContainer');
+            container.innerHTML = aggregations.map(agg => `
+                <div class="agg-item">
+                    <div style="flex: 1;">
+                        <select class="form-select" style="width: auto; display: inline-block; margin-right: 10px;"
+                                onchange="updateAggregation(${agg.id}, 'type', this.value)">
+                            <option value="count" ${agg.type === 'count' ? 'selected' : ''}>Count</option>
+                            <option value="value_count" ${agg.type === 'value_count' ? 'selected' : ''}>Unique Count</option>
+                            <option value="terms" ${agg.type === 'terms' ? 'selected' : ''}>Terms</option>
+                            <option value="stats" ${agg.type === 'stats' ? 'selected' : ''}>Statistics</option>
+                            <option value="date_histogram" ${agg.type === 'date_histogram' ? 'selected' : ''}>Date Histogram</option>
+                        </select>
+                        <input type="text" class="form-input" style="width: auto; display: inline-block;"
+                               value="${agg.name}" placeholder="Name"
+                               onchange="updateAggregation(${agg.id}, 'name', this.value)">
+                    </div>
+                    <button class="agg-remove" onclick="removeAggregation(${agg.id})">×</button>
+                </div>
+            `).join('');
+        }
+
+        // Update aggregation
+        function updateAggregation(id, field, value) {
+            const agg = aggregations.find(a => a.id === id);
+            if (agg) {
+                agg[field] = value;
+            }
+        }
+
+        // Execute query
+        async function executeQuery() {
+            const startTime = Date.now();
+
+            // Build query parameters
+            const params = {
+                filters: [],
+                logic: document.getElementById('logic').value,
+                sort: document.getElementById('sortField').value,
+                sort_order: document.getElementById('sortOrder').value,
+                limit: parseInt(document.getElementById('limit').value) || 100,
+                offset: 0,
+                aggregations: {},
+                group_by: Array.from(document.getElementById('groupBy').selectedOptions).map(o => o.value)
+            };
+
+            // Add basic filters
+            const agentName = document.getElementById('agentName').value;
+            const sessionId = document.getElementById('sessionId').value;
+            const eventType = document.getElementById('eventType').value;
+            const riskLevel = document.getElementById('riskLevel').value;
+
+            if (agentName) params.filters.push({ field: 'agent_name', operator: 'eq', value: agentName });
+            if (sessionId) params.filters.push({ field: 'session_id', operator: 'eq', value: sessionId });
+            if (eventType) params.filters.push({ field: 'event_type', operator: 'eq', value: eventType });
+            if (riskLevel) params.filters.push({ field: 'risk_level', operator: 'eq', value: riskLevel });
+
+            // Add advanced filters
+            filters.forEach(filter => {
+                if (filter.value) {
+                    params.filters.push({
+                        field: filter.field,
+                        operator: filter.operator,
+                        value: filter.value
+                    });
+                }
+            });
+
+            // Add aggregations
+            aggregations.forEach(agg => {
+                params.aggregations[agg.name] = {
+                    type: agg.type,
+                    field: agg.field || 'event_type'
+                };
+            });
+
+            // Show query parameters in SQL tab
+            document.getElementById('sqlOutput').innerHTML = `<pre>${JSON.stringify(params, null, 2)}</pre>`;
+
+            try {
+                const response = await fetch('/api/query/advanced', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+
+                const data = await response.json();
+                lastQueryResponse = data;
+
+                const queryTime = Date.now() - startTime;
+
+                // Update stats
+                document.getElementById('statTotal').textContent = data.total || 0;
+                document.getElementById('statTime').textContent = queryTime + 'ms';
+
+                // Render results
+                renderResults(data.extractions || []);
+                renderAggregationsResults(data.aggregations || {});
+                document.getElementById('jsonOutput').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+            } catch (error) {
+                console.error('Query failed:', error);
+                document.getElementById('resultsBody').innerHTML = `
+                    <tr><td colspan="6" style="text-align: center; color: var(--error-color); padding: 40px;">
+                        Query failed: ${error.message}
+                    </td></tr>
+                `;
+            }
+        }
+
+        // Render results table
+        function renderResults(extractions) {
+            const tbody = document.getElementById('resultsBody');
+
+            if (!extractions || extractions.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                        No results found
+                    </td></tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = extractions.map(ext => `
+                <tr>
+                    <td>${new Date(ext.timestamp).toLocaleString()}</td>
+                    <td><span class="badge badge-info">${ext.event_type}</span></td>
+                    <td>${ext.pattern || '-'}</td>
+                    <td>${(ext.matched_value || '').substring(0, 50)}${ext.matched_value && ext.matched_value.length > 50 ? '...' : ''}</td>
+                    <td>${ext.line_number || 0}</td>
+                    <td><span class="badge badge-${getRiskBadge(ext.risk_level)}">${ext.risk_level || 'N/A'}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // Render aggregations results
+        function renderAggregationsResults(aggregations) {
+            const container = document.getElementById('aggregationsResults');
+
+            if (!aggregations || Object.keys(aggregations).length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 40px; color: var(--text-secondary);">No aggregations computed</p>';
+                return;
+            }
+
+            let html = '';
+            for (const [name, result] of Object.entries(aggregations)) {
+                html += `
+                    <div class="section">
+                        <div class="section-title">${name}</div>
+                        <div class="code-block">
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Get risk badge class
+        function getRiskBadge(risk) {
+            switch (risk) {
+                case 'critical': return 'error';
+                case 'high': return 'warning';
+                case 'medium': return 'info';
+                case 'low': return 'success';
+                default: return 'info';
+            }
+        }
+
+        // Switch tab
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+
+            // Show selected tab
+            document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).style.display = 'block';
+        }
+
+        // Clear query
+        function clearQuery() {
+            document.getElementById('agentName').value = '';
+            document.getElementById('sessionId').value = '';
+            document.getElementById('eventType').value = '';
+            document.getElementById('riskLevel').value = '';
+            filters = [];
+            aggregations = [];
+            renderFilters();
+            renderAggregations();
+            document.getElementById('resultsBody').innerHTML = `
+                <tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                    Build and execute a query to see results
+                </td></tr>
+            `;
+            document.getElementById('statTotal').textContent = '0';
+            document.getElementById('statTime').textContent = '0ms';
+            updateStats();
+        }
+
+        // Update stats
+        function updateStats() {
+            let count = 0;
+            if (document.getElementById('agentName').value) count++;
+            if (document.getElementById('sessionId').value) count++;
+            if (document.getElementById('eventType').value) count++;
+            if (document.getElementById('riskLevel').value) count++;
+            count += filters.filter(f => f.value).length;
+            document.getElementById('statFilters').textContent = count;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStats();
+        });
+    </script>
+</body>
+</html>

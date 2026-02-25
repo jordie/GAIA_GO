@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Architect Browser Agent</title>
+  <style>
+    body {
+      width: 300px;
+      padding: 15px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 0;
+    }
+    h1 {
+      font-size: 16px;
+      margin: 0 0 10px 0;
+      color: #333;
+    }
+    .status {
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+    .status.connected {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .status.disconnected {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .stats {
+      font-size: 12px;
+      color: #666;
+      margin-top: 10px;
+    }
+    .stats div {
+      padding: 4px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .stats div:last-child {
+      border-bottom: none;
+    }
+    .stats label {
+      display: inline-block;
+      width: 100px;
+      font-weight: 500;
+    }
+    .stats value {
+      color: #333;
+    }
+    button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏗️ Architect Browser Agent</h1>
+
+  <div id="status" class="status disconnected">
+    Checking connection...
+  </div>
+
+  <div class="stats" id="stats">
+    <div><label>Server:</label> <value id="server">-</value></div>
+    <div><label>Open Tabs:</label> <value id="tabs">-</value></div>
+    <div><label>Tab Groups:</label> <value id="groups">-</value></div>
+    <div><label>Active Tasks:</label> <value id="tasks">-</value></div>
+  </div>
+
+  <button id="reconnect">Reconnect</button>
+
+  <script src="popup.js"></script>
+</body>
+</html>

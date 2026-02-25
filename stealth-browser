@@ -1,0 +1,259 @@
+#!/usr/bin/env python3
+"""
+Stealth Browser - Undetectable browser automation for AI agents
+Uses undetected-chromedriver to bypass bot detection
+"""
+
+import sys
+import time
+import json
+from pathlib import Path
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage:")
+        print("  stealth-browser login <url> <username> <password>")
+        print("  stealth-browser scrape <url>")
+        sys.exit(1)
+
+    command = sys.argv[1]
+
+    try:
+        from selenium import webdriver
+        from selenium.webdriver.chrome.service import Service
+        from selenium.webdriver.chrome.options import Options
+        from selenium.webdriver.common.by import By
+        from webdriver_manager.chrome import ChromeDriverManager
+
+        # Create Chrome instance with anti-detection options
+        options = Options()
+        options.add_argument('--start-maximized')
+        options.add_argument('--disable-blink-features=AutomationControlled')
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option('useAutomationExtension', False)
+        options.add_argument('--disable-dev-shm-usage')
+
+        print("🚀 Starting stealth browser...")
+
+        # Auto-install correct ChromeDriver version
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=options)
+
+        # Additional stealth
+        driver.execute_cdp_cmd('Network.setUserAgentOverride', {
+            "userAgent": 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        })
+        driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+
+        driver.implicitly_wait(10)
+
+        print("✅ Browser started (stealth mode)")
+
+        if command == "login":
+            if len(sys.argv) < 5:
+                print("Usage: stealth-browser login <url> <username> <password>")
+                sys.exit(1)
+
+            url = sys.argv[2]
+            username = sys.argv[3]
+            password = sys.argv[4]
+
+            print(f"\n🌐 Navigating to {url}")
+            driver.get(url)
+            time.sleep(3)  # Let page load naturally
+
+            print("📸 Taking homepage screenshot...")
+            driver.save_screenshot('/tmp/stealth_home.png')
+            print("   Saved: /tmp/stealth_home.png")
+
+            # Look for login link/button
+            print("\n🔍 Looking for login link...")
+            login_selectors = [
+                "//a[contains(text(), 'Login')]",
+                "//a[contains(text(), 'Sign In')]",
+                "//a[contains(text(), 'Log In')]",
+                "//a[contains(@href, 'login')]",
+                "//a[contains(@href, 'signin')]",
+                "//button[contains(text(), 'Login')]",
+            ]
+
+            login_clicked = False
+            for selector in login_selectors:
+                try:
+                    element = driver.find_element(By.XPATH, selector)
+                    print(f"✅ Found login element: {selector}")
+                    element.click()
+                    login_clicked = True
+                    time.sleep(3)
+                    break
+                except:
+                    continue
+
+            if not login_clicked:
+                print("⚠️  Could not find login link automatically")
+                print("📄 Current URL:", driver.current_url)
+                print("📄 Page title:", driver.title)
+
+            # Take screenshot of login page
+            driver.save_screenshot('/tmp/stealth_login_page.png')
+            print("📸 Login page screenshot: /tmp/stealth_login_page.png")
+
+            # Try to find and fill login form
+            print("\n🔐 Attempting to fill login form...")
+
+            # Common username field selectors
+            username_filled = False
+            username_selectors = [
+                "input[type='email']",
+                "input[name='email']",
+                "input[name='username']",
+                "input[id='email']",
+                "input[id='username']",
+            ]
+
+            for selector in username_selectors:
+                try:
+                    field = driver.find_element(By.CSS_SELECTOR, selector)
+                    field.clear()
+                    field.send_keys(username)
+                    print(f"✅ Filled username: {selector}")
+                    username_filled = True
+                    time.sleep(1)
+                    break
+                except:
+                    continue
+
+            # Common password field selector
+            password_filled = False
+            try:
+                pass_field = driver.find_element(By.CSS_SELECTOR, "input[type='password']")
+                pass_field.clear()
+                pass_field.send_keys(password)
+                print(f"✅ Filled password")
+                password_filled = True
+                time.sleep(1)
+            except:
+                print("⚠️  Could not find password field")
+
+            # Try to submit
+            if username_filled and password_filled:
+                submit_selectors = [
+                    "button[type='submit']",
+                    "input[type='submit']",
+                    "button:contains('Login')",
+                    "button:contains('Sign In')",
+                ]
+
+                submitted = False
+                for selector in submit_selectors:
+                    try:
+                        button = driver.find_element(By.CSS_SELECTOR, selector)
+                        print(f"🚀 Clicking submit button: {selector}")
+                        button.click()
+                        submitted = True
+                        break
+                    except:
+                        continue
+
+                if submitted:
+                    print("⏳ Waiting for page to load after login...")
+                    time.sleep(5)
+
+                    driver.save_screenshot('/tmp/stealth_after_login.png')
+                    print("📸 After login screenshot: /tmp/stealth_after_login.png")
+
+                    # Extract page content
+                    page_text = driver.find_element(By.TAG_NAME, 'body').text
+
+                    # Find prices
+                    import re
+                    prices = re.findall(r'\$[\d,]+\.?\d*', page_text)
+
+                    # Find monthly information
+                    monthly_info = []
+                    for line in page_text.split('\n'):
+                        if 'month' in line.lower() or 'monthly' in line.lower():
+                            monthly_info.append(line.strip())
+
+                    # Find student/child information
+                    student_info = []
+                    for line in page_text.split('\n'):
+                        if 'student' in line.lower() or 'child' in line.lower() or 'swimmer' in line.lower():
+                            student_info.append(line.strip())
+
+                    print("\n" + "="*60)
+                    print("📊 EXTRACTED DATA:")
+                    print("="*60)
+                    print(f"\n💰 Prices found: {prices}")
+                    print(f"\n📅 Monthly information ({len(monthly_info)} items):")
+                    for item in monthly_info[:10]:
+                        print(f"  - {item}")
+
+                    print(f"\n👤 Student information ({len(student_info)} items):")
+                    for item in student_info[:10]:
+                        print(f"  - {item}")
+
+                    # Save results
+                    result = {
+                        'success': True,
+                        'url': driver.current_url,
+                        'page_title': driver.title,
+                        'prices': prices,
+                        'monthly_info': monthly_info[:10],
+                        'student_info': student_info[:10],
+                        'page_excerpt': page_text[:2000],
+                        'screenshots': {
+                            'home': '/tmp/stealth_home.png',
+                            'login_page': '/tmp/stealth_login_page.png',
+                            'after_login': '/tmp/stealth_after_login.png'
+                        }
+                    }
+
+                    with open('/tmp/stealth_result.json', 'w') as f:
+                        json.dump(result, f, indent=2)
+
+                    print("\n✅ Results saved to: /tmp/stealth_result.json")
+
+                else:
+                    print("❌ Could not find submit button")
+
+            else:
+                print("❌ Login form fields not filled")
+
+            # Keep browser open for inspection
+            print("\n⏸  Browser will stay open for 60 seconds for inspection...")
+            print("   (Press Ctrl+C to close sooner)")
+            try:
+                time.sleep(60)
+            except KeyboardInterrupt:
+                print("\n👋 Closing browser...")
+
+        elif command == "scrape":
+            if len(sys.argv) < 3:
+                print("Usage: stealth-browser scrape <url>")
+                sys.exit(1)
+
+            url = sys.argv[2]
+            print(f"🌐 Navigating to {url}")
+            driver.get(url)
+            time.sleep(3)
+
+            page_text = driver.find_element(By.TAG_NAME, 'body').text
+            print(page_text)
+
+            driver.save_screenshot('/tmp/stealth_scrape.png')
+            print("\n📸 Screenshot: /tmp/stealth_scrape.png")
+
+        driver.quit()
+        print("✅ Browser closed")
+
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,142 @@
+{
+  "version": "1.0.0",
+  "environments": [
+    {
+      "name": "dev",
+      "description": "Development environment for testing and experimentation",
+      "working_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect",
+      "user": "jgirmay",
+      "constraints": {
+        "allow_write": true,
+        "allow_delete": true,
+        "allow_network": true,
+        "max_file_size_mb": 150,
+        "restricted_paths": [
+          "/System",
+          "/Library/System",
+          "/.Trash",
+          "/tmp/sensitive"
+        ],
+        "allowed_commands": [
+          "*"
+        ],
+        "denied_commands": [
+          "rm -rf /",
+          "sudo rm",
+          "dd if=",
+          "shutdown"
+        ]
+      },
+      "feedback_config": {
+        "track_outcomes": true,
+        "auto_report_errors": true,
+        "collect_metrics": true
+      }
+    },
+    {
+      "name": "staging",
+      "description": "Staging environment for pre-production testing",
+      "working_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect-staging",
+      "user": "jgirmay",
+      "constraints": {
+        "allow_write": true,
+        "allow_delete": false,
+        "allow_network": true,
+        "max_file_size_mb": 50,
+        "restricted_paths": [
+          "/System",
+          "/Library/System",
+          "/.Trash",
+          "/Users/jgirmay/Documents"
+        ],
+        "allowed_commands": [
+          "git",
+          "go",
+          "python3",
+          "npm",
+          "docker",
+          "curl",
+          "wget"
+        ],
+        "denied_commands": [
+          "sudo",
+          "rm -rf",
+          "chmod 777"
+        ]
+      },
+      "feedback_config": {
+        "track_outcomes": true,
+        "auto_report_errors": true,
+        "collect_metrics": true
+      }
+    },
+    {
+      "name": "prod",
+      "description": "Production environment - read-only operations only",
+      "working_dir": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect-prod",
+      "user": "jgirmay",
+      "constraints": {
+        "allow_write": false,
+        "allow_delete": false,
+        "allow_network": false,
+        "max_file_size_mb": 10,
+        "restricted_paths": [
+          "*"
+        ],
+        "allowed_commands": [
+          "ls",
+          "cat",
+          "grep",
+          "find",
+          "git status",
+          "git log"
+        ],
+        "denied_commands": [
+          "sudo",
+          "rm",
+          "mv",
+          "cp",
+          "chmod",
+          "chown"
+        ]
+      },
+      "feedback_config": {
+        "track_outcomes": true,
+        "auto_report_errors": true,
+        "collect_metrics": true
+      }
+    },
+    {
+      "name": "sandbox",
+      "description": "Isolated sandbox for experimental agents",
+      "working_dir": "/tmp/architect_sandbox",
+      "user": "jgirmay",
+      "constraints": {
+        "allow_write": true,
+        "allow_delete": true,
+        "allow_network": false,
+        "max_file_size_mb": 25,
+        "restricted_paths": [
+          "/System",
+          "/Library",
+          "/Users"
+        ],
+        "allowed_commands": [
+          "*"
+        ],
+        "denied_commands": [
+          "sudo",
+          "rm -rf /",
+          "curl",
+          "wget"
+        ]
+      },
+      "feedback_config": {
+        "track_outcomes": true,
+        "auto_report_errors": true,
+        "collect_metrics": true
+      }
+    }
+  ],
+  "default_environment": "dev"
+}

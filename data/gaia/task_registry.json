@@ -1,0 +1,105 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-02-20T16:50:00Z",
+  "active_tasks": {
+    "go-conversion": {
+      "id": "go-conversion",
+      "name": "Go app conversion",
+      "description": "Convert Python educational apps to Go/Gin",
+      "groups": ["architect-team", "dev-team"],
+      "started_at": "2026-02-17T00:00:00Z",
+      "status": "in_progress",
+      "files": [
+        "architect-go/",
+        "educational-apps-go/",
+        "pkg/",
+        "cmd/"
+      ],
+      "branches": [
+        "feature/go-edu-apps-week1-infrastructure-0220",
+        "feature/phase4.5-analytics-0218"
+      ],
+      "priority": 8
+    },
+    "conflict-detection": {
+      "id": "conflict-detection",
+      "name": "Conflict detection system",
+      "description": "Implement duplicate work and environment conflict detection",
+      "groups": ["codex-worker", "gaia-system"],
+      "started_at": "2026-02-20T16:45:00Z",
+      "status": "in_progress",
+      "files": [
+        "workers/auto_confirm_worker.py",
+        "workers/assigner_worker.py",
+        "gaia.py",
+        "data/gaia/"
+      ],
+      "branches": [
+        "feature/phase4.5-analytics-0218"
+      ],
+      "priority": 9
+    },
+    "typing-improvement": {
+      "id": "typing-improvement",
+      "name": "Auto-confirm typing improvement",
+      "description": "Add ## prefix support and typing detection to auto-confirm",
+      "groups": ["gaia-system"],
+      "started_at": "2026-02-20T16:45:00Z",
+      "status": "in_progress",
+      "files": [
+        "workers/auto_confirm_worker.py",
+        "gaia.py"
+      ],
+      "branches": [
+        "feature/phase4.5-analytics-0218"
+      ],
+      "priority": 9
+    }
+  },
+  "group_assignments": {
+    "architect-team": ["go-conversion"],
+    "dev-team": ["go-conversion"],
+    "codex-worker": ["conflict-detection"],
+    "gaia-system": ["conflict-detection", "typing-improvement"],
+    "manager1": []
+  },
+  "environment_usage": {
+    "env_1": {
+      "task": "go-conversion",
+      "group": "dev-team",
+      "files": ["architect-go/", "educational-apps-go/"],
+      "status": "in_use"
+    },
+    "env_2": {
+      "task": null,
+      "group": null,
+      "files": [],
+      "status": "available"
+    },
+    "env_3": {
+      "task": null,
+      "group": null,
+      "files": [],
+      "status": "available"
+    },
+    "env_4": {
+      "task": null,
+      "group": null,
+      "files": [],
+      "status": "available"
+    },
+    "env_5": {
+      "task": null,
+      "group": null,
+      "files": [],
+      "status": "available"
+    }
+  },
+  "conflicts": [],
+  "detection_rules": {
+    "duplicate_work_threshold": 0.8,
+    "idle_time_seconds": 3,
+    "typing_prefix": "##",
+    "auto_confirm_enabled": true
+  }
+}

@@ -1,0 +1,413 @@
+{
+  "project": "basic_edu_apps_final",
+  "project_path": "/Users/jgirmay/Desktop/gitrepo/pyWork/basic_edu_apps_final",
+  "generated_at": "2025-12-25T02:00:00",
+  "analysis": {
+    "codebase_size": "7784 lines (unified_app.py)",
+    "test_coverage": "96+ test files across apps",
+    "current_status": "Multi-app educational platform with typing, math, reading, piano. Needs bug fixes and architecture improvements",
+    "tech_stack": ["Python", "Flask", "SQLite", "JavaScript", "Web Audio API", "Speech Recognition API"]
+  },
+  "total_tasks": 48,
+  "total_milestones": 6,
+  "estimated_duration_days": 28,
+  "milestones": [
+    {
+      "id": "edu_m1_critical_fixes",
+      "name": "Critical Architecture & Database Fixes",
+      "description": "Fix blocking issues with routing, database schemas, and template serving",
+      "phase": "bug_fix",
+      "start_date": "2025-12-26",
+      "target_date": "2026-01-02",
+      "duration_days": 7,
+      "priority": 1,
+      "tasks": [
+        {
+          "title": "Fix template serving without string-munging",
+          "description": "Render templates via blueprints with correct static_url_path/url_for instead of rewriting HTML",
+          "priority": 1,
+          "complexity": "complex",
+          "estimated_hours": 8,
+          "category": "bug",
+          "dependencies": [],
+          "technical_notes": "Affects all apps - unified_app.py line handling"
+        },
+        {
+          "title": "Fix dashboard template/static resolution",
+          "description": "Ensure dashboard consistently loads from dashboard_templates/ with /dashboard_static paths",
+          "priority": 1,
+          "complexity": "medium",
+          "estimated_hours": 4,
+          "category": "bug",
+          "dependencies": ["Fix template serving without string-munging"]
+        },
+        {
+          "title": "Align central DB schema initialization",
+          "description": "Reconcile education_central.db initialization between unified_app.py and dashboard.py",
+          "priority": 1,
+          "complexity": "medium",
+          "estimated_hours": 6,
+          "category": "bug",
+          "dependencies": []
+        },
+        {
+          "title": "Unify typing persistence schema",
+          "description": "Standardize typing/typing.db schema across typing/app.py and unified_app.py",
+          "priority": 1,
+          "complexity": "medium",
+          "estimated_hours": 4,
+          "category": "bug",
+          "dependencies": []
+        },
+        {
+          "title": "Align math schema and field naming",
+          "description": "Reconcile math/math_practice.db schema and fix mode vs operation field naming",
+          "priority": 1,
+          "complexity": "medium",
+          "estimated_hours": 4,
+          "category": "bug",
+          "dependencies": []
+        },
+        {
+          "title": "Fix piano API mounting",
+          "description": "Mount /piano/api/* on unified blueprint and anchor piano.db to module directory",
+          "priority": 1,
+          "complexity": "simple",
+          "estimated_hours": 2,
+          "category": "bug",
+          "dependencies": []
+        },
+        {
+          "title": "Fix reading API blueprint registration",
+          "description": "Move /reading/api/* endpoints to unified server blueprint",
+          "priority": 1,
+          "complexity": "simple",
+          "estimated_hours": 2,
+          "category": "bug",
+          "dependencies": []
+        }
+      ]
+    },
+    {
+      "id": "edu_m2_database_fixes",
+      "name": "Database & Session Management",
+      "description": "Fix database path anchoring and session handling",
+      "phase": "bug_fix",
+      "start_date": "2026-01-03",
+      "target_date": "2026-01-09",
+      "duration_days": 6,
+      "priority": 1,
+      "tasks": [
+        {
+          "title": "Anchor all DB paths to module directories",
+          "description": "Fix all apps to use Path(__file__).parent for DB paths to avoid stray files",
+          "priority": 1,
+          "complexity": "medium",
+          "estimated_hours": 6,
+          "category": "bug",
+          "dependencies": []
+        },
+        {
+          "title": "Fix math session defaulting",
+          "description": "Replace hard-coded user_id = 1 with guest user lookup/creation",
+          "priority": 2,
+          "complexity": "simple",
+          "estimated_hours": 2,
+          "category": "bug",
+          "dependencies": []
+        },
+        {
+          "title": "Investigate math save_session 500 errors",
+          "description": "Add validation and error logging for /math/api/save_session payload issues",
+          "priority": 2,
+          "complexity": "medium",
+          "estimated_hours": 4,
+          "category": "bug",
+          "dependencies": []
+        },
+        {
+          "title": "Create/fix math questions detail table",
+          "description": "Align questions table structure between unified_app.py expectations and app schema",
+          "priority": 2,
+          "complexity": "simple",
+          "estimated_hours": 3,
+          "category": "bug",
+          "dependencies": []
+        },
+        {
+          "title": "Add reading users table",
+          "description": "Create users table in reading app DB for dashboard sync compatibility",
+          "priority": 2,
+          "complexity": "simple",
+          "estimated_hours": 2,
+          "category": "bug",
+          "dependencies": []
+        }
+      ]
+    },
+    {
+      "id": "edu_m3_config_security",
+      "name": "Configuration & Security",
+      "description": "Replace hardcoded config with environment variables and improve security",
+      "phase": "enhancement",
+      "start_date": "2026-01-10",
+      "target_date": "2026-01-16",
+      "duration_days": 6,
+      "priority": 2,
+      "tasks": [
+        {
+          "title": "Replace hard-coded hosts/ports with env config",
+          "description": "Move 100.112.58.92 and other hard-coded values to environment variables",
+          "priority": 2,
+          "complexity": "medium",
+          "estimated_hours": 6,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Clarify HTTPS cert handling",
+          "description": "Make cert.pem/key.pem optional with graceful fallback and clear documentation",
+          "priority": 2,
+          "complexity": "simple",
+          "estimated_hours": 3,
+          "category": "bug",
+          "dependencies": []
+        },
+        {
+          "title": "Centralize Flask secret keys",
+          "description": "Move all secret keys to environment variables across all apps",
+          "priority": 2,
+          "complexity": "simple",
+          "estimated_hours": 2,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Document sandbox port error workaround",
+          "description": "Investigate [Errno 1] Operation not permitted and document solution",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 3,
+          "category": "documentation",
+          "dependencies": []
+        }
+      ]
+    },
+    {
+      "id": "edu_m4_analytics_auth",
+      "name": "Analytics & Authentication",
+      "description": "Centralize analytics and implement Google OAuth",
+      "phase": "feature",
+      "start_date": "2026-01-17",
+      "target_date": "2026-01-24",
+      "duration_days": 7,
+      "priority": 2,
+      "tasks": [
+        {
+          "title": "Centralize analytics ingest",
+          "description": "Write summarized metrics to education_central.db when apps save results",
+          "priority": 2,
+          "complexity": "complex",
+          "estimated_hours": 12,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Propagate authenticated users across apps",
+          "description": "Sync Google OAuth users to all per-app DBs with shared session cookie",
+          "priority": 2,
+          "complexity": "complex",
+          "estimated_hours": 10,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Implement persistent user identity",
+          "description": "Replace random secrets with unified session management for consistent user tracking",
+          "priority": 2,
+          "complexity": "medium",
+          "estimated_hours": 6,
+          "category": "feature",
+          "dependencies": ["Propagate authenticated users across apps"]
+        },
+        {
+          "title": "Build user profile/progress view",
+          "description": "Create unified profile showing stats across all apps from central DB",
+          "priority": 3,
+          "complexity": "complex",
+          "estimated_hours": 8,
+          "category": "feature",
+          "dependencies": ["Centralize analytics ingest"]
+        }
+      ]
+    },
+    {
+      "id": "edu_m5_app_enhancements",
+      "name": "App-Specific Enhancements",
+      "description": "Improve individual app features and data storage",
+      "phase": "feature",
+      "start_date": "2026-01-25",
+      "target_date": "2026-02-07",
+      "duration_days": 13,
+      "priority": 3,
+      "tasks": [
+        {
+          "title": "Store math question/answer details normalized",
+          "description": "Normalize question storage and add remediation suggestions for missed fact families",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 8,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Add reading per-word accuracy tracking",
+          "description": "Store expected vs recognized words in separate table for detailed analytics",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 6,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Implement piano per-note timing capture",
+          "description": "Track per-note timing and mistakes in first-class table for analytics",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 6,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Add typing guided practice plans",
+          "description": "Create accuracy-first then speed drill plans with milestone badges",
+          "priority": 3,
+          "complexity": "complex",
+          "estimated_hours": 10,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Build math adaptive practice modes",
+          "description": "Implement spaced repetition and mixed-operations challenges",
+          "priority": 3,
+          "complexity": "complex",
+          "estimated_hours": 12,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Create reading skill progression system",
+          "description": "Build progression: isolated words → phrases → sentences → passages",
+          "priority": 3,
+          "complexity": "complex",
+          "estimated_hours": 14,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Add piano practice playlists",
+          "description": "Create left/right/both hand drill playlists with progress tracking",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 8,
+          "category": "feature",
+          "dependencies": []
+        }
+      ]
+    },
+    {
+      "id": "edu_m6_testing_deployment",
+      "name": "Testing & Deployment Infrastructure",
+      "description": "Comprehensive testing and production deployment",
+      "phase": "quality",
+      "start_date": "2026-02-08",
+      "target_date": "2026-02-21",
+      "duration_days": 13,
+      "priority": 2,
+      "tasks": [
+        {
+          "title": "Create Playwright E2E test suite",
+          "description": "Build E2E tests for critical user flows across all apps",
+          "priority": 2,
+          "complexity": "complex",
+          "estimated_hours": 20,
+          "category": "test",
+          "dependencies": []
+        },
+        {
+          "title": "Add cross-browser compatibility tests",
+          "description": "Test on Chrome, Safari, Firefox, Edge for desktop and mobile",
+          "priority": 2,
+          "complexity": "medium",
+          "estimated_hours": 12,
+          "category": "test",
+          "dependencies": ["Create Playwright E2E test suite"]
+        },
+        {
+          "title": "Implement API integration tests",
+          "description": "Test API endpoint chains and error handling across all apps",
+          "priority": 2,
+          "complexity": "medium",
+          "estimated_hours": 10,
+          "category": "test",
+          "dependencies": []
+        },
+        {
+          "title": "Harden process launcher",
+          "description": "Add stdout/stderr logging, health polling, and crash recovery to app_launcher.py",
+          "priority": 2,
+          "complexity": "medium",
+          "estimated_hours": 6,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Finalize requirements.txt and Makefile",
+          "description": "Pin dependencies, add make dev/run targets, document Python version",
+          "priority": 2,
+          "complexity": "simple",
+          "estimated_hours": 3,
+          "category": "deployment",
+          "dependencies": []
+        },
+        {
+          "title": "Setup GitHub Actions CI/CD",
+          "description": "Configure automated test runs on PR with coverage reporting",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 6,
+          "category": "deployment",
+          "dependencies": []
+        },
+        {
+          "title": "Create deployment smoke tests",
+          "description": "Build smoke test script that validates deployment health",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 4,
+          "category": "test",
+          "dependencies": []
+        }
+      ]
+    }
+  ],
+  "cross_project_dependencies": [],
+  "risk_assessment": {
+    "technical_risks": [
+      "Database migration complexity across 4 app DBs + central DB",
+      "Session management changes could break existing user sessions",
+      "Template refactoring could introduce rendering bugs"
+    ],
+    "resource_risks": [
+      "Large codebase (7784 lines) increases testing burden",
+      "Multi-app architecture requires careful coordination"
+    ],
+    "mitigation_strategies": [
+      "Create backup of all DBs before schema changes",
+      "Implement feature flags for gradual rollout",
+      "Add comprehensive logging for debugging",
+      "Test in DEV environment before QA deployment"
+    ]
+  }
+}
