@@ -8,7 +8,6 @@ import (
 	"github.com/jgirmay/GAIA_GO/internal/api"
 	"github.com/jgirmay/GAIA_GO/internal/app"
 	"github.com/jgirmay/GAIA_GO/internal/middleware"
-	"github.com/jgirmay/GAIA_GO/internal/session"
 )
 
 // GuessingApp is a simple number guessing game

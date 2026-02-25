@@ -21,7 +21,7 @@ func DiscoverApps(db *sql.DB, sessionManager *session.Manager) (*DiscoveredApps,
 	discovered := &DiscoveredApps{
 		Apps:      make([]app.App, 0),
 		Metadata:  make(map[string]*app.Metadata),
-		LoadOrder: []string{"math", "typing", "reading", "piano"},
+		LoadOrder: []string{"math", "typing", "reading", "piano", "guessing"},
 	}
 
 	// Build metadata and stubs for known apps
@@ -55,6 +55,11 @@ func DiscoverApps(db *sql.DB, sessionManager *session.Manager) (*DiscoveredApps,
 			meta.Description = "Learn to play piano songs"
 			meta.Version = "1.0.0"
 			stub = &AppStub{name: "piano", displayName: "Piano Master", description: "Learn to play piano songs", version: "1.0.0"}
+		case "guessing":
+			meta.DisplayName = "Guess the Number"
+			meta.Description = "Guess the secret number and compete for the fastest time"
+			meta.Version = "1.0.0"
+			stub = &AppStub{name: "guessing", displayName: "Guess the Number", description: "Guess the secret number and compete for the fastest time", version: "1.0.0"}
 		}
 
 		discovered.Apps = append(discovered.Apps, stub)

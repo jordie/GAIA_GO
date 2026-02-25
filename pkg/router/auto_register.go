@@ -9,6 +9,7 @@ import (
 	"github.com/jgirmay/GAIA_GO/internal/docs"
 	"github.com/jgirmay/GAIA_GO/internal/metrics"
 	"github.com/jgirmay/GAIA_GO/internal/session"
+	guessinghandlers "github.com/jgirmay/GAIA_GO/pkg/apps/guessing"
 	mathhandlers "github.com/jgirmay/GAIA_GO/pkg/apps/math"
 	pianohandlers "github.com/jgirmay/GAIA_GO/pkg/apps/piano"
 	readinghandlers "github.com/jgirmay/GAIA_GO/pkg/apps/reading"
@@ -89,6 +90,10 @@ func (r *AppRouter) registerAppHandlers(appName string, db *sql.DB, sm *session.
 		pianoApp := pianohandlers.NewPianoApp(db)
 		pianohandlers.RegisterHandlers(group, pianoApp, sm, businessMetrics)
 		log.Printf("Registered piano app handlers\n")
+	case "guessing":
+		guessingApp := guessinghandlers.NewGuessingApp(db)
+		guessinghandlers.RegisterHandlers(group, guessingApp, sm, businessMetrics)
+		log.Printf("Registered guessing app handlers\n")
 	default:
 		return fmt.Errorf("unknown app: %s", appName)
 	}
