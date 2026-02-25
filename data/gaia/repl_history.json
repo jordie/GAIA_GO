@@ -1,0 +1,23 @@
+[
+  {
+    "timestamp": "22:09:44",
+    "prompt": "Hello, respond with 'Hello back!'",
+    "session": "codex_worker1",
+    "provider": "codex",
+    "complexity": "low"
+  },
+  {
+    "timestamp": "22:10:51",
+    "prompt": "Hello, respond with 'Hello back!'",
+    "session": "codex_worker1",
+    "provider": "codex",
+    "complexity": "low"
+  },
+  {
+    "timestamp": "22:33:31",
+    "prompt": "Design 3 REST API endpoints for a todo app. Format: METHOD /path - description",
+    "session": "architect",
+    "provider": "claude",
+    "complexity": "medium"
+  }
+]

@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+# Git pre-push hook for branch protection
+#
+# Enforces:
+#   - No direct pushes to main
+#   - No direct pushes to dev (except from merge commits)
+#   - Feature branches must target dev, not main
+#
+
+PROTECTED_BRANCHES="main master dev qa"
+
+# Get current branch
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# Read stdin for push info
+while read local_ref local_sha remote_ref remote_sha; do
+    # Extract remote branch name
+    REMOTE_BRANCH=$(echo "$remote_ref" | sed 's|refs/heads/||')
+
+    # Block direct pushes to protected branches (main, master, dev, qa)
+    for protected in $PROTECTED_BRANCHES; do
+        if [ "$REMOTE_BRANCH" = "$protected" ]; then
+            echo ""
+            echo "========================================"
+            echo "  PUSH BLOCKED - Protected Branch"
+            echo "========================================"
+            echo ""
+            echo "  You cannot push directly to '$protected'."
+            echo ""
+            echo "  Proper workflow:"
+            echo "    1. Create feature branch from dev"
+            echo "       git checkout dev && git checkout -b feature/my-change"
+            echo "    2. Work in feature_environments/env_X (not root!)"
+            echo "    3. Push feature branch"
+            echo "       git push origin feature/my-change"
+            echo "    4. Create PR: feature/* -> dev"
+            echo "       gh pr create --base dev"
+            echo "    5. After testing, PR: dev -> qa (QA testing)"
+            echo "       gh pr create --base qa --head dev"
+            echo "    6. After QA approval, PR: qa -> main (production)"
+            echo "       gh pr create --base main --head qa"
+            echo ""
+            echo "  See: scripts/SOP.md#git-branching-rules"
+            echo ""
+            echo "========================================"
+            exit 1
+        fi
+    done
+
+    # Check if feature branch is trying to push to main
+    if [[ "$BRANCH" =~ ^feature/ ]] && [ "$REMOTE_BRANCH" = "main" ]; then
+        echo ""
+        echo "========================================"
+        echo "  PUSH BLOCKED - Wrong Target"
+        echo "========================================"
+        echo ""
+        echo "  Feature branches cannot merge to 'main'."
+        echo "  Feature branches must go to 'dev' first."
+        echo ""
+        echo "  Run instead:"
+        echo "    git push origin $BRANCH"
+        echo "    gh pr create --base dev"
+        echo ""
+        echo "========================================"
+        exit 1
+    fi
+done
+
+exit 0

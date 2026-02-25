@@ -1,0 +1,243 @@
+package services
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
+	"architect-go/pkg/models"
+	"architect-go/pkg/repository"
+)
+
+// MockEventLogRepository mocks the EventLogRepository
+type MockEventLogRepository struct {
+	mock.Mock
+}
+
+func (m *MockEventLogRepository) Create(ctx context.Context, event *models.EventLog) error {
+	args := m.Called(ctx, event)
+	return args.Error(0)
+}
+
+func (m *MockEventLogRepository) Get(ctx context.Context, id string) (*models.EventLog, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.EventLog), args.Error(1)
+}
+
+func (m *MockEventLogRepository) List(ctx context.Context, filters map[string]interface{}, limit int, offset int) ([]*models.EventLog, int64, error) {
+	args := m.Called(ctx, filters, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*models.EventLog), int64(args.Int(1)), args.Error(2)
+}
+
+func (m *MockEventLogRepository) GetByType(ctx context.Context, eventType string, limit int, offset int) ([]*models.EventLog, int64, error) {
+	args := m.Called(ctx, eventType, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*models.EventLog), int64(args.Int(1)), args.Error(2)
+}
+
+func (m *MockEventLogRepository) GetByUser(ctx context.Context, userID string, limit int, offset int) ([]*models.EventLog, int64, error) {
+	args := m.Called(ctx, userID, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*models.EventLog), int64(args.Int(1)), args.Error(2)
+}
+
+func (m *MockEventLogRepository) GetByProject(ctx context.Context, projectID string, limit int, offset int) ([]*models.EventLog, int64, error) {
+	args := m.Called(ctx, projectID, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*models.EventLog), int64(args.Int(1)), args.Error(2)
+}
+
+func (m *MockEventLogRepository) Search(ctx context.Context, query string, limit int, offset int) ([]*models.EventLog, int64, error) {
+	args := m.Called(ctx, query, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*models.EventLog), int64(args.Int(1)), args.Error(2)
+}
+
+func (m *MockEventLogRepository) Update(ctx context.Context, event *models.EventLog) error {
+	args := m.Called(ctx, event)
+	return args.Error(0)
+}
+
+func (m *MockEventLogRepository) Delete(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockEventLogRepository) HardDelete(ctx context.Context, beforeDate string) (int64, error) {
+	args := m.Called(ctx, beforeDate)
+	return int64(args.Int(0)), args.Error(1)
+}
+
+func (m *MockEventLogRepository) GetByTag(ctx context.Context, tag string, limit int, offset int) ([]*models.EventLog, int64, error) {
+	args := m.Called(ctx, tag, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*models.EventLog), int64(args.Int(1)), args.Error(2)
+}
+
+func (m *MockEventLogRepository) GetStats(ctx context.Context, startDate, endDate string) (map[string]interface{}, error) {
+	args := m.Called(ctx, startDate, endDate)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]interface{}), args.Error(1)
+}
+
+// TestEventLogService_CreateEvent tests event creation
+func TestEventLogService_CreateEvent(t *testing.T) {
+	mockRepo := new(MockEventLogRepository)
+	ctx := context.Background()
+
+	event := &models.EventLog{
+		ID:        "event-1",
+		EventType: "user_action",
+		Message:   "Test event",
+		Source:    "dashboard",
+		UserID:    "user-1",
+		ProjectID: "project-1",
+		Tags:      []string{"test"},
+	}
+
+	mockRepo.On("Create", ctx, mock.MatchedBy(func(e *models.EventLog) bool {
+		return e.EventType == "user_action" && e.Message == "Test event"
+	})).Return(nil)
+
+	service := NewEventLogService(mockRepo)
+	req := &CreateEventRequest{
+		EventType: "user_action",
+		Message:   "Test event",
+		Source:    "dashboard",
+		UserID:    "user-1",
+		ProjectID: "project-1",
+		Tags:      []string{"test"},
+	}
+
+	result, err := service.CreateEvent(ctx, req)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "user_action", result.EventType)
+	mockRepo.AssertCalled(t, "Create", ctx, mock.AnythingOfType("*models.EventLog"))
+}
+
+// TestEventLogService_GetEvent tests event retrieval
+func TestEventLogService_GetEvent(t *testing.T) {
+	mockRepo := new(MockEventLogRepository)
+	ctx := context.Background()
+
+	event := &models.EventLog{
+		ID:        "event-1",
+		EventType: "user_action",
+		Message:   "Test event",
+	}
+
+	mockRepo.On("Get", ctx, "event-1").Return(event, nil)
+
+	service := NewEventLogService(mockRepo)
+	result, err := service.GetEvent(ctx, "event-1")
+
+	assert.NoError(t, err)
+	assert.Equal(t, "event-1", result.ID)
+	mockRepo.AssertCalled(t, "Get", ctx, "event-1")
+}
+
+// TestEventLogService_ListEvents tests event listing
+func TestEventLogService_ListEvents(t *testing.T) {
+	mockRepo := new(MockEventLogRepository)
+	ctx := context.Background()
+
+	events := []*models.EventLog{
+		{ID: "event-1", EventType: "user_action"},
+		{ID: "event-2", EventType: "system"},
+	}
+
+	mockRepo.On("List", ctx, mock.Anything, 10, 0).Return(events, int64(2), nil)
+
+	service := NewEventLogService(mockRepo)
+	req := &ListEventsRequest{Limit: 10, Offset: 0}
+	results, total, err := service.ListEvents(ctx, req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(2), total)
+	assert.Equal(t, 2, len(results))
+	mockRepo.AssertCalled(t, "List", ctx, mock.Anything, 10, 0)
+}
+
+// TestEventLogService_AddEventTag tests tagging functionality
+func TestEventLogService_AddEventTag(t *testing.T) {
+	mockRepo := new(MockEventLogRepository)
+	ctx := context.Background()
+
+	event := &models.EventLog{
+		ID:   "event-1",
+		Tags: []string{},
+	}
+
+	mockRepo.On("Get", ctx, "event-1").Return(event, nil)
+	mockRepo.On("Update", ctx, mock.MatchedBy(func(e *models.EventLog) bool {
+		return len(e.Tags) > 0
+	})).Return(nil)
+
+	service := NewEventLogService(mockRepo)
+	req := &EventTagRequest{Tag: "important"}
+	err := service.AddEventTag(ctx, "event-1", req)
+
+	assert.NoError(t, err)
+	mockRepo.AssertCalled(t, "Get", ctx, "event-1")
+	mockRepo.AssertCalled(t, "Update", ctx, mock.AnythingOfType("*models.EventLog"))
+}
+
+// TestEventLogService_DeleteEvents tests bulk deletion
+func TestEventLogService_DeleteEvents(t *testing.T) {
+	mockRepo := new(MockEventLogRepository)
+	ctx := context.Background()
+
+	mockRepo.On("Delete", ctx, "event-1").Return(nil)
+	mockRepo.On("Delete", ctx, "event-2").Return(nil)
+
+	service := NewEventLogService(mockRepo)
+	eventIDs := []string{"event-1", "event-2"}
+	err := service.DeleteEvents(ctx, eventIDs)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(mockRepo.Calls))
+}
+
+// TestEventLogService_GetEventStats tests statistics retrieval
+func TestEventLogService_GetEventStats(t *testing.T) {
+	mockRepo := new(MockEventLogRepository)
+	ctx := context.Background()
+
+	stats := map[string]interface{}{
+		"total": 100,
+		"types": map[string]int{"user_action": 50},
+	}
+
+	mockRepo.On("GetStats", ctx, "2024-01-01", "2024-01-31").Return(stats, nil)
+
+	service := NewEventLogService(mockRepo)
+	result, err := service.GetEventStats(ctx, "2024-01-01", "2024-01-31")
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "2024-01-01", result.StartDate)
+	mockRepo.AssertCalled(t, "GetStats", ctx, "2024-01-01", "2024-01-31")
+}

@@ -1,0 +1,53 @@
+#!/bin/bash
+#
+# Git post-commit hook for automatic deployment
+#
+# Checks for new tags and triggers appropriate deployments:
+#   - v*.*.* tags -> QA deployment
+#   - release-* tags -> PROD deployment (requires approval)
+#
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
+LOG_FILE="$REPO_DIR/deploy_worker.log"
+DEPLOY_WORKER="$REPO_DIR/deploy_worker.py"
+
+# Get current branch
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# Log the commit
+COMMIT=$(git rev-parse --short HEAD)
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] [HOOK] Post-commit: $COMMIT on $BRANCH" >> "$LOG_FILE"
+
+# Check for tags on this commit
+TAGS=$(git tag --points-at HEAD 2>/dev/null)
+
+if [ -n "$TAGS" ]; then
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [HOOK] Tags found: $TAGS" >> "$LOG_FILE"
+
+    for TAG in $TAGS; do
+        # Check for version tag (QA deployment)
+        if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] [HOOK] Version tag detected: $TAG -> QA deployment" >> "$LOG_FILE"
+            if [ -f "$DEPLOY_WORKER" ]; then
+                python3 "$DEPLOY_WORKER" deploy qa "$TAG" &
+            fi
+        fi
+
+        # Check for release tag (PROD deployment)
+        if [[ "$TAG" =~ ^release-[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] [HOOK] Release tag detected: $TAG -> PROD deployment pending" >> "$LOG_FILE"
+            echo ""
+            echo "=============================================="
+            echo "  PRODUCTION DEPLOYMENT READY"
+            echo "=============================================="
+            echo "  Tag: $TAG"
+            echo "  To deploy to production, run:"
+            echo "    DEPLOY_APPROVED=1 python3 deploy_worker.py deploy prod $TAG"
+            echo "=============================================="
+            echo ""
+        fi
+    done
+fi
+
+exit 0

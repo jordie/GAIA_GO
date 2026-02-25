@@ -1,0 +1,224 @@
+package services
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"time"
+
+	"github.com/google/uuid"
+
+	"architect-go/pkg/dto"
+	"architect-go/pkg/models"
+	"architect-go/pkg/repository"
+)
+
+// AuditLogServiceImpl implements AuditLogService
+type AuditLogServiceImpl struct {
+	repo repository.AuditLogRepository
+}
+
+// NewAuditLogService creates a new audit log service
+func NewAuditLogService(repo repository.AuditLogRepository) AuditLogService {
+	return &AuditLogServiceImpl{repo: repo}
+}
+
+func (als *AuditLogServiceImpl) LogAction(ctx context.Context, req *dto.LogActionRequest) (*models.AuditLog, error) {
+	details, _ := json.Marshal(req.Details)
+	auditLog := &models.AuditLog{
+		ID:        uuid.New().String(),
+		UserID:    req.UserID,
+		Action:    req.Action,
+		Resource:  req.Resource,
+		Details:   details,
+		Timestamp: time.Now(),
+		Status:    "completed",
+	}
+
+	if err := als.repo.Create(ctx, auditLog); err != nil {
+		return nil, fmt.Errorf("failed to log action: %w", err)
+	}
+
+	return auditLog, nil
+}
+
+func (als *AuditLogServiceImpl) GetAuditLog(ctx context.Context, id string) (*models.AuditLog, error) {
+	auditLog, err := als.repo.Get(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get audit log: %w", err)
+	}
+	return auditLog, nil
+}
+
+func (als *AuditLogServiceImpl) ListAuditLogs(ctx context.Context, limit, offset int) ([]*models.AuditLog, int64, error) {
+	logs, total, err := als.repo.List(ctx, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to list audit logs: %w", err)
+	}
+	return logs, total, nil
+}
+
+func (als *AuditLogServiceImpl) ListAuditLogsByUser(ctx context.Context, userID string, limit, offset int) ([]*models.AuditLog, int64, error) {
+	logs, total, err := als.repo.ListByUser(ctx, userID, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to list audit logs by user: %w", err)
+	}
+	return logs, total, nil
+}
+
+func (als *AuditLogServiceImpl) ListAuditLogsByResource(ctx context.Context, resource string, limit, offset int) ([]*models.AuditLog, int64, error) {
+	logs, total, err := als.repo.ListByResource(ctx, resource, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to list audit logs by resource: %w", err)
+	}
+	return logs, total, nil
+}
+
+func (als *AuditLogServiceImpl) ListAuditLogsByAction(ctx context.Context, action string, limit, offset int) ([]*models.AuditLog, int64, error) {
+	logs, total, err := als.repo.ListByAction(ctx, action, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to list audit logs by action: %w", err)
+	}
+	return logs, total, nil
+}
+
+func (als *AuditLogServiceImpl) GetAuditLogsByDateRange(ctx context.Context, startDate, endDate string, limit, offset int) ([]*models.AuditLog, int64, error) {
+	logs, total, err := als.repo.ListByDateRange(ctx, startDate, endDate, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get audit logs by date range: %w", err)
+	}
+	return logs, total, nil
+}
+
+func (als *AuditLogServiceImpl) SearchAuditLogs(ctx context.Context, query string, limit, offset int) ([]*models.AuditLog, int64, error) {
+	logs, total, err := als.repo.Search(ctx, query, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to search audit logs: %w", err)
+	}
+	return logs, total, nil
+}
+
+func (als *AuditLogServiceImpl) GetAuditStats(ctx context.Context, timeframe string) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"timeframe":     timeframe,
+		"total_actions": 0,
+		"by_action":    map[string]int{},
+	}, nil
+}
+
+func (als *AuditLogServiceImpl) GetUserActivity(ctx context.Context, userID string) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"user_id": userID,
+		"actions": []string{},
+	}, nil
+}
+
+func (als *AuditLogServiceImpl) GetResourceChanges(ctx context.Context, resourceID string, limit, offset int) ([]*models.AuditLog, int64, error) {
+	logs, total, err := als.repo.ListByResource(ctx, resourceID, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get resource changes: %w", err)
+	}
+	return logs, total, nil
+}
+
+func (als *AuditLogServiceImpl) GetComplianceReport(ctx context.Context, startDate, endDate string) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"period": map[string]string{"start": startDate, "end": endDate},
+		"report": map[string]interface{}{},
+	}, nil
+}
+
+func (als *AuditLogServiceImpl) ExportAuditLogs(ctx context.Context, format string, filters map[string]interface{}) (*EventExportResponse, error) {
+	return &EventExportResponse{
+		Format:     format,
+		ExportedAt: time.Now(),
+		Count:      0,
+	}, nil
+}
+
+func (als *AuditLogServiceImpl) ArchiveAuditLogs(ctx context.Context, beforeDate string) (int64, error) {
+	return 0, nil
+}
+
+func (als *AuditLogServiceImpl) PurgeAuditLogs(ctx context.Context, beforeDate string) (int64, error) {
+	return 0, nil
+}
+
+func (als *AuditLogServiceImpl) GetAuditTrail(ctx context.Context, resourceID string) ([]map[string]interface{}, error) {
+	return make([]map[string]interface{}, 0), nil
+}
+
+func (als *AuditLogServiceImpl) GetChangeLog(ctx context.Context, resourceID string) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"changes": []interface{}{},
+	}, nil
+}
+
+func (als *AuditLogServiceImpl) GenerateReport(ctx context.Context, req *dto.AuditReportRequest) (*dto.AuditReportResponse, error) {
+	return &dto.AuditReportResponse{
+		TotalActions: 0,
+		ActionTypes:  map[string]int64{},
+	}, nil
+}
+
+func (als *AuditLogServiceImpl) GetRecentActions(ctx context.Context, userID string, limit int) ([]*models.AuditLog, error) {
+	logs, _, err := als.ListAuditLogsByUser(ctx, userID, limit, 0)
+	if err != nil {
+		return nil, err
+	}
+	return logs, nil
+}
+
+func (als *AuditLogServiceImpl) GetActionSummary(ctx context.Context, timeframe string) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"timeframe": timeframe,
+		"summary":   map[string]int{},
+	}, nil
+}
+
+func (als *AuditLogServiceImpl) MarkAsReviewed(ctx context.Context, logID string) error {
+	return nil
+}
+
+func (als *AuditLogServiceImpl) GetReviewStatus(ctx context.Context, logID string) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"reviewed": false,
+	}, nil
+}
+
+func (als *AuditLogServiceImpl) CreateAlert(ctx context.Context, req *dto.AuditAlertRequest) (string, error) {
+	return uuid.New().String(), nil
+}
+
+func (als *AuditLogServiceImpl) GetAlerts(ctx context.Context, limit, offset int) ([]map[string]interface{}, int64, error) {
+	return make([]map[string]interface{}, 0), 0, nil
+}
+
+func (als *AuditLogServiceImpl) DeleteAlert(ctx context.Context, alertID string) error {
+	return nil
+}
+
+func (als *AuditLogServiceImpl) GetSecurityEvents(ctx context.Context, limit, offset int) ([]*models.AuditLog, int64, error) {
+	return make([]*models.AuditLog, 0), 0, nil
+}
+
+func (als *AuditLogServiceImpl) VerifyIntegrity(ctx context.Context) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"status": "healthy",
+	}, nil
+}
+
+func (als *AuditLogServiceImpl) GetRetentionPolicy(ctx context.Context) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"retention_days": 365,
+		"enabled":        true,
+	}, nil
+}
+
+func (als *AuditLogServiceImpl) UpdateRetentionPolicy(ctx context.Context, policy map[string]interface{}) error {
+	return nil
+}
+
+func (als *AuditLogServiceImpl) AlertOnAnomalies(ctx context.Context, threshold int) error {
+	return nil
+}

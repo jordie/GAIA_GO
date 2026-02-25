@@ -1,0 +1,211 @@
+{
+  "version": "1.0.0",
+  "settings": {
+    "buffer_size": 50,
+    "event_buffer_size": 1000,
+    "enable_training": true,
+    "training_data_path": "data/training"
+  },
+  "patterns": [
+    {
+      "name": "claude_tool_use",
+      "event_type": "tool_use",
+      "regex": "⏺ (\\w+)\\((.*)\\)",
+      "field_map": {
+        "tool": 1,
+        "args": 2
+      },
+      "priority": 100,
+      "auto_confirm": false,
+      "risk_level": "medium",
+      "metadata": {
+        "category": "tool_execution"
+      }
+    },
+    {
+      "name": "claude_permission_prompt",
+      "event_type": "permission",
+      "regex": "⏵⏵ (\\w+) permissions? on",
+      "field_map": {
+        "action": 1
+      },
+      "priority": 95,
+      "auto_confirm": false,
+      "risk_level": "high",
+      "metadata": {
+        "requires_approval": true
+      }
+    },
+    {
+      "name": "file_read_safe",
+      "event_type": "tool_use",
+      "regex": "Reading (\\d+) files?",
+      "field_map": {
+        "count": 1
+      },
+      "priority": 80,
+      "auto_confirm": true,
+      "risk_level": "low",
+      "metadata": {
+        "safe_operation": true
+      }
+    },
+    {
+      "name": "bash_command",
+      "event_type": "tool_use",
+      "regex": "⏺ Bash\\((.+)\\)",
+      "field_map": {
+        "command": 1
+      },
+      "priority": 90,
+      "auto_confirm": false,
+      "risk_level": "high",
+      "metadata": {
+        "requires_review": true
+      }
+    },
+    {
+      "name": "edit_operation",
+      "event_type": "tool_use",
+      "regex": "⏺ Edit\\((.+)\\)",
+      "field_map": {
+        "file": 1
+      },
+      "priority": 85,
+      "auto_confirm": true,
+      "risk_level": "medium"
+    },
+    {
+      "name": "write_operation",
+      "event_type": "tool_use",
+      "regex": "⏺ Write\\((.+)\\)",
+      "field_map": {
+        "file": 1
+      },
+      "priority": 85,
+      "auto_confirm": false,
+      "risk_level": "medium"
+    },
+    {
+      "name": "task_thinking",
+      "event_type": "state_change",
+      "regex": "✢ (\\w+)… \\(thinking\\)",
+      "field_map": {
+        "state": 1
+      },
+      "priority": 70,
+      "auto_confirm": true,
+      "risk_level": "low"
+    },
+    {
+      "name": "task_completed",
+      "event_type": "state_change",
+      "regex": "✻ (\\w+) for (.+)",
+      "field_map": {
+        "action": 1,
+        "duration": 2
+      },
+      "priority": 75,
+      "auto_confirm": true,
+      "risk_level": "low"
+    },
+    {
+      "name": "error_detection",
+      "event_type": "error",
+      "regex": "Error: (.+)",
+      "field_map": {
+        "message": 1
+      },
+      "priority": 100,
+      "auto_confirm": false,
+      "risk_level": "high"
+    },
+    {
+      "name": "exit_code_nonzero",
+      "event_type": "error",
+      "regex": "Exit code (\\d+)",
+      "field_map": {
+        "code": 1
+      },
+      "priority": 95,
+      "auto_confirm": false,
+      "risk_level": "high"
+    },
+    {
+      "name": "gemini_shell_mode",
+      "event_type": "state_change",
+      "regex": "shell mode enabled",
+      "field_map": {},
+      "priority": 70,
+      "auto_confirm": true,
+      "risk_level": "low"
+    },
+    {
+      "name": "yolo_mode_status",
+      "event_type": "state_change",
+      "regex": "YOLO mode \\(ctrl \\+ y to toggle\\)",
+      "field_map": {},
+      "priority": 65,
+      "auto_confirm": true,
+      "risk_level": "low"
+    },
+    {
+      "name": "token_usage",
+      "event_type": "metric",
+      "regex": "token usage: ([\\d,]+)/([\\d,]+)",
+      "field_map": {
+        "used": 1,
+        "total": 2
+      },
+      "priority": 60,
+      "auto_confirm": true,
+      "risk_level": "low"
+    },
+    {
+      "name": "session_idle",
+      "event_type": "state_change",
+      "regex": "Type your message or @path/to/file",
+      "field_map": {},
+      "priority": 90,
+      "auto_confirm": true,
+      "risk_level": "low",
+      "metadata": {
+        "agent_state": "idle"
+      }
+    },
+    {
+      "name": "git_commit",
+      "event_type": "tool_use",
+      "regex": "git commit -m \"(.+)\"",
+      "field_map": {
+        "message": 1
+      },
+      "priority": 85,
+      "auto_confirm": false,
+      "risk_level": "medium"
+    },
+    {
+      "name": "compilation_error",
+      "event_type": "error",
+      "regex": "# ([\\w/\\.]+)\\n.*:(\\d+):(\\d+): (.+)",
+      "field_map": {
+        "package": 1,
+        "line": 2,
+        "column": 3,
+        "error": 4
+      },
+      "priority": 95,
+      "auto_confirm": false,
+      "risk_level": "high"
+    },
+    {
+      "name": "go_build_success",
+      "event_type": "state_change",
+      "regex": "go build.*succeeded",
+      "field_map": {},
+      "priority": 75,
+      "auto_confirm": true,
+      "risk_level": "low"
+    }
+  ]
+}

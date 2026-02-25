@@ -1,0 +1,206 @@
+{
+  "session": "codex_worker1",
+  "updated_at": "2026-02-16T22:28:40.166297",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Design 3 REST API endpoints for a todo app"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "Design 3 REST API endpoints for a todo app"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "This Python code has a bug: `x = [1,2,3]; x[10]`. Fix it."
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "This Python code has a bug: `x = [1,2,3]; x[10]`. Fix it."
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "How would you optimize a loop with 1M items?"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "How would you optimize a loop with 1M items?"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "Hello, respond with 'Hello back!'"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "Design 3 REST API endpoints for a todo app"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "Design 3 REST API endpoints for a todo app"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "This Python code has a bug: `x = [1,2,3]; x[10]`. Fix it."
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "This Python code has a bug: `x = [1,2,3]; x[10]`. Fix it."
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "How would you optimize a loop with 1M items?"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "How would you optimize a loop with 1M items?"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "List exactly 3 REST API endpoints for a todo app. Format: METHOD /path - description"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: claude: Error code: 401 - {'type': 'error', 'error': {'type': 'authentication_error', 'message': 'invalid x-api-key'}, 'request_id': 'req_011CYD9zkbVmSwg2XJjzzZz4'}; ollama: 400 Client Error: Bad Request for url: http://localhost:11434/api/chat; anythingllm: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: /api/v1/workspace/chat (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=3001): Failed to establish a new connection: [Errno 61] Connection refused\")); gemini: argument of type 'NoneType' is not a container or iterable; openai: OPENAI_API_KEY not set"
+    },
+    {
+      "role": "user",
+      "content": "List exactly 3 REST API endpoints for a todo app. Format: METHOD /path - description"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "Hello, respond with just 'hello'"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: claude: Error code: 401 - {'type': 'error', 'error': {'type': 'authentication_error', 'message': 'invalid x-api-key'}, 'request_id': 'req_011CYDAVTMiitgeZv9kUw1A4'}; ollama: 400 Client Error: Bad Request for url: http://localhost:11434/api/chat; anythingllm: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: /api/v1/workspace/chat (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=3001): Failed to establish a new connection: [Errno 61] Connection refused\")); gemini: argument of type 'NoneType' is not a container or iterable; openai: OPENAI_API_KEY not set"
+    },
+    {
+      "role": "user",
+      "content": "Hello, respond with just 'hello'"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "List exactly 3 REST API endpoints for a todo app. Format: METHOD /path - description"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "List exactly 3 REST API endpoints for a todo app. Format: METHOD /path - description"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "Design 3 REST API endpoints for a todo app"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "Design 3 REST API endpoints for a todo app"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "This Python code has a bug: `x = [1,2,3]; x[10]`. Fix it."
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "This Python code has a bug: `x = [1,2,3]; x[10]`. Fix it."
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "How would you optimize a loop with 1M items?"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    },
+    {
+      "role": "user",
+      "content": "How would you optimize a loop with 1M items?"
+    },
+    {
+      "role": "assistant",
+      "content": "Error generating response: All providers failed: "
+    }
+  ]
+}

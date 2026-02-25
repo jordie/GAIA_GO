@@ -1,0 +1,59 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+docs/
+docs_gen*
+*.md
+README*
+
+# Tests
+*_test.go
+testing/
+.coverprofile
+coverage.out
+
+# Scripts
+scripts/
+*.sh
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+server
+
+# Build cache
+.cache/
+vendor/
+
+# Environment
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Docker files (not needed in image)
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose*.yml
+
+# Kubernetes (not needed in image)
+k8s/

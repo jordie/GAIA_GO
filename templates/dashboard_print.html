@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Architect Dashboard Print Export</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #1b1a17;
+            --ink-soft: #34312d;
+            --muted: #6f6a61;
+            --paper: #f6f2eb;
+            --paper-bright: #ffffff;
+            --accent: #0c5964;
+            --accent-soft: #e2f0ef;
+            --line: #d8d1c7;
+            --shadow: 0 18px 40px rgba(30, 26, 20, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+            color: var(--ink);
+            background: radial-gradient(circle at top left, #f3ede3, #f9f6f1 48%, #ffffff 100%);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(120deg, rgba(12, 89, 100, 0.05), transparent 55%),
+                repeating-linear-gradient(0deg, rgba(27, 26, 23, 0.03), rgba(27, 26, 23, 0.03) 1px, transparent 1px, transparent 28px);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .page {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 32px 28px 60px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 24px;
+            align-items: flex-start;
+            padding: 20px 24px;
+            background: var(--paper-bright);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+        }
+
+        .eyebrow {
+            text-transform: uppercase;
+            letter-spacing: 0.22em;
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        h1 {
+            margin: 0 0 8px 0;
+            font-size: 28px;
+            letter-spacing: 0.02em;
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            border: 1px solid var(--accent);
+            background: var(--accent);
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .btn.secondary {
+            background: transparent;
+            color: var(--accent);
+        }
+
+        .btn.ghost {
+            border-color: var(--line);
+            color: var(--ink-soft);
+            background: transparent;
+        }
+
+        .btn:hover {
+            filter: brightness(0.98);
+        }
+
+        .notice {
+            margin-top: 18px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            background: var(--accent-soft);
+            color: var(--ink-soft);
+            font-size: 13px;
+            border: 1px solid rgba(12, 89, 100, 0.2);
+        }
+
+        .error-banner {
+            margin-top: 12px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            background: #ffecec;
+            color: #8a2d2d;
+            font-size: 13px;
+            border: 1px solid #f1b3b3;
+        }
+
+        .summary-grid {
+            margin-top: 22px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+        }
+
+        .summary-card {
+            background: var(--paper-bright);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 16px 18px;
+            box-shadow: 0 8px 18px rgba(30, 26, 20, 0.05);
+        }
+
+        .card-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .card-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        .card-meta {
+            margin-top: 6px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .section {
+            margin-top: 26px;
+            padding: 20px 24px 22px;
+            background: var(--paper-bright);
+            border-radius: 18px;
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--ink-soft);
+        }
+
+        .section-meta {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .data-table th,
+        .data-table td {
+            text-align: left;
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--line);
+            vertical-align: top;
+        }
+
+        .data-table th {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .data-table td {
+            color: var(--ink-soft);
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .mono {
+            font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            border: 1px solid transparent;
+        }
+
+        .pill.success {
+            background: #e8f4ec;
+            color: #1c6c3f;
+            border-color: #b6e0c3;
+        }
+
+        .pill.warning {
+            background: #fff1db;
+            color: #8a5a12;
+            border-color: #f2c98a;
+        }
+
+        .pill.danger {
+            background: #fde8e8;
+            color: #8a2d2d;
+            border-color: #f2bcbc;
+        }
+
+        .pill.info {
+            background: #e6f0f6;
+            color: #1f5678;
+            border-color: #b4d1e6;
+        }
+
+        .pill.muted {
+            background: #f0ede6;
+            color: #6f6a61;
+            border-color: #d8d1c7;
+        }
+
+        .split-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        .empty-state {
+            padding: 14px 0 4px;
+            color: var(--muted);
+            font-size: 12px;
+            display: none;
+        }
+
+        .page-footer {
+            margin-top: 28px;
+            font-size: 11px;
+            color: var(--muted);
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        @media (max-width: 900px) {
+            .page {
+                padding: 24px 18px 48px;
+            }
+
+            .page-header {
+                flex-direction: column;
+            }
+        }
+
+        @media print {
+            body {
+                background: #ffffff;
+            }
+
+            body::before {
+                display: none;
+            }
+
+            .screen-only {
+                display: none !important;
+            }
+
+            .page {
+                padding: 0;
+            }
+
+            .section,
+            .summary-card,
+            .page-header {
+                box-shadow: none;
+                border-color: #cfcfcf;
+            }
+
+            .section {
+                break-inside: avoid;
+            }
+
+            .table-wrap {
+                overflow: visible;
+            }
+
+            a {
+                color: inherit;
+                text-decoration: none;
+            }
+        }
+
+        @page {
+            margin: 18mm;
+        }
+    </style>
+</head>
+<body data-username="{{ session.get('username', 'User') }}">
+    <div class="page">
+        <header class="page-header">
+            <div>
+                <div class="eyebrow">Architect Dashboard</div>
+                <h1>Print and Export View</h1>
+                <div class="meta">Generated <span id="generatedAt">Loading</span> by {{ session.get('username', 'User') }}</div>
+            </div>
+            <div class="actions screen-only">
+                <button class="btn primary" id="printBtn" type="button">Print</button>
+                <button class="btn secondary" id="exportJsonBtn" type="button">Export JSON</button>
+                <a class="btn ghost" href="/" target="_blank" rel="noopener">Open Live Dashboard</a>
+            </div>
+        </header>
+
+        <div class="notice" id="snapshotNote">Loading snapshot</div>
+        <div class="error-banner" id="errorBanner" style="display: none;"></div>
+
+        <section class="summary-grid" id="summaryGrid">
+            <div class="summary-card">
+                <div class="card-label">Projects</div>
+                <div class="card-value" id="summaryProjects">0</div>
+                <div class="card-meta" id="summaryProjectsMeta">Active projects</div>
+            </div>
+            <div class="summary-card">
+                <div class="card-label">Features</div>
+                <div class="card-value" id="summaryFeatures">0</div>
+                <div class="card-meta" id="summaryFeaturesMeta">In progress</div>
+            </div>
+            <div class="summary-card">
+                <div class="card-label">Bugs</div>
+                <div class="card-value" id="summaryBugs">0</div>
+                <div class="card-meta" id="summaryBugsMeta">Open issues</div>
+            </div>
+            <div class="summary-card">
+                <div class="card-label">Errors</div>
+                <div class="card-value" id="summaryErrors">0</div>
+                <div class="card-meta" id="summaryErrorsMeta">Open occurrences</div>
+            </div>
+            <div class="summary-card">
+                <div class="card-label">Tasks</div>
+                <div class="card-value" id="summaryTasks">0</div>
+                <div class="card-meta" id="summaryTasksMeta">Pending and running</div>
+            </div>
+            <div class="summary-card">
+                <div class="card-label">Infrastructure</div>
+                <div class="card-value" id="summaryInfra">0</div>
+                <div class="card-meta" id="summaryInfraMeta">Online nodes</div>
+            </div>
+        </section>
+
+        <section class="section" id="projectsSection">
+            <div class="section-header">
+                <h2>Projects</h2>
+                <div class="section-meta" id="projectsMeta"></div>
+            </div>
+            <div class="table-wrap">
+                <table class="data-table" id="projectsTable">
+                    <thead>
+                        <tr>
+                            <th>Project</th>
+                            <th>Priority</th>
+                            <th>Features</th>
+                            <th>Bugs</th>
+                            <th>Errors</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="empty-state" id="projectsEmpty">No projects found.</div>
+            </div>
+        </section>
+
+        <section class="section" id="issuesSection">
+            <div class="section-header">
+                <h2>Issues Snapshot</h2>
+                <div class="section-meta" id="issuesMeta"></div>
+            </div>
+            <div class="split-grid">
+                <div>
+                    <div class="section-header" style="margin-bottom: 8px;">
+                        <h2>Features</h2>
+                        <div class="section-meta" id="featuresMeta"></div>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table" id="featuresTable">
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th>Project</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <div class="empty-state" id="featuresEmpty">No active features found.</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="section-header" style="margin-bottom: 8px;">
+                        <h2>Bugs</h2>
+                        <div class="section-meta" id="bugsMeta"></div>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table" id="bugsTable">
+                            <thead>
+                                <tr>
+                                    <th>Bug</th>
+                                    <th>Project</th>
+                                    <th>Severity</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <div class="empty-state" id="bugsEmpty">No open bugs found.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="errorsSection">
+            <div class="section-header">
+                <h2>Errors</h2>
+                <div class="section-meta" id="errorsMeta"></div>
+            </div>
+            <div class="table-wrap">
+                <table class="data-table" id="errorsTable">
+                    <thead>
+                        <tr>
+                            <th>Error</th>
+                            <th>Source</th>
+                            <th>Status</th>
+                            <th>Count</th>
+                            <th>Last Seen</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="empty-state" id="errorsEmpty">No errors found.</div>
+            </div>
+        </section>
+
+        <section class="section" id="tasksSection">
+            <div class="section-header">
+                <h2>Task Queue</h2>
+                <div class="section-meta" id="tasksMeta"></div>
+            </div>
+            <div class="split-grid">
+                <div>
+                    <div class="section-header" style="margin-bottom: 8px;">
+                        <h2>Pending Tasks</h2>
+                        <div class="section-meta" id="pendingTasksMeta"></div>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table" id="pendingTasksTable">
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                    <th>Age</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <div class="empty-state" id="pendingTasksEmpty">No pending tasks found.</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="section-header" style="margin-bottom: 8px;">
+                        <h2>Running Tasks</h2>
+                        <div class="section-meta" id="runningTasksMeta"></div>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table" id="runningTasksTable">
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                    <th>Age</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <div class="empty-state" id="runningTasksEmpty">No running tasks found.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="infraSection">
+            <div class="section-header">
+                <h2>Infrastructure</h2>
+                <div class="section-meta" id="infraMeta"></div>
+            </div>
+            <div class="split-grid">
+                <div>
+                    <div class="section-header" style="margin-bottom: 8px;">
+                        <h2>Nodes</h2>
+                        <div class="section-meta" id="nodesMeta"></div>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table" id="nodesTable">
+                            <thead>
+                                <tr>
+                                    <th>Node</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>CPU</th>
+                                    <th>Memory</th>
+                                    <th>Sessions</th>
+                                    <th>Workers</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <div class="empty-state" id="nodesEmpty">No nodes found.</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="section-header" style="margin-bottom: 8px;">
+                        <h2>Workers</h2>
+                        <div class="section-meta" id="workersMeta"></div>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table" id="workersTable">
+                            <thead>
+                                <tr>
+                                    <th>Worker</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Node</th>
+                                    <th>Last Seen</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <div class="empty-state" id="workersEmpty">No registered workers found.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="activitySection">
+            <div class="section-header">
+                <h2>Recent Activity</h2>
+                <div class="section-meta" id="activityMeta"></div>
+            </div>
+            <div class="table-wrap">
+                <table class="data-table" id="activityTable">
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Entity</th>
+                            <th>Details</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="empty-state" id="activityEmpty">No recent activity found.</div>
+            </div>
+        </section>
+
+        <footer class="page-footer">
+            <div>Snapshot created at <span id="generatedAtFooter">Loading</span></div>
+            <div>Source: Live dashboard</div>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboardPrint.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+TOPIC: Hotels - 1 Month Accommodation
+
+TIMESTAMP: 2026-02-13T05:16:20.891483
+
+PROMPT:
+Find suitable hotels/accommodations in Ethiopia for a 1-month stay (June-July 2026):
+- Location: Addis Ababa (main base)
+- Duration: Approximately 1 month
+- Guests: Family of 6 (2 adults, 4 children ages 6-13)
+- Requirements:
+  * Family-friendly (kid-safe, activities for children)
+  * Kitchen or kitchenette preferred (long stay)
+  * 2-3 bedrooms or family suites
+  * Safe neighborhood
+  * WiFi, air conditioning
+- Budget: Mid-range to budget-friendly
+- Options: Hotels, serviced apartments, Airbnb, or vacation rentals
+Output: Top 5 accommodation options with prices, amenities, location, and booking info

@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Replay - Go Wrapper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #48bb78;
+            --error-color: #f56565;
+            --warning-color: #ed8936;
+            --info-color: #4299e1;
+            --dark-bg: #1a202c;
+            --card-bg: #2d3748;
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --border-color: #4a5568;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #2d3748 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(45, 55, 72, 0.95);
+            border-bottom: 2px solid var(--primary-color);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-playing { background: var(--success-color); color: white; }
+        .status-paused { background: var(--warning-color); color: white; }
+        .status-stopped { background: var(--error-color); color: white; }
+        .status-loading { background: var(--info-color); color: white; }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--card-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 20px;
+            height: calc(100vh - 120px);
+        }
+
+        .panel {
+            background: rgba(45, 55, 72, 0.8);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .session-list {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .session-card {
+            background: var(--card-bg);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .session-card:hover {
+            border-color: var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        .session-card.selected {
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+        }
+
+        .session-card h3 {
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+        }
+
+        .session-card .info {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin: 2px 0;
+        }
+
+        .playback-controls {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn-play {
+            background: linear-gradient(135deg, var(--success-color), #38a169);
+            color: white;
+            width: 60px;
+            height: 60px;
+        }
+
+        .control-btn-pause {
+            background: linear-gradient(135deg, var(--warning-color), #dd6b20);
+            color: white;
+            width: 60px;
+            height: 60px;
+        }
+
+        .control-btn-stop {
+            background: linear-gradient(135deg, var(--error-color), #e53e3e);
+            color: white;
+        }
+
+        .control-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .progress-section {
+            margin: 15px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            transition: width 0.3s;
+            border-radius: 4px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .speed-control {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .speed-btn {
+            padding: 5px 12px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .speed-btn:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .speed-btn.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .event-viewer {
+            flex: 1;
+            overflow-y: auto;
+            background: #1a202c;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .event-item {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 3px solid;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .event-extraction {
+            background: rgba(72, 187, 120, 0.1);
+            border-color: var(--success-color);
+        }
+
+        .event-state_change {
+            background: rgba(66, 153, 225, 0.1);
+            border-color: var(--info-color);
+        }
+
+        .event-error {
+            background: rgba(245, 101, 101, 0.1);
+            border-color: var(--error-color);
+        }
+
+        .event-timestamp {
+            color: var(--text-secondary);
+            font-size: 11px;
+            margin-bottom: 3px;
+        }
+
+        .event-content {
+            color: var(--text-primary);
+        }
+
+        .event-meta {
+            color: var(--text-secondary);
+            font-size: 11px;
+            margin-top: 3px;
+        }
+
+        .info-panel {
+            overflow-y: auto;
+        }
+
+        .info-section {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .info-section h3 {
+            font-size: 14px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 13px;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+        }
+
+        .info-value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .timeline {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .timeline-item {
+            padding: 10px;
+            border-left: 2px solid var(--border-color);
+            margin-bottom: 10px;
+            position: relative;
+            padding-left: 20px;
+            font-size: 12px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 15px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary-color);
+        }
+
+        .timeline-item.active {
+            border-color: var(--primary-color);
+        }
+
+        .timeline-item.active::before {
+            background: var(--success-color);
+            box-shadow: 0 0 10px var(--success-color);
+        }
+
+        .export-section {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .export-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .export-btn:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 1400px) {
+            .grid {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .panel {
+                max-height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎬 Session Replay Viewer</h1>
+        <div class="header-controls">
+            <span id="statusBadge" class="status-badge status-loading">LOADING</span>
+            <button class="btn btn-secondary" onclick="refreshSessions()">🔄 Refresh</button>
+            <button class="btn btn-primary" onclick="location.href='/'">🏠 Dashboard</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="grid">
+            <!-- Left Panel: Session List -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>📚 Sessions</span>
+                </div>
+                <input type="text" class="search-box" id="sessionSearch" placeholder="Search sessions...">
+                <div class="session-list" id="sessionList">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading sessions...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel: Playback & Events -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>▶️ Playback</span>
+                    <button class="btn btn-secondary" onclick="clearEvents()">Clear</button>
+                </div>
+
+                <!-- Playback Controls -->
+                <div class="playback-controls" id="playbackControls" style="display: none;">
+                    <div class="controls-row">
+                        <button class="control-btn control-btn-stop" onclick="stopReplay()" title="Stop">⏹</button>
+                        <button class="control-btn control-btn-play" id="playBtn" onclick="togglePlayPause()" title="Play">▶</button>
+                        <button class="control-btn control-btn-stop" onclick="seekBackward()" title="Backward">⏪</button>
+                        <button class="control-btn control-btn-stop" onclick="seekForward()" title="Forward">⏩</button>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="progress-section">
+                        <div class="progress-bar" onclick="seekToPosition(event)">
+                            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-info">
+                            <span id="progressText">0 / 0 events (0%)</span>
+                            <span id="timeRemaining">--:--</span>
+                        </div>
+                    </div>
+
+                    <!-- Speed Control -->
+                    <div class="speed-control">
+                        <span style="font-size: 12px; color: var(--text-secondary);">Speed:</span>
+                        <button class="speed-btn" onclick="setSpeed(0.5)">0.5x</button>
+                        <button class="speed-btn active" onclick="setSpeed(1)">1x</button>
+                        <button class="speed-btn" onclick="setSpeed(2)">2x</button>
+                        <button class="speed-btn" onclick="setSpeed(5)">5x</button>
+                        <button class="speed-btn" onclick="setSpeed(10)">10x</button>
+                    </div>
+                </div>
+
+                <!-- Event Viewer -->
+                <div class="event-viewer" id="eventViewer">
+                    <div style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                        Select a session to start replay
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Session Info -->
+            <div class="panel info-panel">
+                <div class="panel-header">
+                    <span>ℹ️ Session Info</span>
+                </div>
+
+                <div id="sessionInfo" style="display: none;">
+                    <!-- Stats -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="statEvents">0</div>
+                            <div class="stat-label">Events</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statDuration">0s</div>
+                            <div class="stat-label">Duration</div>
+                        </div>
+                    </div>
+
+                    <!-- Details -->
+                    <div class="info-section">
+                        <h3>Details</h3>
+                        <div class="info-row">
+                            <span class="info-label">Agent</span>
+                            <span class="info-value" id="infoAgent">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Session ID</span>
+                            <span class="info-value" id="infoSessionId" style="font-size: 10px;">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Started</span>
+                            <span class="info-value" id="infoStarted">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Ended</span>
+                            <span class="info-value" id="infoEnded">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Exit Code</span>
+                            <span class="info-value" id="infoExitCode">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Lines Processed</span>
+                            <span class="info-value" id="infoLines">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Timeline -->
+                    <div class="info-section">
+                        <h3>Timeline</h3>
+                        <div class="timeline" id="timeline"></div>
+                    </div>
+
+                    <!-- Export -->
+                    <div class="info-section">
+                        <h3>Export</h3>
+                        <div class="export-section">
+                            <button class="export-btn" onclick="exportSession('json')">📄 JSON</button>
+                            <button class="export-btn" onclick="exportSession('csv')">📊 CSV</button>
+                            <button class="export-btn" onclick="exportSession('har')">🔗 HAR</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="noSessionSelected" style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                    No session selected
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSession = null;
+        let currentSessionId = null;
+        let eventSource = null;
+        let isPlaying = false;
+        let isPaused = false;
+        let currentSpeed = 1.0;
+        let allSessions = [];
+        let currentEvents = [];
+        let currentIndex = 0;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshSessions();
+
+            // Search functionality
+            document.getElementById('sessionSearch').addEventListener('input', filterSessions);
+        });
+
+        // Refresh sessions list
+        async function refreshSessions() {
+            try {
+                // Fetch from query API
+                const response = await fetch('/api/query/sessions?limit=100');
+                const data = await response.json();
+
+                allSessions = data.sessions || [];
+                renderSessions(allSessions);
+            } catch (error) {
+                console.error('Failed to fetch sessions:', error);
+                document.getElementById('sessionList').innerHTML =
+                    '<div class="loading"><p style="color: var(--error-color);">Failed to load sessions</p></div>';
+            }
+        }
+
+        // Render sessions
+        function renderSessions(sessions) {
+            const listEl = document.getElementById('sessionList');
+
+            if (!sessions || sessions.length === 0) {
+                listEl.innerHTML = '<div class="loading"><p>No sessions found</p></div>';
+                return;
+            }
+
+            listEl.innerHTML = sessions.map(session => `
+                <div class="session-card ${currentSessionId === session.session_id ? 'selected' : ''}"
+                     onclick="selectSession('${session.session_id}')">
+                    <h3>${session.agent_name}</h3>
+                    <div class="info">📋 ${session.session_id.substring(0, 12)}...</div>
+                    <div class="info">📅 ${new Date(session.started_at).toLocaleString()}</div>
+                    <div class="info">📊 ${session.total_extraction_events} events</div>
+                    ${session.exit_code !== null ? `<div class="info">🔚 Exit: ${session.exit_code}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Filter sessions
+        function filterSessions() {
+            const search = document.getElementById('sessionSearch').value.toLowerCase();
+            const filtered = allSessions.filter(s =>
+                s.agent_name.toLowerCase().includes(search) ||
+                s.session_id.toLowerCase().includes(search)
+            );
+            renderSessions(filtered);
+        }
+
+        // Select session
+        async function selectSession(sessionId) {
+            currentSessionId = sessionId;
+
+            // Stop any ongoing replay
+            stopReplay();
+
+            // Update UI
+            renderSessions(allSessions);
+            updateStatus('loading', 'Loading...');
+
+            try {
+                // Fetch session details
+                const sessionResp = await fetch(`/api/query/session/${sessionId}`);
+                currentSession = await sessionResp.json();
+
+                // Fetch extractions
+                const extractionsResp = await fetch(`/api/query/extractions?session=${sessionId}`);
+                const extractionsData = await extractionsResp.json();
+                currentEvents = extractionsData.extractions || [];
+                currentIndex = 0;
+
+                // Update info panel
+                displaySessionInfo();
+
+                // Show controls
+                document.getElementById('playbackControls').style.display = 'block';
+                document.getElementById('noSessionSelected').style.display = 'none';
+                document.getElementById('sessionInfo').style.display = 'block';
+
+                // Clear event viewer
+                document.getElementById('eventViewer').innerHTML = '';
+
+                updateStatus('stopped', 'Ready');
+            } catch (error) {
+                console.error('Failed to load session:', error);
+                updateStatus('stopped', 'Error');
+            }
+        }
+
+        // Display session info
+        function displaySessionInfo() {
+            if (!currentSession) return;
+
+            const duration = currentSession.ended_at ?
+                (new Date(currentSession.ended_at) - new Date(currentSession.started_at)) / 1000 : 0;
+
+            document.getElementById('statEvents').textContent = currentEvents.length;
+            document.getElementById('statDuration').textContent = duration > 0 ? duration.toFixed(1) + 's' : 'N/A';
+
+            document.getElementById('infoAgent').textContent = currentSession.agent_name;
+            document.getElementById('infoSessionId').textContent = currentSession.session_id;
+            document.getElementById('infoStarted').textContent = new Date(currentSession.started_at).toLocaleString();
+            document.getElementById('infoEnded').textContent = currentSession.ended_at ?
+                new Date(currentSession.ended_at).toLocaleString() : 'N/A';
+            document.getElementById('infoExitCode').textContent = currentSession.exit_code !== null ?
+                currentSession.exit_code : 'N/A';
+            document.getElementById('infoLines').textContent = currentSession.total_lines_processed || 0;
+
+            // Build timeline
+            buildTimeline();
+        }
+
+        // Build timeline
+        function buildTimeline() {
+            const timeline = document.getElementById('timeline');
+            if (!currentEvents || currentEvents.length === 0) {
+                timeline.innerHTML = '<p style="color: var(--text-secondary); font-size: 12px;">No events</p>';
+                return;
+            }
+
+            // Group events by time buckets
+            const buckets = {};
+            currentEvents.forEach((event, idx) => {
+                const time = new Date(event.timestamp);
+                const bucket = `${time.getHours()}:${String(time.getMinutes()).padStart(2, '0')}`;
+
+                if (!buckets[bucket]) buckets[bucket] = [];
+                buckets[bucket].push({event, idx});
+            });
+
+            timeline.innerHTML = Object.entries(buckets).map(([time, items]) => `
+                <div class="timeline-item ${items.some(i => i.idx === currentIndex) ? 'active' : ''}"
+                     onclick="seekToIndex(${items[0].idx})">
+                    <strong>${time}</strong> - ${items.length} events
+                    <div style="font-size: 10px; color: var(--text-secondary); margin-top: 3px;">
+                        ${items[0].event.event_type}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Toggle play/pause
+        async function togglePlayPause() {
+            if (isPlaying) {
+                await pauseReplay();
+            } else {
+                await startReplay();
+            }
+        }
+
+        // Start replay
+        async function startReplay() {
+            if (!currentSessionId || !currentEvents.length) return;
+
+            isPlaying = true;
+            isPaused = false;
+            updateStatus('playing', 'Playing');
+
+            const playBtn = document.getElementById('playBtn');
+            playBtn.textContent = '⏸';
+            playBtn.className = 'control-btn control-btn-pause';
+
+            // Start SSE stream
+            if (eventSource) {
+                eventSource.close();
+            }
+
+            eventSource = new EventSource(`/api/replay/session/${currentSessionId}?speed=${currentSpeed}`);
+
+            eventSource.addEventListener('session_start', (e) => {
+                console.log('Replay started:', JSON.parse(e.data));
+            });
+
+            eventSource.addEventListener('extraction', (e) => {
+                const event = JSON.parse(e.data);
+                addEventToViewer(event, 'extraction');
+                currentIndex++;
+                updateProgress();
+            });
+
+            eventSource.addEventListener('state_change', (e) => {
+                const event = JSON.parse(e.data);
+                addEventToViewer(event, 'state_change');
+                currentIndex++;
+                updateProgress();
+            });
+
+            eventSource.addEventListener('replay_complete', (e) => {
+                console.log('Replay complete:', JSON.parse(e.data));
+                stopReplay();
+            });
+
+            eventSource.onerror = (error) => {
+                console.error('SSE error:', error);
+                stopReplay();
+            };
+        }
+
+        // Pause replay
+        async function pauseReplay() {
+            isPaused = true;
+            isPlaying = false;
+            updateStatus('paused', 'Paused');
+
+            const playBtn = document.getElementById('playBtn');
+            playBtn.textContent = '▶';
+            playBtn.className = 'control-btn control-btn-play';
+
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+        }
+
+        // Stop replay
+        function stopReplay() {
+            isPlaying = false;
+            isPaused = false;
+            updateStatus('stopped', 'Stopped');
+
+            const playBtn = document.getElementById('playBtn');
+            playBtn.textContent = '▶';
+            playBtn.className = 'control-btn control-btn-play';
+
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+
+            currentIndex = 0;
+            updateProgress();
+        }
+
+        // Set playback speed
+        function setSpeed(speed) {
+            currentSpeed = speed;
+
+            // Update UI
+            document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Restart if playing
+            if (isPlaying) {
+                stopReplay();
+                startReplay();
+            }
+        }
+
+        // Seek to position (by clicking progress bar)
+        function seekToPosition(event) {
+            const bar = event.currentTarget;
+            const rect = bar.getBoundingClientRect();
+            const percent = (event.clientX - rect.left) / rect.width;
+            const targetIndex = Math.floor(percent * currentEvents.length);
+            seekToIndex(targetIndex);
+        }
+
+        // Seek to index
+        function seekToIndex(index) {
+            if (!currentEvents.length) return;
+
+            currentIndex = Math.max(0, Math.min(index, currentEvents.length - 1));
+            updateProgress();
+
+            // Reload events up to this point
+            const viewer = document.getElementById('eventViewer');
+            viewer.innerHTML = '';
+
+            for (let i = 0; i <= currentIndex; i++) {
+                addEventToViewer(currentEvents[i], 'extraction');
+            }
+        }
+
+        // Seek backward
+        function seekBackward() {
+            seekToIndex(currentIndex - 10);
+        }
+
+        // Seek forward
+        function seekForward() {
+            seekToIndex(currentIndex + 10);
+        }
+
+        // Add event to viewer
+        function addEventToViewer(event, type) {
+            const viewer = document.getElementById('eventViewer');
+            const eventEl = document.createElement('div');
+            eventEl.className = `event-item event-${type}`;
+
+            let content = '';
+            if (type === 'extraction') {
+                content = `
+                    <div class="event-timestamp">${new Date(event.timestamp).toLocaleTimeString()}</div>
+                    <div class="event-content">
+                        <strong>${event.event_type}</strong>: ${event.pattern}
+                        <br>${event.value || event.matched_value || ''}
+                    </div>
+                    <div class="event-meta">Line ${event.line || event.line_number || 0} ${event.risk ? '• Risk: ' + event.risk : ''}</div>
+                `;
+            } else if (type === 'state_change') {
+                content = `
+                    <div class="event-timestamp">${new Date(event.timestamp).toLocaleTimeString()}</div>
+                    <div class="event-content">State: <strong>${event.state}</strong></div>
+                `;
+            }
+
+            eventEl.innerHTML = content;
+            viewer.appendChild(eventEl);
+
+            // Auto-scroll
+            viewer.scrollTop = viewer.scrollHeight;
+        }
+
+        // Update progress
+        function updateProgress() {
+            if (!currentEvents.length) return;
+
+            const percent = (currentIndex / currentEvents.length) * 100;
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressText').textContent =
+                `${currentIndex} / ${currentEvents.length} events (${percent.toFixed(1)}%)`;
+
+            buildTimeline();
+        }
+
+        // Clear events
+        function clearEvents() {
+            document.getElementById('eventViewer').innerHTML = '';
+            currentIndex = 0;
+            updateProgress();
+        }
+
+        // Update status
+        function updateStatus(state, text) {
+            const badge = document.getElementById('statusBadge');
+            badge.className = `status-badge status-${state}`;
+            badge.textContent = text.toUpperCase();
+        }
+
+        // Export session
+        function exportSession(format) {
+            if (!currentSessionId) return;
+
+            const url = `/api/replay/export/${currentSessionId}?format=${format}`;
+            window.open(url, '_blank');
+        }
+    </script>
+</body>
+</html>

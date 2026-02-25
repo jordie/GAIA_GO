@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Dashboard Pro - Go Wrapper</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            padding: 20px 30px;
+            border-bottom: 3px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            color: #58a6ff;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #238636;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #2ea043;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #21262d;
+            border: 1px solid #30363d;
+        }
+
+        .btn-secondary:hover {
+            background: #30363d;
+        }
+
+        .btn-danger {
+            background: #da3633;
+        }
+
+        .btn-danger:hover {
+            background: #f85149;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        input[type="text"], input[type="search"] {
+            padding: 10px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        input[type="text"]:focus, input[type="search"]:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: #161b22;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #30363d;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .metric-label {
+            color: #8b949e;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #30363d;
+            padding-bottom: 0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            color: #c9d1d9;
+        }
+
+        .tab.active {
+            color: #58a6ff;
+            border-bottom-color: #58a6ff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Search Panel */
+        .search-panel {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+        }
+
+        .search-stats {
+            color: #8b949e;
+            font-size: 13px;
+        }
+
+        /* Log Viewer with Search */
+        .log-viewer {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .log-header {
+            background: #1f2937;
+            padding: 15px;
+            border-bottom: 2px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-content {
+            height: 500px;
+            overflow-y: auto;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            background: #0d1117;
+        }
+
+        .log-line {
+            padding: 4px 8px;
+            margin: 2px 0;
+            border-radius: 3px;
+            transition: background 0.2s;
+        }
+
+        .log-line:hover {
+            background: #161b22;
+        }
+
+        .log-line.highlight {
+            background: #1f6feb33;
+            border-left: 3px solid #58a6ff;
+        }
+
+        .log-line.filtered {
+            display: none;
+        }
+
+        .log-line-num {
+            color: #6e7681;
+            margin-right: 10px;
+            user-select: none;
+        }
+
+        /* Code Block Styling */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            background: #161b22;
+            padding: 8px 12px;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .code-lang {
+            color: #58a6ff;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .code-content {
+            padding: 15px;
+            overflow-x: auto;
+        }
+
+        .code-content pre {
+            margin: 0;
+        }
+
+        .code-content code {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+        }
+
+        /* Extraction Timeline */
+        .timeline-container {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #30363d;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            padding-left: 20px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -34px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #58a6ff;
+            border: 2px solid #0d1117;
+        }
+
+        .timeline-time {
+            color: #8b949e;
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+
+        .timeline-card {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 12px;
+        }
+
+        .timeline-type {
+            color: #8b949e;
+            font-size: 11px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .timeline-pattern {
+            color: #79c0ff;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .timeline-value {
+            color: #c9d1d9;
+            word-break: break-all;
+        }
+
+        /* Extraction Cards Enhanced */
+        .extraction-grid {
+            padding: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 15px;
+        }
+
+        .extraction-item {
+            background: #0d1117;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #58a6ff;
+            transition: all 0.3s;
+        }
+
+        .extraction-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .extraction-item.type-session {
+            border-left-color: #58a6ff;
+        }
+
+        .extraction-item.type-code_block {
+            border-left-color: #3fb950;
+        }
+
+        .extraction-item.type-metric {
+            border-left-color: #d2a8ff;
+        }
+
+        .extraction-item.type-error {
+            border-left-color: #f85149;
+        }
+
+        .extraction-type {
+            color: #8b949e;
+            font-size: 11px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .extraction-pattern {
+            color: #79c0ff;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .extraction-value {
+            color: #c9d1d9;
+            margin-bottom: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .extraction-meta {
+            color: #6e7681;
+            font-size: 11px;
+            padding-top: 8px;
+            border-top: 1px solid #21262d;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .filter-label {
+            color: #8b949e;
+            font-size: 12px;
+        }
+
+        select {
+            padding: 6px 12px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+
+        /* Stats Badge */
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .badge-primary {
+            background: #1f6feb;
+            color: white;
+        }
+
+        .badge-success {
+            background: #238636;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #9e6a03;
+            color: white;
+        }
+
+        .badge-danger {
+            background: #da3633;
+            color: white;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #58a6ff;
+        }
+
+        .spinner {
+            border: 3px solid #30363d;
+            border-top: 3px solid #58a6ff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Export Button */
+        .export-btn {
+            position: relative;
+        }
+
+        .export-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            margin-top: 5px;
+            min-width: 150px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+
+        .export-menu.show {
+            display: block;
+        }
+
+        .export-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #21262d;
+        }
+
+        .export-item:last-child {
+            border-bottom: none;
+        }
+
+        .export-item:hover {
+            background: #21262d;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #484f58;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>
+            <span>🚀</span>
+            Agent Dashboard Pro
+            <span class="badge badge-primary">Phase 4A</span>
+        </h1>
+        <div class="header-controls">
+            <input type="text" id="apiUrl" placeholder="API URL" value="http://localhost:8151">
+            <button class="btn" onclick="refreshDashboard()">🔄 Refresh</button>
+            <button class="btn btn-secondary" onclick="showCreateAgent()">➕ New Agent</button>
+            <div class="export-btn">
+                <button class="btn btn-secondary" onclick="toggleExportMenu()">💾 Export</button>
+                <div id="exportMenu" class="export-menu">
+                    <div class="export-item" onclick="exportLogs()">📄 Export Logs</div>
+                    <div class="export-item" onclick="exportExtractions()">🔍 Export Extractions</div>
+                    <div class="export-item" onclick="exportMetrics()">📈 Export Metrics</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Total Agents</div>
+                <div class="metric-value" id="totalAgents">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Running</div>
+                <div class="metric-value" id="runningAgents" style="color: #3fb950;">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">SSE Clients</div>
+                <div class="metric-value" id="sseClients" style="color: #79c0ff;">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Extractions</div>
+                <div class="metric-value" id="totalExtractions" style="color: #d2a8ff;">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Code Blocks</div>
+                <div class="metric-value" id="codeBlocks" style="color: #3fb950;">0</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('logs')">📄 Live Logs</button>
+            <button class="tab" onclick="switchTab('extractions')">🔍 Extractions</button>
+            <button class="tab" onclick="switchTab('timeline')">⏱️ Timeline</button>
+            <button class="tab" onclick="switchTab('code')">💻 Code Blocks</button>
+            <button class="tab" onclick="switchTab('metrics')">📈 Metrics</button>
+        </div>
+
+        <!-- Tab: Live Logs with Search -->
+        <div id="tab-logs" class="tab-content active">
+            <div class="search-panel">
+                <input type="search" id="logSearch" class="search-input"
+                       placeholder="🔍 Search logs..." oninput="filterLogs()">
+                <select id="logAgentSelect" onchange="connectToAgent(this.value)">
+                    <option value="">Select agent...</option>
+                </select>
+                <span class="search-stats" id="searchStats">0 / 0 lines</span>
+                <button class="btn btn-secondary btn-sm" onclick="clearLogs()">Clear</button>
+                <button class="btn btn-secondary btn-sm" onclick="toggleAutoscroll()">
+                    <span id="autoscrollIcon">✓</span> Auto
+                </button>
+            </div>
+
+            <div class="log-viewer">
+                <div id="logContent" class="log-content">
+                    <div style="text-align: center; padding: 40px; color: #8b949e;">
+                        Select an agent to view live logs
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Extractions with Filters -->
+        <div id="tab-extractions" class="tab-content">
+            <div class="filters">
+                <div class="filter-group">
+                    <span class="filter-label">Type:</span>
+                    <select id="extractionTypeFilter" onchange="filterExtractions()">
+                        <option value="">All Types</option>
+                        <option value="session">Session</option>
+                        <option value="code_block">Code Block</option>
+                        <option value="metric">Metric</option>
+                        <option value="error">Error</option>
+                        <option value="state">State</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">Pattern:</span>
+                    <select id="extractionPatternFilter" onchange="filterExtractions()">
+                        <option value="">All Patterns</option>
+                    </select>
+                </div>
+                <input type="search" id="extractionSearch" placeholder="🔍 Search extractions..."
+                       oninput="filterExtractions()" style="flex: 1;">
+            </div>
+
+            <div class="extraction-grid" id="extractionsContainer">
+                <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #8b949e;">
+                    No extractions yet
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Timeline View -->
+        <div id="tab-timeline" class="tab-content">
+            <div class="timeline-container">
+                <div class="timeline" id="timelineContainer">
+                    <div style="text-align: center; padding: 40px; color: #8b949e;">
+                        No events yet
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Code Blocks -->
+        <div id="tab-code" class="tab-content">
+            <div id="codeBlocksContainer">
+                <div style="text-align: center; padding: 40px; color: #8b949e;">
+                    No code blocks detected yet
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Metrics -->
+        <div id="tab-metrics" class="tab-content">
+            <div class="metrics-chart" style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <div style="font-size: 18px; font-weight: bold; color: #58a6ff; margin-bottom: 15px;">
+                    📈 Events Per Second
+                </div>
+                <canvas id="eventsChart" height="80"></canvas>
+            </div>
+            <div class="metrics-chart" style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px;">
+                <div style="font-size: 18px; font-weight: bold; color: #58a6ff; margin-bottom: 15px;">
+                    🔢 Extraction Types Distribution
+                </div>
+                <canvas id="extractionTypesChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let agents = {};
+        let sseConnections = {};
+        let currentTab = 'logs';
+        let autoscroll = true;
+        let allLogs = [];
+        let allExtractions = [];
+        let allCodeBlocks = [];
+        let extractionPatterns = new Set();
+        let eventsChart = null;
+        let extractionTypesChart = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            refreshDashboard();
+            setInterval(refreshDashboard, 5000);
+        });
+
+        function initCharts() {
+            const ctx1 = document.getElementById('eventsChart').getContext('2d');
+            eventsChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Events/sec',
+                        data: [],
+                        borderColor: '#58a6ff',
+                        backgroundColor: '#1f6feb33',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true, ticks: { color: '#8b949e' }, grid: { color: '#30363d' } },
+                        x: { ticks: { color: '#8b949e' }, grid: { color: '#30363d' } }
+                    },
+                    plugins: { legend: { labels: { color: '#c9d1d9' } } }
+                }
+            });
+
+            const ctx2 = document.getElementById('extractionTypesChart').getContext('2d');
+            extractionTypesChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: ['#58a6ff', '#3fb950', '#d2a8ff', '#f85149', '#79c0ff']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#c9d1d9' } } }
+                }
+            });
+        }
+
+        async function refreshDashboard() {
+            const apiUrl = document.getElementById('apiUrl').value;
+
+            try {
+                const response = await fetch(`${apiUrl}/api/agents`);
+                const data = await response.json();
+
+                agents = {};
+                data.agents.forEach(agent => {
+                    agents[agent.name] = agent;
+                });
+
+                updateMetrics();
+                updateAgentSelects();
+
+                const sseResponse = await fetch(`${apiUrl}/api/sse/stats`);
+                const sseStats = await sseResponse.json();
+                document.getElementById('sseClients').textContent = sseStats.total_clients || 0;
+
+            } catch (error) {
+                console.error('Failed to refresh dashboard:', error);
+            }
+        }
+
+        function updateMetrics() {
+            const total = Object.keys(agents).length;
+            let running = 0;
+            Object.values(agents).forEach(agent => {
+                if (agent.status === 'running') running++;
+            });
+
+            document.getElementById('totalAgents').textContent = total;
+            document.getElementById('runningAgents').textContent = running;
+            document.getElementById('totalExtractions').textContent = allExtractions.length;
+            document.getElementById('codeBlocks').textContent = allCodeBlocks.length;
+        }
+
+        function updateAgentSelects() {
+            const select = document.getElementById('logAgentSelect');
+            const currentValue = select.value;
+
+            select.innerHTML = '<option value="">Select agent...</option>';
+            Object.values(agents).forEach(agent => {
+                const option = document.createElement('option');
+                option.value = agent.name;
+                option.textContent = agent.name;
+                if (agent.name === currentValue) option.selected = true;
+                select.appendChild(option);
+            });
+        }
+
+        function connectToAgent(agentName) {
+            if (!agentName) return;
+
+            if (sseConnections[agentName]) {
+                sseConnections[agentName].close();
+            }
+
+            const apiUrl = document.getElementById('apiUrl').value;
+            const eventSource = new EventSource(`${apiUrl}/api/agents/${agentName}/stream`);
+
+            eventSource.addEventListener('log', (e) => {
+                const data = JSON.parse(e.data);
+                addLogLine(data.data.line_num, data.data.line, data.timestamp);
+            });
+
+            eventSource.addEventListener('extraction', (e) => {
+                const data = JSON.parse(e.data);
+                addExtraction(data);
+                addToTimeline(data);
+
+                // Check for code blocks
+                if (data.data.type === 'code_block' && data.data.pattern === 'code_block_end') {
+                    addCodeBlock(data);
+                }
+            });
+
+            eventSource.onerror = () => {
+                console.error('SSE connection error for', agentName);
+            };
+
+            sseConnections[agentName] = eventSource;
+        }
+
+        function addLogLine(lineNum, content, timestamp) {
+            allLogs.push({ lineNum, content, timestamp });
+
+            const container = document.getElementById('logContent');
+
+            if (container.querySelector('[style*="text-align: center"]')) {
+                container.innerHTML = '';
+            }
+
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.dataset.content = content.toLowerCase();
+            line.innerHTML = `
+                <span class="log-line-num">${lineNum}</span>
+                <span class="log-line-content">${escapeHtml(content)}</span>
+            `;
+
+            container.appendChild(line);
+
+            if (autoscroll) {
+                container.scrollTop = container.scrollHeight;
+            }
+
+            while (container.children.length > 1000) {
+                container.removeChild(container.firstChild);
+            }
+
+            updateSearchStats();
+        }
+
+        function addExtraction(data) {
+            allExtractions.push(data);
+
+            // Add to pattern list
+            if (data.data.pattern) {
+                extractionPatterns.add(data.data.pattern);
+                updatePatternFilter();
+            }
+
+            // Update extraction types chart
+            updateExtractionTypesChart(data.data.type);
+
+            // Add to UI
+            const container = document.getElementById('extractionsContainer');
+
+            if (container.querySelector('[style*="grid-column"]')) {
+                container.innerHTML = '';
+            }
+
+            const item = document.createElement('div');
+            item.className = `extraction-item type-${data.data.type || 'unknown'}`;
+            item.dataset.type = data.data.type || '';
+            item.dataset.pattern = data.data.pattern || '';
+            item.dataset.value = (data.data.value || '').toLowerCase();
+
+            const extractData = data.data || {};
+            item.innerHTML = `
+                <div class="extraction-type">${extractData.type}</div>
+                <div class="extraction-pattern">${extractData.pattern}</div>
+                <div class="extraction-value">${escapeHtml(extractData.value || '')}</div>
+                <div class="extraction-meta">
+                    <span>Line ${extractData.line_num}</span>
+                    <span>${new Date(data.timestamp).toLocaleTimeString()}</span>
+                </div>
+            `;
+
+            container.insertBefore(item, container.firstChild);
+
+            while (container.children.length > 100) {
+                container.removeChild(container.lastChild);
+            }
+
+            updateMetrics();
+        }
+
+        function addToTimeline(data) {
+            const container = document.getElementById('timelineContainer');
+
+            if (container.querySelector('[style*="text-align: center"]')) {
+                container.innerHTML = '';
+            }
+
+            const item = document.createElement('div');
+            item.className = 'timeline-item';
+
+            const extractData = data.data || {};
+            item.innerHTML = `
+                <div class="timeline-time">${new Date(data.timestamp).toLocaleTimeString()}</div>
+                <div class="timeline-card">
+                    <div class="timeline-type">${extractData.type}</div>
+                    <div class="timeline-pattern">${extractData.pattern}</div>
+                    <div class="timeline-value">${escapeHtml(extractData.value || '')}</div>
+                </div>
+            `;
+
+            container.insertBefore(item, container.firstChild);
+
+            while (container.children.length > 50) {
+                container.removeChild(container.lastChild);
+            }
+        }
+
+        function addCodeBlock(data) {
+            allCodeBlocks.push(data);
+
+            const container = document.getElementById('codeBlocksContainer');
+
+            if (container.querySelector('[style*="text-align: center"]')) {
+                container.innerHTML = '';
+            }
+
+            const block = document.createElement('div');
+            block.className = 'code-block';
+
+            const metadata = data.data.metadata || {};
+            const language = metadata.language || 'plaintext';
+            const content = metadata.content || data.data.value || '';
+
+            block.innerHTML = `
+                <div class="code-header">
+                    <span class="code-lang">${language}</span>
+                    <span style="color: #8b949e; font-size: 12px;">
+                        ${metadata.line_count || 0} lines •
+                        ${new Date(data.timestamp).toLocaleTimeString()}
+                    </span>
+                </div>
+                <div class="code-content">
+                    <pre><code class="language-${language}">${escapeHtml(content)}</code></pre>
+                </div>
+            `;
+
+            container.insertBefore(block, container.firstChild);
+
+            // Apply syntax highlighting
+            block.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+
+            updateMetrics();
+        }
+
+        function filterLogs() {
+            const searchTerm = document.getElementById('logSearch').value.toLowerCase();
+            const lines = document.querySelectorAll('.log-line');
+
+            let visible = 0;
+            lines.forEach(line => {
+                const content = line.dataset.content || '';
+                if (content.includes(searchTerm)) {
+                    line.classList.remove('filtered');
+                    line.classList.toggle('highlight', searchTerm !== '');
+                    visible++;
+                } else {
+                    line.classList.add('filtered');
+                    line.classList.remove('highlight');
+                }
+            });
+
+            updateSearchStats(visible, lines.length);
+        }
+
+        function updateSearchStats(visible, total) {
+            if (visible === undefined) {
+                const lines = document.querySelectorAll('.log-line');
+                visible = Array.from(lines).filter(l => !l.classList.contains('filtered')).length;
+                total = lines.length;
+            }
+            document.getElementById('searchStats').textContent = `${visible} / ${total} lines`;
+        }
+
+        function filterExtractions() {
+            const typeFilter = document.getElementById('extractionTypeFilter').value;
+            const patternFilter = document.getElementById('extractionPatternFilter').value;
+            const searchTerm = document.getElementById('extractionSearch').value.toLowerCase();
+
+            const items = document.querySelectorAll('.extraction-item');
+            items.forEach(item => {
+                const type = item.dataset.type || '';
+                const pattern = item.dataset.pattern || '';
+                const value = item.dataset.value || '';
+
+                const typeMatch = !typeFilter || type === typeFilter;
+                const patternMatch = !patternFilter || pattern === patternFilter;
+                const searchMatch = !searchTerm || value.includes(searchTerm);
+
+                item.style.display = (typeMatch && patternMatch && searchMatch) ? 'block' : 'none';
+            });
+        }
+
+        function updatePatternFilter() {
+            const select = document.getElementById('extractionPatternFilter');
+            const currentValue = select.value;
+
+            const patterns = Array.from(extractionPatterns).sort();
+            select.innerHTML = '<option value="">All Patterns</option>';
+
+            patterns.forEach(pattern => {
+                const option = document.createElement('option');
+                option.value = pattern;
+                option.textContent = pattern;
+                if (pattern === currentValue) option.selected = true;
+                select.appendChild(option);
+            });
+        }
+
+        function updateExtractionTypesChart(type) {
+            const labels = extractionTypesChart.data.labels;
+            const data = extractionTypesChart.data.datasets[0].data;
+
+            const index = labels.indexOf(type);
+            if (index === -1) {
+                labels.push(type);
+                data.push(1);
+            } else {
+                data[index]++;
+            }
+
+            if (currentTab === 'metrics') {
+                extractionTypesChart.update('none');
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('logContent').innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #8b949e;">
+                    Logs cleared
+                </div>
+            `;
+            allLogs = [];
+            updateSearchStats();
+        }
+
+        function toggleAutoscroll() {
+            autoscroll = !autoscroll;
+            document.getElementById('autoscrollIcon').textContent = autoscroll ? '✓' : '';
+        }
+
+        function toggleExportMenu() {
+            document.getElementById('exportMenu').classList.toggle('show');
+        }
+
+        function exportLogs() {
+            const data = allLogs.map(log => `[${log.lineNum}] ${log.content}`).join('\n');
+            downloadFile('logs.txt', data);
+            toggleExportMenu();
+        }
+
+        function exportExtractions() {
+            const data = JSON.stringify(allExtractions, null, 2);
+            downloadFile('extractions.json', data);
+            toggleExportMenu();
+        }
+
+        function exportMetrics() {
+            const metrics = {
+                total_agents: Object.keys(agents).length,
+                running_agents: Object.values(agents).filter(a => a.status === 'running').length,
+                total_extractions: allExtractions.length,
+                code_blocks: allCodeBlocks.length,
+                log_lines: allLogs.length
+            };
+            downloadFile('metrics.json', JSON.stringify(metrics, null, 2));
+            toggleExportMenu();
+        }
+
+        function downloadFile(filename, content) {
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function showCreateAgent() {
+            const name = prompt('Agent name:');
+            if (!name) return;
+
+            const command = prompt('Command:', 'bash');
+            if (!command) return;
+
+            const args = prompt('Arguments (comma-separated):', '-c,echo Hello');
+
+            createAgent(name, command, args.split(','));
+        }
+
+        async function createAgent(name, command, args) {
+            const apiUrl = document.getElementById('apiUrl').value;
+
+            await fetch(`${apiUrl}/api/agents`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, command, args })
+            });
+
+            refreshDashboard();
+
+            // Auto-connect to new agent
+            setTimeout(() => {
+                document.getElementById('logAgentSelect').value = name;
+                connectToAgent(name);
+            }, 500);
+        }
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Close export menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.export-btn')) {
+                document.getElementById('exportMenu').classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

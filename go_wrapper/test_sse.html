@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSE Test Client - Go Wrapper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #4ec9b0;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            background: #252526;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px;
+            background: #3c3c3c;
+            border: 1px solid #4ec9b0;
+            color: #d4d4d4;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #0e639c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #1177bb;
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        button.stop {
+            background: #d16969;
+        }
+
+        button.stop:hover {
+            background: #e74c3c;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #252526;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #4ec9b0;
+        }
+
+        .stat-label {
+            color: #858585;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4ec9b0;
+        }
+
+        .panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background: #252526;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: #2d2d30;
+            padding: 15px;
+            font-weight: bold;
+            color: #4ec9b0;
+            border-bottom: 2px solid #4ec9b0;
+        }
+
+        .panel-content {
+            padding: 15px;
+            height: 400px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            padding: 8px;
+            margin-bottom: 8px;
+            background: #1e1e1e;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            border-left: 3px solid #4ec9b0;
+        }
+
+        .log-entry.log {
+            border-left-color: #808080;
+        }
+
+        .log-entry.extraction {
+            border-left-color: #4ec9b0;
+        }
+
+        .log-entry.state {
+            border-left-color: #569cd6;
+        }
+
+        .log-entry.complete {
+            border-left-color: #4ec9b0;
+        }
+
+        .log-entry.error {
+            border-left-color: #d16969;
+        }
+
+        .log-timestamp {
+            color: #858585;
+            font-size: 10px;
+        }
+
+        .log-type {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .log-type.log { background: #808080; }
+        .log-type.extraction { background: #4ec9b0; }
+        .log-type.state { background: #569cd6; }
+        .log-type.complete { background: #4ec9b0; }
+        .log-type.error { background: #d16969; }
+
+        .log-data {
+            margin-top: 5px;
+            color: #ce9178;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status.connected {
+            background: #4ec9b0;
+            color: #1e1e1e;
+        }
+
+        .status.disconnected {
+            background: #d16969;
+            color: white;
+        }
+
+        .extraction-card {
+            background: #1e1e1e;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border-left: 3px solid #4ec9b0;
+        }
+
+        .extraction-pattern {
+            color: #569cd6;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .extraction-value {
+            color: #ce9178;
+            margin-left: 10px;
+        }
+
+        .extraction-metadata {
+            color: #858585;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 SSE Test Client - Go Wrapper</h1>
+
+        <div class="controls">
+            <input type="text" id="agentName" placeholder="Agent name (e.g., codex-1)" value="test-agent">
+            <input type="text" id="apiUrl" placeholder="API URL" value="http://localhost:8151">
+            <button id="connectBtn" onclick="connect()">Connect</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled class="stop">Disconnect</button>
+            <button onclick="clearLogs()">Clear Logs</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Connection Status</div>
+                <div class="stat-value" id="statusValue">
+                    <span class="status disconnected">Disconnected</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Events Received</div>
+                <div class="stat-value" id="eventsCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Log Lines</div>
+                <div class="stat-value" id="logsCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Extractions</div>
+                <div class="stat-value" id="extractionsCount">0</div>
+            </div>
+        </div>
+
+        <div class="panels">
+            <div class="panel">
+                <div class="panel-header">📋 Raw Events</div>
+                <div class="panel-content" id="eventsPanel"></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">🔍 Extracted Data</div>
+                <div class="panel-content" id="extractionsPanel"></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">📄 Log Lines</div>
+                <div class="panel-content" id="logsPanel"></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">⚡ State Changes</div>
+                <div class="panel-content" id="statePanel"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let eventSource = null;
+        let stats = {
+            events: 0,
+            logs: 0,
+            extractions: 0
+        };
+
+        function connect() {
+            const agentName = document.getElementById('agentName').value;
+            const apiUrl = document.getElementById('apiUrl').value;
+
+            if (!agentName) {
+                alert('Please enter an agent name');
+                return;
+            }
+
+            const url = `${apiUrl}/api/agents/${agentName}/stream`;
+            console.log('Connecting to:', url);
+
+            eventSource = new EventSource(url);
+
+            eventSource.onopen = () => {
+                console.log('SSE connection opened');
+                updateStatus(true);
+            };
+
+            eventSource.onerror = (error) => {
+                console.error('SSE error:', error);
+                updateStatus(false);
+            };
+
+            eventSource.addEventListener('connected', (e) => {
+                const data = JSON.parse(e.data);
+                console.log('Connected:', data);
+                addEvent('connected', data);
+            });
+
+            eventSource.addEventListener('log', (e) => {
+                const data = JSON.parse(e.data);
+                stats.logs++;
+                addLog(data);
+                addEvent('log', data);
+                updateStats();
+            });
+
+            eventSource.addEventListener('extraction', (e) => {
+                const data = JSON.parse(e.data);
+                stats.extractions++;
+                addExtraction(data);
+                addEvent('extraction', data);
+                updateStats();
+            });
+
+            eventSource.addEventListener('state', (e) => {
+                const data = JSON.parse(e.data);
+                addState(data);
+                addEvent('state', data);
+            });
+
+            eventSource.addEventListener('complete', (e) => {
+                const data = JSON.parse(e.data);
+                addState(data);
+                addEvent('complete', data);
+            });
+
+            eventSource.addEventListener('error', (e) => {
+                const data = JSON.parse(e.data);
+                addEvent('error', data);
+            });
+
+            eventSource.addEventListener('ping', (e) => {
+                // Silent keep-alive
+            });
+
+            eventSource.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                console.log('Message:', data);
+                stats.events++;
+                updateStats();
+            };
+        }
+
+        function disconnect() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+                updateStatus(false);
+            }
+        }
+
+        function updateStatus(connected) {
+            const statusEl = document.getElementById('statusValue');
+            statusEl.innerHTML = connected ?
+                '<span class="status connected">Connected</span>' :
+                '<span class="status disconnected">Disconnected</span>';
+
+            document.getElementById('connectBtn').disabled = connected;
+            document.getElementById('disconnectBtn').disabled = !connected;
+        }
+
+        function updateStats() {
+            document.getElementById('eventsCount').textContent = stats.events;
+            document.getElementById('logsCount').textContent = stats.logs;
+            document.getElementById('extractionsCount').textContent = stats.extractions;
+        }
+
+        function addEvent(type, data) {
+            const panel = document.getElementById('eventsPanel');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+
+            const time = new Date(data.timestamp).toLocaleTimeString();
+            entry.innerHTML = `
+                <div class="log-timestamp">${time}</div>
+                <span class="log-type ${type}">${type.toUpperCase()}</span>
+                <div class="log-data">${JSON.stringify(data.data || data, null, 2)}</div>
+            `;
+
+            panel.insertBefore(entry, panel.firstChild);
+            stats.events++;
+        }
+
+        function addLog(data) {
+            const panel = document.getElementById('logsPanel');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry log';
+
+            const time = new Date(data.timestamp).toLocaleTimeString();
+            const logData = data.data || {};
+            entry.innerHTML = `
+                <div class="log-timestamp">${time} - Line ${logData.line_num}</div>
+                <div class="log-data">${logData.line || ''}</div>
+            `;
+
+            panel.insertBefore(entry, panel.firstChild);
+
+            // Keep only last 100 entries
+            while (panel.children.length > 100) {
+                panel.removeChild(panel.lastChild);
+            }
+        }
+
+        function addExtraction(data) {
+            const panel = document.getElementById('extractionsPanel');
+            const entry = document.createElement('div');
+            entry.className = 'extraction-card';
+
+            const extractData = data.data || {};
+            entry.innerHTML = `
+                <div class="extraction-pattern">${extractData.pattern || extractData.type}</div>
+                <div class="extraction-value">${extractData.value || ''}</div>
+                <div class="extraction-metadata">
+                    Line ${extractData.line_num} - ${new Date(data.timestamp).toLocaleTimeString()}
+                    ${extractData.metadata ? JSON.stringify(extractData.metadata) : ''}
+                </div>
+            `;
+
+            panel.insertBefore(entry, panel.firstChild);
+
+            // Keep only last 50 entries
+            while (panel.children.length > 50) {
+                panel.removeChild(panel.lastChild);
+            }
+        }
+
+        function addState(data) {
+            const panel = document.getElementById('statePanel');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry state';
+
+            const time = new Date(data.timestamp).toLocaleTimeString();
+            const stateData = data.data || {};
+            entry.innerHTML = `
+                <div class="log-timestamp">${time}</div>
+                <span class="log-type ${data.type}">${data.type.toUpperCase()}</span>
+                <div class="log-data">${JSON.stringify(stateData, null, 2)}</div>
+            `;
+
+            panel.insertBefore(entry, panel.firstChild);
+
+            // Keep only last 50 entries
+            while (panel.children.length > 50) {
+                panel.removeChild(panel.lastChild);
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('eventsPanel').innerHTML = '';
+            document.getElementById('logsPanel').innerHTML = '';
+            document.getElementById('extractionsPanel').innerHTML = '';
+            document.getElementById('statePanel').innerHTML = '';
+            stats = { events: 0, logs: 0, extractions: 0 };
+            updateStats();
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (eventSource) {
+                eventSource.close();
+            }
+        });
+    </script>
+</body>
+</html>

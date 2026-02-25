@@ -1,0 +1,5 @@
+# Exclude all binaries and logs
+*
+
+# Keep directory structure
+!.gitignore

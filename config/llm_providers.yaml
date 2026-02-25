@@ -1,0 +1,208 @@
+# LLM Provider Configuration
+#
+# This file configures the LLM providers for the Architect Dashboard.
+# Supports Claude (Anthropic), Ollama (local), and OpenAI GPT-4.
+#
+# Environment variables can be referenced with ${VAR_NAME} syntax.
+
+# Default failover order (tried in sequence until one succeeds)
+failover_order:
+  - claude
+  - ollama
+  - openai
+
+# Provider-specific settings
+providers:
+  # Anthropic Claude (Primary)
+  # Model selection: Set via CLAUDE_MODEL environment variable
+  # Options:
+  #   - claude-sonnet-4-5-20250929 (Premium, current session) - $3/$15 per 1M tokens
+  #   - claude-3-5-sonnet-20241022 (Mid-tier) - $3/$15 per 1M tokens
+  #   - claude-3-5-haiku-20241022 (Cheapest, ~80% savings) - $1/$5 per 1M tokens
+  #   - claude-opus-4-5-20251101 (Most expensive) - $15/$75 per 1M tokens
+  claude:
+    enabled: true
+    model: ${CLAUDE_MODEL:-claude-sonnet-4-5-20250929}  # Default to Sonnet 4.5
+
+    # API Configuration
+    api_key: ${ANTHROPIC_API_KEY}  # Load from environment or vault
+    endpoint: https://api.anthropic.com
+
+    # Timeouts and Limits
+    timeout: 120  # seconds
+    max_retries: 3
+
+    # Circuit Breaker Settings
+    circuit_breaker:
+      failure_threshold: 5       # Open circuit after N failures
+      failure_window: 60         # Count failures within N seconds
+      recovery_timeout: 30       # Wait N seconds before testing recovery
+      success_threshold: 3       # Close circuit after N successes
+      max_recovery_timeout: 300  # Maximum backoff time
+      backoff_multiplier: 2.0    # Exponential backoff multiplier
+
+    # Cost Tracking (USD per 1K tokens)
+    # Costs are auto-detected based on model name
+    # Haiku: $1/$5, Sonnet: $3/$15, Opus: $15/$75
+    cost_per_1k_prompt: 0.003     # $3 per 1M input tokens (Sonnet default)
+    cost_per_1k_completion: 0.015 # $15 per 1M output tokens (Sonnet default)
+
+  # Ollama (Local, Free)
+  ollama:
+    enabled: true
+    model: llama3.2  # Options: llama3.2, codellama, mistral, etc.
+
+    # API Configuration
+    endpoint: ${OLLAMA_HOST:-http://localhost:11434}
+
+    # Timeouts and Limits
+    timeout: 60  # seconds (local, should be faster)
+    max_retries: 2
+
+    # Circuit Breaker Settings
+    circuit_breaker:
+      failure_threshold: 3       # Fail faster for local service
+      failure_window: 30
+      recovery_timeout: 10       # Quick recovery for local
+      success_threshold: 2
+      max_recovery_timeout: 60
+      backoff_multiplier: 1.5
+
+    # Cost Tracking (free)
+    cost_per_1k_prompt: 0.0
+    cost_per_1k_completion: 0.0
+
+  # OpenAI GPT-4 (Backup)
+  openai:
+    enabled: true
+    model: gpt-4-turbo  # Options: gpt-4-turbo, gpt-4, gpt-3.5-turbo
+
+    # API Configuration
+    api_key: ${OPENAI_API_KEY}  # Load from environment or vault
+    endpoint: https://api.openai.com/v1
+
+    # Timeouts and Limits
+    timeout: 120  # seconds
+    max_retries: 3
+
+    # Circuit Breaker Settings
+    circuit_breaker:
+      failure_threshold: 5
+      failure_window: 60
+      recovery_timeout: 30
+      success_threshold: 3
+      max_recovery_timeout: 300
+      backoff_multiplier: 2.0
+
+    # Cost Tracking (USD per 1K tokens)
+    cost_per_1k_prompt: 0.01      # $10 per 1M input tokens
+    cost_per_1k_completion: 0.03  # $30 per 1M output tokens
+
+  # Google Gemini (Very Affordable - 95% cheaper than Claude!)
+  # Model: gemini-2.0-flash-exp (fast, optimized for latency)
+  # Cost: $0.15 per 1M input tokens, $0.60 per 1M output tokens
+  # Perfect for: Documentation, analysis, quick generation, batch processing
+  gemini:
+    enabled: true
+    model: ${GEMINI_MODEL:-gemini-2.0-flash-exp}
+
+    # API Configuration
+    api_key: ${GEMINI_API_KEY:-${GOOGLE_API_KEY}}  # Load from GEMINI_API_KEY or GOOGLE_API_KEY
+    endpoint: https://generativelanguage.googleapis.com/v1beta
+
+    # Timeouts and Limits
+    timeout: 120  # seconds
+    max_retries: 3
+
+    # Circuit Breaker Settings
+    circuit_breaker:
+      failure_threshold: 5
+      failure_window: 60
+      recovery_timeout: 30
+      success_threshold: 3
+      max_recovery_timeout: 300
+      backoff_multiplier: 2.0
+
+    # Cost Tracking (USD per 1K tokens)
+    # Gemini 2.0 Flash is extremely affordable
+    cost_per_1k_prompt: 0.00015    # $0.15 per 1M input tokens
+    cost_per_1k_completion: 0.0006 # $0.60 per 1M output tokens
+
+  # AnythingLLM (Local RAG System)
+  # Free self-hosted RAG and document processing
+  # Can use local models or connect to external LLMs
+  anythingllm:
+    enabled: true
+    model: default
+
+    # API Configuration
+    endpoint: ${ANYTHINGLLM_ENDPOINT:-http://localhost:3001}
+    api_key: ${ANYTHINGLLM_API_KEY}
+
+    # Timeouts and Limits
+    timeout: 60  # seconds (local, should be faster)
+    max_retries: 2
+
+    # Circuit Breaker Settings (fail faster for local service)
+    circuit_breaker:
+      failure_threshold: 3
+      failure_window: 30
+      recovery_timeout: 10
+      success_threshold: 2
+      max_recovery_timeout: 60
+      backoff_multiplier: 1.5
+
+    # Cost Tracking (free - self-hosted)
+    cost_per_1k_prompt: 0.0
+    cost_per_1k_completion: 0.0
+
+# Global Settings
+global:
+  # Default provider (if not using failover)
+  default_provider: claude
+
+  # Enable failover
+  failover_enabled: true
+
+  # Request timeout (applies to all providers)
+  default_timeout: 120
+
+  # Logging
+  log_requests: true
+  log_responses: false  # Only log on error
+  log_level: INFO
+
+  # Performance
+  enable_caching: false  # Future: cache identical requests
+  cache_ttl: 3600       # Cache TTL in seconds
+
+# Budget Controls (optional)
+budget:
+  enabled: false
+
+  # Daily limits
+  daily_request_limit: 1000
+  daily_cost_limit: 10.0  # USD
+
+  # Monthly limits
+  monthly_request_limit: 30000
+  monthly_cost_limit: 300.0  # USD
+
+  # Alerts
+  alert_threshold: 0.8  # Alert at 80% of limit
+  alert_webhook: null   # Optional: Slack/Discord webhook
+
+# Advanced Settings
+advanced:
+  # Retry configuration
+  retry_on_rate_limit: true
+  retry_backoff_base: 2.0
+  retry_max_delay: 60.0
+
+  # Response validation
+  validate_responses: true
+  require_valid_json: false
+
+  # Monitoring
+  metrics_enabled: true
+  metrics_interval: 60  # Report metrics every N seconds

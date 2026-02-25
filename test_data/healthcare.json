@@ -1,0 +1,151 @@
+{
+  "id": "healthcare_tests",
+  "name": "Healthcare Appointments Extraction",
+  "description": "Extract appointments from dentist, orthodontist, chiropractor",
+  "target_service": "healthcare",
+  "tags": ["healthcare", "appointments", "extraction"],
+
+  "global_variables": {},
+
+  "test_cases": [
+    {
+      "id": "orthodontist_appointments",
+      "name": "Orthodontist Appointments",
+      "description": "Extract upcoming orthodontist appointments",
+      "tags": ["orthodontist", "extraction"],
+      "variables": {
+        "portal_url": "${orthodontist_url}"
+      },
+      "credentials": {
+        "ortho": "orthodontist/Orthodontist Account"
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${portal_url}"
+        },
+        {
+          "type": "wait",
+          "value": 2
+        },
+        {
+          "type": "fill",
+          "target": "input[type='email'], input[name='username'], #username",
+          "value": "${ortho_username}"
+        },
+        {
+          "type": "fill",
+          "target": "input[type='password'], #password",
+          "value": "${ortho_password}"
+        },
+        {
+          "type": "click",
+          "target": "button[type='submit'], input[type='submit']"
+        },
+        {
+          "type": "wait",
+          "value": 3
+        },
+        {
+          "type": "click",
+          "target": "a:has-text('Appointments'), a[href*='appointment']",
+          "optional": true
+        },
+        {
+          "type": "extract",
+          "target": ".appointment, .upcoming-appointment, [class*='appt']",
+          "value": "appointments",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "dentist_appointments",
+      "name": "Dentist Appointments",
+      "description": "Extract upcoming dentist appointments",
+      "tags": ["dentist", "extraction"],
+      "variables": {
+        "portal_url": "${dentist_url}"
+      },
+      "credentials": {
+        "dent": "dentist/Dentist Account"
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${portal_url}"
+        },
+        {
+          "type": "wait",
+          "value": 2
+        },
+        {
+          "type": "fill",
+          "target": "input[type='email'], input[name='username'], #username",
+          "value": "${dent_username}"
+        },
+        {
+          "type": "fill",
+          "target": "input[type='password'], #password",
+          "value": "${dent_password}"
+        },
+        {
+          "type": "click",
+          "target": "button[type='submit'], input[type='submit']"
+        },
+        {
+          "type": "wait",
+          "value": 3
+        },
+        {
+          "type": "extract",
+          "target": ".appointment, .scheduled-visit, [class*='appt']",
+          "value": "appointments",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "chiropractor_appointments",
+      "name": "Chiropractor Appointments",
+      "description": "Extract upcoming chiropractor appointments",
+      "tags": ["chiropractor", "extraction"],
+      "variables": {
+        "portal_url": "${chiropractor_url}"
+      },
+      "credentials": {
+        "chiro": "chiropractor/Chiropractor Account"
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${portal_url}"
+        },
+        {
+          "type": "fill",
+          "target": "input[type='email'], input[name='username']",
+          "value": "${chiro_username}"
+        },
+        {
+          "type": "fill",
+          "target": "input[type='password']",
+          "value": "${chiro_password}"
+        },
+        {
+          "type": "click",
+          "target": "button[type='submit']"
+        },
+        {
+          "type": "wait",
+          "value": 3
+        },
+        {
+          "type": "extract",
+          "target": ".appointment, [class*='booking']",
+          "value": "appointments",
+          "optional": true
+        }
+      ]
+    }
+  ]
+}

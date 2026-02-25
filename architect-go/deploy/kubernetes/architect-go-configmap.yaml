@@ -1,0 +1,55 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: architect-go-config
+  labels:
+    app: architect-go
+data:
+  # Application configuration
+  app.env: |
+    ENVIRONMENT=production
+    LOG_LEVEL=info
+    PORT=8080
+    CACHE_ENABLED=true
+    SESSION_TIMEOUT=3600
+
+  # Database configuration
+  database.conf: |
+    # Database connection settings
+    # DATABASE_URL is provided via secrets
+    DB_POOL_SIZE=20
+    DB_MAX_POOL_SIZE=100
+    DB_CONNECTION_TIMEOUT=5s
+    DB_IDLE_TIMEOUT=10s
+
+  # Cache configuration
+  cache.conf: |
+    # In-memory cache settings
+    CACHE_MAX_SIZE=10000
+    CACHE_USER_TTL=1h
+    CACHE_PROJECT_TTL=30m
+    CACHE_TASK_TTL=5m
+    CACHE_SESSION_TTL=24h
+
+  # Logging configuration
+  logging.conf: |
+    # Log level: debug, info, warn, error
+    LOG_LEVEL=info
+    LOG_FORMAT=json
+    LOG_OUTPUT=stdout
+
+  # Monitoring configuration
+  monitoring.conf: |
+    # Prometheus metrics
+    METRICS_ENABLED=true
+    METRICS_PORT=8080
+    METRICS_PATH=/metrics
+
+  # Security configuration
+  security.conf: |
+    # Security settings
+    CORS_ENABLED=true
+    CORS_ORIGINS=*
+    RATE_LIMIT_ENABLED=true
+    RATE_LIMIT_REQUESTS=1000
+    RATE_LIMIT_WINDOW=1m

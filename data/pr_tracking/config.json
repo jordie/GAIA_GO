@@ -1,0 +1,12 @@
+{
+  "auto_track": true,
+  "batch_processing": true,
+  "report_interval_hours": 1,
+  "export_formats": ["json", "markdown", "html"],
+  "cost_tracking_enabled": true,
+  "provider_rates": {
+    "claude": 3.00,
+    "codex": 0.87,
+    "ollama": 0.00
+  }
+}

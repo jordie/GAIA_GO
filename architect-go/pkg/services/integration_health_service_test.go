@@ -1,0 +1,214 @@
+package services
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+)
+
+// MockIntegrationHealthRepository mocks the IntegrationHealthRepository
+type MockIntegrationHealthRepository struct {
+	mock.Mock
+}
+
+func (m *MockIntegrationHealthRepository) CreateHealthCheck(ctx context.Context, healthCheck map[string]interface{}) error {
+	args := m.Called(ctx, healthCheck)
+	return args.Error(0)
+}
+
+func (m *MockIntegrationHealthRepository) GetLatestHealthCheck(ctx context.Context, integrationID string) (map[string]interface{}, error) {
+	args := m.Called(ctx, integrationID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]interface{}), args.Error(1)
+}
+
+func (m *MockIntegrationHealthRepository) GetHealthCheckHistory(ctx context.Context, integrationID string, limit int, offset int) ([]map[string]interface{}, int64, error) {
+	args := m.Called(ctx, integrationID, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]map[string]interface{}), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockIntegrationHealthRepository) CreateIncident(ctx context.Context, incident map[string]interface{}) error {
+	args := m.Called(ctx, incident)
+	return args.Error(0)
+}
+
+func (m *MockIntegrationHealthRepository) GetIncident(ctx context.Context, incidentID string) (map[string]interface{}, error) {
+	args := m.Called(ctx, incidentID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]interface{}), args.Error(1)
+}
+
+func (m *MockIntegrationHealthRepository) ListIncidents(ctx context.Context, integrationID string, limit int, offset int) ([]map[string]interface{}, int64, error) {
+	args := m.Called(ctx, integrationID, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]map[string]interface{}), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockIntegrationHealthRepository) UpdateIncident(ctx context.Context, incident map[string]interface{}) error {
+	args := m.Called(ctx, incident)
+	return args.Error(0)
+}
+
+func (m *MockIntegrationHealthRepository) GetActiveIncidents(ctx context.Context) ([]map[string]interface{}, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]map[string]interface{}), args.Error(1)
+}
+
+func (m *MockIntegrationHealthRepository) CreateAlert(ctx context.Context, alert map[string]interface{}) error {
+	args := m.Called(ctx, alert)
+	return args.Error(0)
+}
+
+func (m *MockIntegrationHealthRepository) GetAlerts(ctx context.Context, limit int, offset int) ([]map[string]interface{}, int64, error) {
+	args := m.Called(ctx, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]map[string]interface{}), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockIntegrationHealthRepository) GetMetrics(ctx context.Context, integrationID string) (map[string]interface{}, error) {
+	args := m.Called(ctx, integrationID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]interface{}), args.Error(1)
+}
+
+func (m *MockIntegrationHealthRepository) CreateMetric(ctx context.Context, metric map[string]interface{}) error {
+	args := m.Called(ctx, metric)
+	return args.Error(0)
+}
+
+// TestIntegrationHealthService_CheckIntegrationHealth tests health check
+func TestIntegrationHealthService_CheckIntegrationHealth(t *testing.T) {
+	mockRepo := new(MockIntegrationHealthRepository)
+	ctx := context.Background()
+
+	healthCheck := map[string]interface{}{
+		"status":           "healthy",
+		"integration_id":   "int-1",
+		"response_time_ms": 150,
+	}
+
+	mockRepo.On("CreateHealthCheck", ctx, mock.MatchedBy(func(h map[string]interface{}) bool {
+		return h["integration_id"] == "int-1"
+	})).Return(nil)
+	mockRepo.On("GetLatestHealthCheck", ctx, "int-1").Return(healthCheck, nil)
+
+	service := NewIntegrationHealthService(mockRepo)
+	result, err := service.CheckIntegrationHealth(ctx, "int-1")
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	mockRepo.AssertCalled(t, "CreateHealthCheck", ctx, mock.AnythingOfType("map[string]interface {}"))
+}
+
+// TestIntegrationHealthService_GetOverallHealth tests overall health
+func TestIntegrationHealthService_GetOverallHealth(t *testing.T) {
+	mockRepo := new(MockIntegrationHealthRepository)
+	ctx := context.Background()
+
+	mockRepo.On("GetLatestHealthCheck", ctx, mock.Anything).Return(map[string]interface{}{
+		"status": "healthy",
+	}, nil)
+
+	service := NewIntegrationHealthService(mockRepo)
+	result, err := service.GetOverallHealth(ctx)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+}
+
+// TestIntegrationHealthService_GetIncidentHistory tests incident history retrieval
+func TestIntegrationHealthService_GetIncidentHistory(t *testing.T) {
+	mockRepo := new(MockIntegrationHealthRepository)
+	ctx := context.Background()
+
+	incidents := []map[string]interface{}{
+		{"id": "inc-1", "integration_id": "int-1", "severity": "critical", "status": "open"},
+		{"id": "inc-2", "integration_id": "int-1", "severity": "warning", "status": "resolved"},
+	}
+
+	mockRepo.On("ListIncidents", ctx, "int-1", 10, 0).Return(incidents, int64(2), nil)
+
+	service := NewIntegrationHealthService(mockRepo)
+	results, total, err := service.GetIncidentHistory(ctx, "int-1", 10, 0)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(2), total)
+	assert.Equal(t, 2, len(results))
+	mockRepo.AssertCalled(t, "ListIncidents", ctx, "int-1", 10, 0)
+}
+
+// TestIntegrationHealthService_ReportIncident tests incident reporting
+func TestIntegrationHealthService_ReportIncident(t *testing.T) {
+	mockRepo := new(MockIntegrationHealthRepository)
+	ctx := context.Background()
+
+	mockRepo.On("CreateIncident", ctx, mock.MatchedBy(func(i map[string]interface{}) bool {
+		return i["integration_id"] == "int-1" && i["severity"] == "high"
+	})).Return(nil)
+
+	service := NewIntegrationHealthService(mockRepo)
+	result, err := service.ReportIncident(ctx, "int-1", "high", "API timeout")
+
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+	mockRepo.AssertCalled(t, "CreateIncident", ctx, mock.AnythingOfType("map[string]interface {}"))
+}
+
+// TestIntegrationHealthService_GetActiveIncidents tests active incidents retrieval
+func TestIntegrationHealthService_GetActiveIncidents(t *testing.T) {
+	mockRepo := new(MockIntegrationHealthRepository)
+	ctx := context.Background()
+
+	incidents := []map[string]interface{}{
+		{"id": "incident-1", "status": "open", "severity": "high"},
+		{"id": "incident-2", "status": "open", "severity": "medium"},
+	}
+
+	mockRepo.On("GetActiveIncidents", ctx).Return(incidents, nil)
+
+	service := NewIntegrationHealthService(mockRepo)
+	result, err := service.GetActiveIncidents(ctx)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(result))
+	mockRepo.AssertCalled(t, "GetActiveIncidents", ctx)
+}
+
+// TestIntegrationHealthService_GetMetrics tests metrics retrieval
+func TestIntegrationHealthService_GetMetrics(t *testing.T) {
+	mockRepo := new(MockIntegrationHealthRepository)
+	ctx := context.Background()
+
+	metrics := map[string]interface{}{
+		"uptime_percent":  99.9,
+		"avg_response_ms": 200,
+		"error_rate":      0.01,
+	}
+
+	mockRepo.On("GetMetrics", ctx, "int-1").Return(metrics, nil)
+
+	service := NewIntegrationHealthService(mockRepo)
+	result, err := service.GetMetrics(ctx, "int-1")
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	mockRepo.AssertCalled(t, "GetMetrics", ctx, "int-1")
+}

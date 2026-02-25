@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architect Dashboard - API Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 60px 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .card:hover {
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .footer {
+            background: #f5f5f5;
+            padding: 20px 40px;
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #ddd;
+        }
+
+        .version {
+            color: #999;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Architect Dashboard API</h1>
+            <p>Comprehensive Documentation & Interactive Tools</p>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h2>📚 Documentation</h2>
+                <div class="grid">
+                    <a href="swagger-ui.html" class="card">
+                        <h3>Swagger UI</h3>
+                        <p>Interactive API documentation with Try It Out feature</p>
+                    </a>
+                    <a href="redoc.html" class="card">
+                        <h3>ReDoc</h3>
+                        <p>Beautiful, responsive API documentation</p>
+                    </a>
+                    <a href="openapi.json" class="card">
+                        <h3>OpenAPI Spec</h3>
+                        <p>OpenAPI 3.0 specification in JSON format</p>
+                    </a>
+                    <a href="postman-collection.json" class="card">
+                        <h3>Postman Collection</h3>
+                        <p>Import into Postman for API testing</p>
+                    </a>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🚀 Quick Start</h2>
+                <div class="grid">
+                    <div class="card">
+                        <h3>Authentication</h3>
+                        <p>Learn how to authenticate your API requests</p>
+                    </div>
+                    <div class="card">
+                        <h3>Rate Limiting</h3>
+                        <p>Understand API rate limits and best practices</p>
+                    </div>
+                    <div class="card">
+                        <h3>Error Handling</h3>
+                        <p>Handle errors gracefully in your integration</p>
+                    </div>
+                    <div class="card">
+                        <h3>SDKs</h3>
+                        <p>Official client libraries for Go, Python, JavaScript</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>📋 API Endpoints</h2>
+                <p style="margin-bottom: 20px; color: #666;">
+                    Version 3.2 includes 280+ endpoints across the following categories:
+                </p>
+                <div class="grid">
+                    <div class="card">
+                        <h3>Authentication</h3>
+                        <p>Login, logout, and session management (5 endpoints)</p>
+                    </div>
+                    <div class="card">
+                        <h3>Events</h3>
+                        <p>Event tracking and audit logging (45 endpoints)</p>
+                    </div>
+                    <div class="card">
+                        <h3>Errors</h3>
+                        <p>Error aggregation and analysis (40 endpoints)</p>
+                    </div>
+                    <div class="card">
+                        <h3>Notifications</h3>
+                        <p>User notifications and alerts (35 endpoints)</p>
+                    </div>
+                    <div class="card">
+                        <h3>Sessions</h3>
+                        <p>Session tracking and management (30 endpoints)</p>
+                    </div>
+                    <div class="card">
+                        <h3>Integrations</h3>
+                        <p>Third-party integrations (50 endpoints)</p>
+                    </div>
+                    <div class="card">
+                        <h3>Webhooks</h3>
+                        <p>Webhook management and delivery (40 endpoints)</p>
+                    </div>
+                    <div class="card">
+                        <h3>Health</h3>
+                        <p>Health checks and monitoring (15 endpoints)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Architect Dashboard API v3.2.0</p>
+            <p class="version">Generated on: 2024-02-17</p>
+        </div>
+    </div>
+</body>
+</html>

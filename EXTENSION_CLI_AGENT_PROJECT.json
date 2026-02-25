@@ -1,0 +1,165 @@
+{
+  "id": "extension-cli-agent",
+  "name": "Extension CLI & Agent Control System",
+  "description": "Enable command-line control and agent automation for sending prompts to extension/Comet sidebar",
+  "status": "ready_to_queue",
+  "priority": 8,
+  "type": "Automation & Integration",
+  "created_at": "2026-02-21T16:00:00Z",
+  "estimated_lines": 800,
+  "estimated_hours": 8,
+  "dependencies": [
+    "Current extension implementation",
+    "GAIA server infrastructure",
+    "Comet app integration",
+    "Python 3.8+"
+  ],
+  "phases": [
+    {
+      "phase": 1,
+      "name": "HTTP API in Service Worker",
+      "hours": 2,
+      "tasks": [
+        "Add HTTP endpoint to background.js",
+        "Message routing handlers",
+        "Queue management",
+        "Response formatting"
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "CLI Tool Creation",
+      "hours": 1,
+      "tasks": [
+        "Create architect-send script",
+        "Install to /usr/local/bin",
+        "Environment variable support",
+        "Error handling"
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Agent Wrapper",
+      "hours": 1,
+      "tasks": [
+        "Python ExtensionAgent class",
+        "GAIA assigner integration",
+        "Error handling",
+        "Unit tests"
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Dashboard Integration",
+      "hours": 2,
+      "tasks": [
+        "Command widget in GAIA",
+        "Message history display",
+        "Status monitoring",
+        "Real-time updates"
+      ]
+    },
+    {
+      "phase": 5,
+      "name": "Advanced Features",
+      "hours": 2,
+      "tasks": [
+        "Command queuing",
+        "Priority scheduling",
+        "Timeout handling",
+        "Batch operations"
+      ]
+    }
+  ],
+  "critical_issues": [
+    {
+      "id": "issue-1",
+      "title": "Command-line automation",
+      "description": "Users need to send commands to extension/Comet from terminal without UI",
+      "severity": "high"
+    },
+    {
+      "id": "issue-2",
+      "title": "Agent integration",
+      "description": "Agents need programmatic access to send prompts to extension",
+      "severity": "high"
+    },
+    {
+      "id": "issue-3",
+      "title": "Batch processing",
+      "description": "Need to queue and process multiple commands efficiently",
+      "severity": "medium"
+    },
+    {
+      "id": "issue-4",
+      "title": "Security",
+      "description": "Ensure local-only access with rate limiting",
+      "severity": "medium"
+    }
+  ],
+  "deliverables": [
+    {
+      "name": "HTTP API in Service Worker",
+      "description": "REST endpoints for sending/receiving commands",
+      "status": "pending"
+    },
+    {
+      "name": "CLI Tool (architect-send)",
+      "description": "Command-line utility for sending prompts",
+      "status": "pending"
+    },
+    {
+      "name": "Agent Wrapper (Python)",
+      "description": "ExtensionAgent class for programmatic control",
+      "status": "pending"
+    },
+    {
+      "name": "Dashboard Widget",
+      "description": "GAIA dashboard command control panel",
+      "status": "pending"
+    },
+    {
+      "name": "Integration Layer",
+      "description": "Comet app integration for receiving commands",
+      "status": "pending"
+    },
+    {
+      "name": "Testing Suite",
+      "description": "Unit and integration tests for CLI/agent",
+      "status": "pending"
+    }
+  ],
+  "success_criteria": [
+    "CLI tool sends commands to extension without error",
+    "Agent wrapper integrates with GAIA assigner",
+    "Commands appear in dashboard within 1 second",
+    "Response messages return to CLI/agent",
+    "Batch operations work smoothly",
+    "No race conditions with concurrent messages",
+    "Rate limiting prevents abuse",
+    "Works across all machines (Pink Laptop, Mac Mini)",
+    "Documentation clear and complete",
+    "All unit/integration tests pass"
+  ],
+  "use_cases": [
+    "Quick commands from terminal: architect-send \"what's the weather\"",
+    "Agent automation: Agent sends prompts to Comet via extension",
+    "Shell scripts: Batch process conversations",
+    "Workflow automation: Chain multiple commands together",
+    "Dashboard control: Monitor and send commands from GAIA"
+  ],
+  "api_endpoints": [
+    "POST /api/send-command - Send command to extension",
+    "POST /api/send-to-comet - Send directly to Comet",
+    "GET /api/messages - Retrieve messages from GAIA",
+    "POST /api/queue-prompt - Queue prompt for processing",
+    "GET /api/status - Get extension/GAIA status"
+  ],
+  "team": {
+    "assignee": "available",
+    "reviewer": "architect_manager",
+    "estimated_effort": "8 hours"
+  },
+  "queue_command": "os: Build Extension CLI & Agent Control System for automated command routing --priority 8",
+  "notes": "This system bridges CLI/agent automation with extension-GAIA ecosystem. Enables command-line control and programmatic agent access without UI."
+}

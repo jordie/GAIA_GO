@@ -1,0 +1,209 @@
+package services
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+)
+
+// MockAuditLogRepository mocks the AuditLogRepository
+type MockAuditLogRepository struct {
+	mock.Mock
+}
+
+func (m *MockAuditLogRepository) Create(ctx context.Context, auditLog map[string]interface{}) error {
+	args := m.Called(ctx, auditLog)
+	return args.Error(0)
+}
+
+func (m *MockAuditLogRepository) Get(ctx context.Context, id string) (map[string]interface{}, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]interface{}), args.Error(1)
+}
+
+func (m *MockAuditLogRepository) List(ctx context.Context, limit int, offset int) ([]map[string]interface{}, int64, error) {
+	args := m.Called(ctx, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]map[string]interface{}), int64(args.Int(1)), args.Error(2)
+}
+
+func (m *MockAuditLogRepository) GetByUser(ctx context.Context, userID string, limit int, offset int) ([]map[string]interface{}, int64, error) {
+	args := m.Called(ctx, userID, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]map[string]interface{}), int64(args.Int(1)), args.Error(2)
+}
+
+func (m *MockAuditLogRepository) GetByAction(ctx context.Context, action string, limit int, offset int) ([]map[string]interface{}, int64, error) {
+	args := m.Called(ctx, action, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]map[string]interface{}), int64(args.Int(1)), args.Error(2)
+}
+
+func (m *MockAuditLogRepository) GetByResource(ctx context.Context, resourceType string, resourceID string, limit int, offset int) ([]map[string]interface{}, int64, error) {
+	args := m.Called(ctx, resourceType, resourceID, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]map[string]interface{}), int64(args.Int(1)), args.Error(2)
+}
+
+func (m *MockAuditLogRepository) Search(ctx context.Context, query string, limit int, offset int) ([]map[string]interface{}, int64, error) {
+	args := m.Called(ctx, query, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]map[string]interface{}), int64(args.Int(1)), args.Error(2)
+}
+
+func (m *MockAuditLogRepository) GetStats(ctx context.Context, startDate, endDate string) (map[string]interface{}, error) {
+	args := m.Called(ctx, startDate, endDate)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]interface{}), args.Error(1)
+}
+
+func (m *MockAuditLogRepository) Archive(ctx context.Context, beforeDate string) (int64, error) {
+	args := m.Called(ctx, beforeDate)
+	return int64(args.Int(0)), args.Error(1)
+}
+
+func (m *MockAuditLogRepository) Purge(ctx context.Context, beforeDate string) (int64, error) {
+	args := m.Called(ctx, beforeDate)
+	return int64(args.Int(0)), args.Error(1)
+}
+
+func (m *MockAuditLogRepository) VerifyIntegrity(ctx context.Context) (map[string]interface{}, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]interface{}), args.Error(1)
+}
+
+// TestAuditLogService_CreateAuditLog tests audit log creation
+func TestAuditLogService_CreateAuditLog(t *testing.T) {
+	mockRepo := new(MockAuditLogRepository)
+	ctx := context.Background()
+
+	mockRepo.On("Create", ctx, mock.MatchedBy(func(a map[string]interface{}) bool {
+		return a["user_id"] == "user-1" && a["action"] == "create"
+	})).Return(nil)
+
+	service := NewAuditLogService(mockRepo)
+	result, err := service.CreateAuditLog(ctx, "user-1", "create", "project", "proj-1", map[string]interface{}{"name": "New Project"})
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	mockRepo.AssertCalled(t, "Create", ctx, mock.AnythingOfType("map[string]interface {}"))
+}
+
+// TestAuditLogService_GetAuditLog tests audit log retrieval
+func TestAuditLogService_GetAuditLog(t *testing.T) {
+	mockRepo := new(MockAuditLogRepository)
+	ctx := context.Background()
+
+	auditLog := map[string]interface{}{
+		"id":      "audit-1",
+		"action":  "create",
+		"user_id": "user-1",
+	}
+
+	mockRepo.On("Get", ctx, "audit-1").Return(auditLog, nil)
+
+	service := NewAuditLogService(mockRepo)
+	result, err := service.GetAuditLog(ctx, "audit-1")
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	mockRepo.AssertCalled(t, "Get", ctx, "audit-1")
+}
+
+// TestAuditLogService_ListAuditLogsByUser tests user audit logs retrieval
+func TestAuditLogService_ListAuditLogsByUser(t *testing.T) {
+	mockRepo := new(MockAuditLogRepository)
+	ctx := context.Background()
+
+	logs := []map[string]interface{}{
+		{"id": "audit-1", "action": "create", "user_id": "user-1"},
+		{"id": "audit-2", "action": "update", "user_id": "user-1"},
+	}
+
+	mockRepo.On("GetByUser", ctx, "user-1", 10, 0).Return(logs, int64(2), nil)
+
+	service := NewAuditLogService(mockRepo)
+	results, total, err := service.GetAuditLogsByUser(ctx, "user-1", 10, 0)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(2), total)
+	assert.Equal(t, 2, len(results))
+	mockRepo.AssertCalled(t, "GetByUser", ctx, "user-1", 10, 0)
+}
+
+// TestAuditLogService_GetAuditLogsByAction tests audit logs by action
+func TestAuditLogService_GetAuditLogsByAction(t *testing.T) {
+	mockRepo := new(MockAuditLogRepository)
+	ctx := context.Background()
+
+	logs := []map[string]interface{}{
+		{"id": "audit-1", "action": "delete", "resource": "project"},
+		{"id": "audit-2", "action": "delete", "resource": "task"},
+	}
+
+	mockRepo.On("GetByAction", ctx, "delete", 10, 0).Return(logs, int64(2), nil)
+
+	service := NewAuditLogService(mockRepo)
+	results, total, err := service.GetAuditLogsByAction(ctx, "delete", 10, 0)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(2), total)
+	assert.Equal(t, 2, len(results))
+	mockRepo.AssertCalled(t, "GetByAction", ctx, "delete", 10, 0)
+}
+
+// TestAuditLogService_GetAuditStats tests audit statistics
+func TestAuditLogService_GetAuditStats(t *testing.T) {
+	mockRepo := new(MockAuditLogRepository)
+	ctx := context.Background()
+
+	stats := map[string]interface{}{
+		"total_logs":   100,
+		"total_users":  10,
+		"total_actions": 25,
+	}
+
+	mockRepo.On("GetStats", ctx, "2024-01-01", "2024-01-31").Return(stats, nil)
+
+	service := NewAuditLogService(mockRepo)
+	result, err := service.GetAuditStats(ctx)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	mockRepo.AssertCalled(t, "GetStats", ctx, "2024-01-01", "2024-01-31")
+}
+
+// TestAuditLogService_ArchiveOldLogs tests log archival
+func TestAuditLogService_ArchiveOldLogs(t *testing.T) {
+	mockRepo := new(MockAuditLogRepository)
+	ctx := context.Background()
+
+	mockRepo.On("Archive", ctx, "2024-01-01").Return(int64(50), nil)
+
+	service := NewAuditLogService(mockRepo)
+	archived, err := service.ArchiveOldLogs(ctx, "2024-01-01")
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(50), archived)
+	mockRepo.AssertCalled(t, "Archive", ctx, "2024-01-01")
+}

@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Explorer - Go Wrapper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            padding: 20px 30px;
+            border-bottom: 3px solid #30363d;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            color: #58a6ff;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-subtitle {
+            color: #8b949e;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #30363d;
+            padding-bottom: 0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            color: #c9d1d9;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .tab.active {
+            color: #58a6ff;
+            border-bottom-color: #58a6ff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .panel {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #58a6ff;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 12px;
+            color: #8b949e;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        input, select {
+            padding: 10px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #238636;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #2ea043;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #21262d;
+            border: 1px solid #30363d;
+        }
+
+        .btn-secondary:hover {
+            background: #30363d;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-danger {
+            background: #da3633;
+        }
+
+        .btn-danger:hover {
+            background: #f85149;
+        }
+
+        .results-container {
+            margin-top: 20px;
+        }
+
+        .result-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .result-count {
+            color: #8b949e;
+            font-size: 14px;
+        }
+
+        .result-count strong {
+            color: #58a6ff;
+        }
+
+        .results-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .result-item {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 15px;
+            transition: all 0.3s;
+        }
+
+        .result-item:hover {
+            border-color: #58a6ff;
+            transform: translateX(5px);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .result-title {
+            font-weight: 600;
+            color: #c9d1d9;
+            font-size: 16px;
+        }
+
+        .result-meta {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #8b949e;
+        }
+
+        .result-meta-item {
+            display: flex;
+            gap: 5px;
+        }
+
+        .result-meta-label {
+            font-weight: 600;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-high {
+            background: #da3633;
+            color: white;
+        }
+
+        .badge-medium {
+            background: #d29922;
+            color: white;
+        }
+
+        .badge-low {
+            background: #238636;
+            color: white;
+        }
+
+        .badge-error {
+            background: #da3633;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #d29922;
+            color: white;
+        }
+
+        .badge-info {
+            background: #1f6feb;
+            color: white;
+        }
+
+        .session-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .session-item:hover {
+            border-color: #58a6ff;
+        }
+
+        .session-info {
+            flex: 1;
+        }
+
+        .session-id {
+            font-weight: 600;
+            color: #58a6ff;
+            margin-bottom: 5px;
+        }
+
+        .session-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 13px;
+            color: #8b949e;
+        }
+
+        .session-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .replay-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .speed-control label {
+            font-size: 14px;
+            color: #8b949e;
+        }
+
+        .replay-output {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .replay-event {
+            padding: 8px;
+            margin-bottom: 8px;
+            border-left: 3px solid #30363d;
+            padding-left: 12px;
+        }
+
+        .replay-event.extraction {
+            border-left-color: #58a6ff;
+        }
+
+        .replay-event.state_change {
+            border-left-color: #d29922;
+        }
+
+        .replay-event.session_start {
+            border-left-color: #238636;
+        }
+
+        .replay-event.replay_complete {
+            border-left-color: #8b949e;
+        }
+
+        .event-type {
+            font-weight: 600;
+            color: #58a6ff;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .event-time {
+            color: #8b949e;
+            font-size: 11px;
+        }
+
+        .event-data {
+            color: #c9d1d9;
+            margin-top: 5px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 20px;
+        }
+
+        .stat-label {
+            color: #8b949e;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+
+        .stat-sub {
+            color: #8b949e;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #8b949e;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #30363d;
+            border-top-color: #58a6ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: rgba(218, 54, 51, 0.1);
+            border: 1px solid #da3633;
+            border-radius: 6px;
+            padding: 15px;
+            color: #f85149;
+            margin: 20px 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #8b949e;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        pre {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 15px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        code {
+            color: #79c0ff;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>🗄️ Database Explorer</h1>
+            <div class="header-subtitle">Query extractions, browse sessions, and replay history</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('extractions')">Extractions</button>
+            <button class="tab" onclick="switchTab('sessions')">Sessions</button>
+            <button class="tab" onclick="switchTab('replay')">Replay</button>
+            <button class="tab" onclick="switchTab('stats')">Statistics</button>
+        </div>
+
+        <!-- Extractions Tab -->
+        <div id="extractions-tab" class="tab-content active">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Query Extractions</div>
+                </div>
+
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label class="form-label">Agent Name *</label>
+                        <input type="text" id="extract-agent" placeholder="e.g., codex">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Event Type</label>
+                        <select id="extract-type">
+                            <option value="">All Types</option>
+                            <option value="error">Error</option>
+                            <option value="warning">Warning</option>
+                            <option value="code_block">Code Block</option>
+                            <option value="metric">Metric</option>
+                            <option value="response">Response</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Pattern</label>
+                        <input type="text" id="extract-pattern" placeholder="Pattern name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Limit</label>
+                        <input type="number" id="extract-limit" value="50" min="1" max="1000">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="queryExtractions()">🔍 Search</button>
+                    <button class="btn btn-secondary" onclick="clearExtractFilters()">Clear</button>
+                </div>
+
+                <div id="extractions-results" class="results-container"></div>
+            </div>
+        </div>
+
+        <!-- Sessions Tab -->
+        <div id="sessions-tab" class="tab-content">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Browse Sessions</div>
+                </div>
+
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label class="form-label">Agent Name *</label>
+                        <input type="text" id="session-agent" placeholder="e.g., codex">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Time Range (days)</label>
+                        <input type="number" id="session-days" value="7" min="1" max="365">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Limit</label>
+                        <input type="number" id="session-limit" value="50" min="1" max="1000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Filter</label>
+                        <select id="session-filter">
+                            <option value="">All Sessions</option>
+                            <option value="active">Active Only</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="querySessions()">🔍 Search</button>
+                    <button class="btn btn-secondary" onclick="clearSessionFilters()">Clear</button>
+                </div>
+
+                <div id="sessions-results" class="results-container"></div>
+            </div>
+        </div>
+
+        <!-- Replay Tab -->
+        <div id="replay-tab" class="tab-content">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Session Replay</div>
+                </div>
+
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label class="form-label">Session ID *</label>
+                        <input type="text" id="replay-session" placeholder="e.g., codex-20260210-120000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Playback Speed</label>
+                        <select id="replay-speed">
+                            <option value="0.5">0.5x (Slow)</option>
+                            <option value="1.0" selected>1.0x (Normal)</option>
+                            <option value="2.0">2.0x (Fast)</option>
+                            <option value="5.0">5.0x (Very Fast)</option>
+                            <option value="10.0">10.0x (Maximum)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Export Format</label>
+                        <select id="export-format">
+                            <option value="json">JSON</option>
+                            <option value="csv">CSV</option>
+                            <option value="har">HAR</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button class="btn" onclick="startReplay()">▶️ Play</button>
+                    <button class="btn btn-secondary" onclick="stopReplay()">⏹️ Stop</button>
+                    <button class="btn btn-secondary" onclick="exportSession()">⬇️ Export</button>
+                    <button class="btn btn-secondary" onclick="getSessionJSON()">📄 View JSON</button>
+                </div>
+
+                <div id="replay-output" class="replay-output" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Statistics Tab -->
+        <div id="stats-tab" class="tab-content">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Agent Statistics</div>
+                </div>
+
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label class="form-label">Agent Name *</label>
+                        <input type="text" id="stats-agent" placeholder="e.g., codex">
+                    </div>
+                </div>
+
+                <button class="btn" onclick="queryStats()">📊 Load Statistics</button>
+
+                <div id="stats-results" class="results-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let replayEventSource = null;
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function queryExtractions() {
+            const agent = document.getElementById('extract-agent').value;
+            const type = document.getElementById('extract-type').value;
+            const pattern = document.getElementById('extract-pattern').value;
+            const limit = document.getElementById('extract-limit').value;
+
+            if (!agent) {
+                showError('extractions-results', 'Agent name is required');
+                return;
+            }
+
+            showLoading('extractions-results');
+
+            try {
+                let url = `/api/query/extractions?agent=${encodeURIComponent(agent)}&limit=${limit}`;
+                if (type) url += `&type=${encodeURIComponent(type)}`;
+                if (pattern) url += `&pattern=${encodeURIComponent(pattern)}`;
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+                const data = await response.json();
+                displayExtractions(data);
+            } catch (error) {
+                showError('extractions-results', error.message);
+            }
+        }
+
+        function displayExtractions(data) {
+            const container = document.getElementById('extractions-results');
+            const extractions = data.extractions || [];
+
+            if (extractions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <p>No extractions found</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="result-stats">
+                    <div class="result-count">Found <strong>${extractions.length}</strong> extraction(s)</div>
+                </div>
+                <div class="results-list">
+            `;
+
+            extractions.forEach(ext => {
+                const riskBadge = ext.risk_level ?
+                    `<span class="badge badge-${ext.risk_level}">${ext.risk_level}</span>` : '';
+                const typeBadge = `<span class="badge badge-${ext.event_type === 'error' ? 'error' : 'info'}">${ext.event_type}</span>`;
+
+                html += `
+                    <div class="result-item">
+                        <div class="result-header">
+                            <div class="result-title">${escapeHtml(ext.matched_value || 'N/A')}</div>
+                            <div>${typeBadge} ${riskBadge}</div>
+                        </div>
+                        <div class="result-meta">
+                            <div class="result-meta-item">
+                                <span class="result-meta-label">Pattern:</span>
+                                <span>${ext.pattern}</span>
+                            </div>
+                            <div class="result-meta-item">
+                                <span class="result-meta-label">Line:</span>
+                                <span>${ext.line_number}</span>
+                            </div>
+                            <div class="result-meta-item">
+                                <span class="result-meta-label">Time:</span>
+                                <span>${formatTimestamp(ext.timestamp)}</span>
+                            </div>
+                            <div class="result-meta-item">
+                                <span class="result-meta-label">Session:</span>
+                                <span style="font-family: monospace; font-size: 11px;">${ext.session_id}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div></div>';
+            container.innerHTML = html;
+        }
+
+        async function querySessions() {
+            const agent = document.getElementById('session-agent').value;
+            const days = document.getElementById('session-days').value;
+            const limit = document.getElementById('session-limit').value;
+            const filter = document.getElementById('session-filter').value;
+
+            if (!agent && filter !== 'active') {
+                showError('sessions-results', 'Agent name is required');
+                return;
+            }
+
+            showLoading('sessions-results');
+
+            try {
+                let url = `/api/query/sessions?limit=${limit}`;
+                if (agent) url += `&agent=${encodeURIComponent(agent)}`;
+                if (days) url += `&days=${days}`;
+                if (filter === 'active') url += `&active=true`;
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+                const data = await response.json();
+                displaySessions(data);
+            } catch (error) {
+                showError('sessions-results', error.message);
+            }
+        }
+
+        function displaySessions(data) {
+            const container = document.getElementById('sessions-results');
+            const sessions = data.sessions || [];
+
+            if (sessions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        <p>No sessions found</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="result-stats">
+                    <div class="result-count">Found <strong>${sessions.length}</strong> session(s)</div>
+                </div>
+            `;
+
+            sessions.forEach(session => {
+                const isActive = !session.ended_at;
+                const status = isActive ?
+                    '<span class="badge badge-info">Active</span>' :
+                    `<span class="badge badge-${session.exit_code === 0 ? 'low' : 'high'}">${session.exit_code === 0 ? 'Success' : 'Failed'}</span>`;
+
+                html += `
+                    <div class="session-item">
+                        <div class="session-info">
+                            <div class="session-id">${session.session_id}</div>
+                            <div class="session-stats">
+                                <span>Agent: <strong>${session.agent_name}</strong></span>
+                                <span>Lines: <strong>${session.total_lines_processed || 0}</strong></span>
+                                <span>Extractions: <strong>${session.total_extraction_events || 0}</strong></span>
+                                <span>Started: ${formatTimestamp(session.started_at)}</span>
+                                ${status}
+                            </div>
+                        </div>
+                        <div class="session-actions">
+                            <button class="btn btn-sm btn-secondary" onclick="loadSessionForReplay('${session.session_id}')">▶️ Replay</button>
+                            <button class="btn btn-sm btn-secondary" onclick="viewSessionDetails('${session.session_id}')">👁️ View</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function loadSessionForReplay(sessionId) {
+            switchTab('replay');
+            document.getElementById('replay-session').value = sessionId;
+            document.querySelector('.tab[onclick*="replay"]').click();
+        }
+
+        async function viewSessionDetails(sessionId) {
+            showLoading('sessions-results');
+
+            try {
+                const response = await fetch(`/api/query/session/${encodeURIComponent(sessionId)}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+                const data = await response.json();
+                displaySessionDetails(data);
+            } catch (error) {
+                showError('sessions-results', error.message);
+            }
+        }
+
+        function displaySessionDetails(data) {
+            const container = document.getElementById('sessions-results');
+            const session = data.session;
+            const extractions = data.extractions || [];
+            const stateChanges = data.state_changes || [];
+
+            let html = `
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">Session Details: ${session.session_id}</div>
+                        <button class="btn btn-sm btn-secondary" onclick="querySessions()">← Back</button>
+                    </div>
+
+                    <div class="stats-grid" style="margin-bottom: 20px;">
+                        <div class="stat-card">
+                            <div class="stat-label">Agent</div>
+                            <div class="stat-value" style="font-size: 18px;">${session.agent_name}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Lines Processed</div>
+                            <div class="stat-value">${session.total_lines_processed || 0}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Extractions</div>
+                            <div class="stat-value">${session.total_extraction_events || 0}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Exit Code</div>
+                            <div class="stat-value">${session.exit_code !== null ? session.exit_code : 'Running'}</div>
+                        </div>
+                    </div>
+
+                    <h3 style="color: #58a6ff; margin-top: 20px; margin-bottom: 10px;">Extractions (${extractions.length})</h3>
+                    <div class="results-list">
+            `;
+
+            extractions.slice(0, 10).forEach(ext => {
+                html += `
+                    <div class="result-item">
+                        <div class="result-title">${escapeHtml(ext.matched_value || 'N/A')}</div>
+                        <div class="result-meta">
+                            <span>${ext.event_type}</span>
+                            <span>${ext.pattern}</span>
+                            <span>Line ${ext.line_number}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (extractions.length > 10) {
+                html += `<p style="text-align: center; color: #8b949e; padding: 10px;">... and ${extractions.length - 10} more</p>`;
+            }
+
+            html += '</div></div>';
+            container.innerHTML = html;
+        }
+
+        function startReplay() {
+            const sessionId = document.getElementById('replay-session').value;
+            const speed = document.getElementById('replay-speed').value;
+
+            if (!sessionId) {
+                alert('Session ID is required');
+                return;
+            }
+
+            stopReplay(); // Stop any existing replay
+
+            const output = document.getElementById('replay-output');
+            output.style.display = 'block';
+            output.innerHTML = '<div class="loading"><div class="spinner"></div> Starting replay...</div>';
+
+            try {
+                const url = `/api/replay/session/${encodeURIComponent(sessionId)}?speed=${speed}`;
+                replayEventSource = new EventSource(url);
+
+                replayEventSource.addEventListener('session_start', (e) => {
+                    const data = JSON.parse(e.data);
+                    output.innerHTML = `
+                        <div class="replay-event session_start">
+                            <div class="event-type">Session Start</div>
+                            <div class="event-data">
+                                Agent: ${data.agent} | Speed: ${data.speed}x | Started: ${data.started_at}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                replayEventSource.addEventListener('extraction', (e) => {
+                    const data = JSON.parse(e.data);
+                    const eventDiv = document.createElement('div');
+                    eventDiv.className = 'replay-event extraction';
+                    eventDiv.innerHTML = `
+                        <div class="event-type">Extraction</div>
+                        <div class="event-data">
+                            <strong>[${data.event_type}]</strong> ${escapeHtml(data.value)}
+                            <span style="color: #8b949e;">(line ${data.line})</span>
+                        </div>
+                        <div class="event-time">${data.timestamp}</div>
+                    `;
+                    output.appendChild(eventDiv);
+                    output.scrollTop = output.scrollHeight;
+                });
+
+                replayEventSource.addEventListener('state_change', (e) => {
+                    const data = JSON.parse(e.data);
+                    const eventDiv = document.createElement('div');
+                    eventDiv.className = 'replay-event state_change';
+                    eventDiv.innerHTML = `
+                        <div class="event-type">State Change</div>
+                        <div class="event-data">State: ${data.state}</div>
+                        <div class="event-time">${data.timestamp}</div>
+                    `;
+                    output.appendChild(eventDiv);
+                    output.scrollTop = output.scrollHeight;
+                });
+
+                replayEventSource.addEventListener('replay_complete', (e) => {
+                    const data = JSON.parse(e.data);
+                    const eventDiv = document.createElement('div');
+                    eventDiv.className = 'replay-event replay_complete';
+                    eventDiv.innerHTML = `
+                        <div class="event-type">Replay Complete</div>
+                        <div class="event-data">
+                            Total Events: ${data.total_events} |
+                            Duration: ${data.duration_seconds.toFixed(2)}s |
+                            Speed: ${data.speed}x
+                        </div>
+                    `;
+                    output.appendChild(eventDiv);
+                    output.scrollTop = output.scrollHeight;
+                    stopReplay();
+                });
+
+                replayEventSource.onerror = (error) => {
+                    output.innerHTML += `<div class="error-message">Error: Connection lost or session not found</div>`;
+                    stopReplay();
+                };
+            } catch (error) {
+                output.innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
+            }
+        }
+
+        function stopReplay() {
+            if (replayEventSource) {
+                replayEventSource.close();
+                replayEventSource = null;
+            }
+        }
+
+        async function getSessionJSON() {
+            const sessionId = document.getElementById('replay-session').value;
+
+            if (!sessionId) {
+                alert('Session ID is required');
+                return;
+            }
+
+            const output = document.getElementById('replay-output');
+            output.style.display = 'block';
+            output.innerHTML = '<div class="loading"><div class="spinner"></div> Loading...</div>';
+
+            try {
+                const response = await fetch(`/api/replay/session/${encodeURIComponent(sessionId)}?format=json`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+                const data = await response.json();
+                output.innerHTML = `<pre><code>${JSON.stringify(data, null, 2)}</code></pre>`;
+            } catch (error) {
+                output.innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function exportSession() {
+            const sessionId = document.getElementById('replay-session').value;
+            const format = document.getElementById('export-format').value;
+
+            if (!sessionId) {
+                alert('Session ID is required');
+                return;
+            }
+
+            try {
+                const url = `/api/replay/export/${encodeURIComponent(sessionId)}?format=${format}`;
+                window.open(url, '_blank');
+            } catch (error) {
+                alert(`Export failed: ${error.message}`);
+            }
+        }
+
+        async function queryStats() {
+            const agent = document.getElementById('stats-agent').value;
+
+            if (!agent) {
+                showError('stats-results', 'Agent name is required');
+                return;
+            }
+
+            showLoading('stats-results');
+
+            try {
+                const response = await fetch(`/api/query/stats/agent/${encodeURIComponent(agent)}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+                const data = await response.json();
+                displayStats(data);
+            } catch (error) {
+                showError('stats-results', error.message);
+            }
+        }
+
+        function displayStats(data) {
+            const container = document.getElementById('stats-results');
+            const sessions = data.sessions || {};
+            const extractions = data.extractions || {};
+
+            let html = `
+                <h3 style="color: #58a6ff; margin-top: 20px; margin-bottom: 15px;">Session Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Sessions</div>
+                        <div class="stat-value">${sessions.total || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Active Sessions</div>
+                        <div class="stat-value">${sessions.active || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Completed</div>
+                        <div class="stat-value">${sessions.completed || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Successful</div>
+                        <div class="stat-value">${sessions.successful || 0}</div>
+                        <div class="stat-sub">Success Rate: ${((sessions.success_rate || 0) * 100).toFixed(1)}%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Lines</div>
+                        <div class="stat-value">${sessions.total_lines || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Avg Duration</div>
+                        <div class="stat-value">${(sessions.avg_duration_seconds || 0).toFixed(1)}s</div>
+                    </div>
+                </div>
+
+                <h3 style="color: #58a6ff; margin-top: 30px; margin-bottom: 15px;">Extraction Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Extractions</div>
+                        <div class="stat-value">${extractions.total || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">By Type</div>
+                        <div class="stat-sub">${formatBreakdown(extractions.by_type)}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">By Pattern</div>
+                        <div class="stat-sub">${formatBreakdown(extractions.by_pattern)}</div>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function formatBreakdown(obj) {
+            if (!obj) return 'N/A';
+            return Object.entries(obj).map(([key, val]) => `${key}: ${val}`).join('<br>');
+        }
+
+        function clearExtractFilters() {
+            document.getElementById('extract-agent').value = '';
+            document.getElementById('extract-type').value = '';
+            document.getElementById('extract-pattern').value = '';
+            document.getElementById('extract-limit').value = '50';
+            document.getElementById('extractions-results').innerHTML = '';
+        }
+
+        function clearSessionFilters() {
+            document.getElementById('session-agent').value = '';
+            document.getElementById('session-days').value = '7';
+            document.getElementById('session-limit').value = '50';
+            document.getElementById('session-filter').value = '';
+            document.getElementById('sessions-results').innerHTML = '';
+        }
+
+        function showLoading(containerId) {
+            document.getElementById(containerId).innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading...</p>
+                </div>
+            `;
+        }
+
+        function showError(containerId, message) {
+            document.getElementById(containerId).innerHTML = `
+                <div class="error-message">
+                    <strong>Error:</strong> ${escapeHtml(message)}
+                </div>
+            `;
+        }
+
+        function formatTimestamp(ts) {
+            if (!ts) return 'N/A';
+            return new Date(ts).toLocaleString();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            stopReplay();
+        });
+    </script>
+</body>
+</html>

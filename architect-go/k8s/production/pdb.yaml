@@ -1,0 +1,15 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: architect-go
+  namespace: architect-production
+  labels:
+    app: architect-go
+    environment: production
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: architect-go
+      environment: production
+  unhealthyPodEvictionPolicy: AlwaysAllow

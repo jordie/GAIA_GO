@@ -1,0 +1,201 @@
+package services
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+)
+
+// MockWebhookRepository mocks the WebhookRepository
+type MockWebhookRepository struct {
+	mock.Mock
+}
+
+func (m *MockWebhookRepository) Create(ctx context.Context, webhook map[string]interface{}) error {
+	args := m.Called(ctx, webhook)
+	return args.Error(0)
+}
+
+func (m *MockWebhookRepository) Get(ctx context.Context, id string) (map[string]interface{}, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]interface{}), args.Error(1)
+}
+
+func (m *MockWebhookRepository) List(ctx context.Context, limit int, offset int) ([]map[string]interface{}, int64, error) {
+	args := m.Called(ctx, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]map[string]interface{}), int64(args.Int(1)), args.Error(2)
+}
+
+func (m *MockWebhookRepository) GetByIntegration(ctx context.Context, integrationID string, limit int, offset int) ([]map[string]interface{}, int64, error) {
+	args := m.Called(ctx, integrationID, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]map[string]interface{}), int64(args.Int(1)), args.Error(2)
+}
+
+func (m *MockWebhookRepository) Update(ctx context.Context, webhook map[string]interface{}) error {
+	args := m.Called(ctx, webhook)
+	return args.Error(0)
+}
+
+func (m *MockWebhookRepository) Delete(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockWebhookRepository) CreateDelivery(ctx context.Context, delivery map[string]interface{}) error {
+	args := m.Called(ctx, delivery)
+	return args.Error(0)
+}
+
+func (m *MockWebhookRepository) GetDeliveryHistory(ctx context.Context, webhookID string, limit int, offset int) ([]map[string]interface{}, int64, error) {
+	args := m.Called(ctx, webhookID, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]map[string]interface{}), int64(args.Int(1)), args.Error(2)
+}
+
+func (m *MockWebhookRepository) GetFailedDeliveries(ctx context.Context, limit int, offset int) ([]map[string]interface{}, int64, error) {
+	args := m.Called(ctx, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]map[string]interface{}), int64(args.Int(1)), args.Error(2)
+}
+
+// TestWebhookService_CreateWebhook tests webhook creation
+func TestWebhookService_CreateWebhook(t *testing.T) {
+	mockRepo := new(MockWebhookRepository)
+	ctx := context.Background()
+
+	mockRepo.On("Create", ctx, mock.MatchedBy(func(w map[string]interface{}) bool {
+		return w["url"] == "https://example.com/webhook" && w["enabled"] == true
+	})).Return(nil)
+
+	service := NewWebhookService(mockRepo)
+	req := &CreateWebhookRequest{
+		URL:       "https://example.com/webhook",
+		Events:    []string{"user.created", "user.updated"},
+		Headers:   map[string]string{"X-API-Key": "secret"},
+		Enabled:   true,
+		Retries:   3,
+		Timeout:   30,
+	}
+
+	result, err := service.CreateWebhook(ctx, req)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	mockRepo.AssertCalled(t, "Create", ctx, mock.AnythingOfType("map[string]interface {}"))
+}
+
+// TestWebhookService_GetWebhook tests webhook retrieval
+func TestWebhookService_GetWebhook(t *testing.T) {
+	mockRepo := new(MockWebhookRepository)
+	ctx := context.Background()
+
+	webhook := map[string]interface{}{
+		"id":  "webhook-1",
+		"url": "https://example.com/webhook",
+	}
+
+	mockRepo.On("Get", ctx, "webhook-1").Return(webhook, nil)
+
+	service := NewWebhookService(mockRepo)
+	result, err := service.GetWebhook(ctx, "webhook-1")
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	mockRepo.AssertCalled(t, "Get", ctx, "webhook-1")
+}
+
+// TestWebhookService_ListWebhooks tests webhook listing
+func TestWebhookService_ListWebhooks(t *testing.T) {
+	mockRepo := new(MockWebhookRepository)
+	ctx := context.Background()
+
+	webhooks := []map[string]interface{}{
+		{"id": "webhook-1", "url": "https://example.com/webhook1"},
+		{"id": "webhook-2", "url": "https://example.com/webhook2"},
+	}
+
+	mockRepo.On("List", ctx, 10, 0).Return(webhooks, int64(2), nil)
+
+	service := NewWebhookService(mockRepo)
+	results, total, err := service.ListWebhooks(ctx, 10, 0)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(2), total)
+	assert.Equal(t, 2, len(results))
+	mockRepo.AssertCalled(t, "List", ctx, 10, 0)
+}
+
+// TestWebhookService_DisableWebhook tests webhook disabling
+func TestWebhookService_DisableWebhook(t *testing.T) {
+	mockRepo := new(MockWebhookRepository)
+	ctx := context.Background()
+
+	webhook := map[string]interface{}{
+		"id":      "webhook-1",
+		"enabled": true,
+	}
+
+	mockRepo.On("Get", ctx, "webhook-1").Return(webhook, nil)
+	mockRepo.On("Update", ctx, mock.MatchedBy(func(w map[string]interface{}) bool {
+		return w["enabled"] == false
+	})).Return(nil)
+
+	service := NewWebhookService(mockRepo)
+	err := service.DisableWebhook(ctx, "webhook-1")
+
+	assert.NoError(t, err)
+	mockRepo.AssertCalled(t, "Get", ctx, "webhook-1")
+	mockRepo.AssertCalled(t, "Update", ctx, mock.AnythingOfType("map[string]interface {}"))
+}
+
+// TestWebhookService_GetDeliveryHistory tests delivery history retrieval
+func TestWebhookService_GetDeliveryHistory(t *testing.T) {
+	mockRepo := new(MockWebhookRepository)
+	ctx := context.Background()
+
+	deliveries := []map[string]interface{}{
+		{"id": "delivery-1", "status": "success", "status_code": 200},
+		{"id": "delivery-2", "status": "failed", "status_code": 500},
+	}
+
+	mockRepo.On("GetDeliveryHistory", ctx, "webhook-1", 10, 0).Return(deliveries, int64(2), nil)
+
+	service := NewWebhookService(mockRepo)
+	results, total, err := service.GetDeliveryHistory(ctx, "webhook-1", 10, 0)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(2), total)
+	assert.Equal(t, 2, len(results))
+	mockRepo.AssertCalled(t, "GetDeliveryHistory", ctx, "webhook-1", 10, 0)
+}
+
+// TestWebhookService_RetryDelivery tests delivery retry
+func TestWebhookService_RetryDelivery(t *testing.T) {
+	mockRepo := new(MockWebhookRepository)
+	ctx := context.Background()
+
+	mockRepo.On("CreateDelivery", ctx, mock.MatchedBy(func(d map[string]interface{}) bool {
+		return d["webhook_id"] == "webhook-1" && d["retry"] == true
+	})).Return(nil)
+
+	service := NewWebhookService(mockRepo)
+	err := service.RetryDelivery(ctx, "webhook-1", "delivery-1")
+
+	assert.NoError(t, err)
+	mockRepo.AssertCalled(t, "CreateDelivery", ctx, mock.AnythingOfType("map[string]interface {}"))
+}

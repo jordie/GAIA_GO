@@ -1,0 +1,272 @@
+{
+  "id": "homedepot_tests",
+  "name": "Home Depot Purchase Extraction",
+  "description": "Extract all purchase history from Home Depot and export to database",
+  "target_service": "homedepot",
+  "target_url": "https://www.homedepot.com",
+  "tags": ["shopping", "purchases", "extraction", "export"],
+
+  "global_variables": {
+    "base_url": "https://www.homedepot.com",
+    "export_db": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect/data/exports/exports.db"
+  },
+
+  "test_cases": [
+    {
+      "id": "homedepot_login",
+      "name": "Home Depot Login",
+      "description": "Login to Home Depot account",
+      "tags": ["login"],
+      "credentials": {
+        "hd": "homedepot/Home Depot Account"
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${base_url}/auth/view/signin",
+          "description": "Go to Home Depot sign in"
+        },
+        {
+          "type": "wait",
+          "value": 2
+        },
+        {
+          "type": "fill",
+          "target": "#email, input[name='email'], input[type='email']",
+          "value": "${hd_username}",
+          "description": "Enter email"
+        },
+        {
+          "type": "fill",
+          "target": "#password, input[name='password'], input[type='password']",
+          "value": "${hd_password}",
+          "description": "Enter password"
+        },
+        {
+          "type": "click",
+          "target": "button[type='submit'], #sign-in-button, button:has-text('Sign In')",
+          "description": "Click sign in"
+        },
+        {
+          "type": "wait",
+          "value": 5
+        },
+        {
+          "type": "assert_text",
+          "value": "Account",
+          "description": "Verify logged in",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "homedepot_extract_purchases",
+      "name": "Extract All Purchases",
+      "description": "Navigate to order history and extract all purchases",
+      "tags": ["extraction", "purchases", "export"],
+      "credentials": {
+        "hd": "homedepot/Home Depot Account"
+      },
+      "variables": {
+        "export_to_db": true
+      },
+      "setup": [
+        {
+          "type": "navigate",
+          "target": "${base_url}/auth/view/signin"
+        },
+        {
+          "type": "wait",
+          "value": 2
+        },
+        {
+          "type": "fill",
+          "target": "#email, input[name='email'], input[type='email']",
+          "value": "${hd_username}"
+        },
+        {
+          "type": "fill",
+          "target": "#password, input[name='password'], input[type='password']",
+          "value": "${hd_password}"
+        },
+        {
+          "type": "click",
+          "target": "button[type='submit'], #sign-in-button"
+        },
+        {
+          "type": "wait",
+          "value": 5
+        }
+      ],
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${base_url}/order/view/orders",
+          "description": "Go to order history"
+        },
+        {
+          "type": "wait",
+          "value": 3
+        },
+        {
+          "type": "extract",
+          "target": ".order-card, .order-item, [data-testid='order-card'], .purchase-history-item",
+          "value": "orders_html",
+          "description": "Extract order cards HTML"
+        },
+        {
+          "type": "extract",
+          "target": ".order-number, [data-testid='order-number']",
+          "value": "order_numbers",
+          "description": "Extract order numbers"
+        },
+        {
+          "type": "extract",
+          "target": ".order-date, [data-testid='order-date']",
+          "value": "order_dates",
+          "description": "Extract order dates"
+        },
+        {
+          "type": "extract",
+          "target": ".order-total, [data-testid='order-total']",
+          "value": "order_totals",
+          "description": "Extract order totals"
+        },
+        {
+          "type": "extract",
+          "target": ".order-status, [data-testid='order-status']",
+          "value": "order_statuses",
+          "description": "Extract order statuses"
+        },
+        {
+          "type": "screenshot",
+          "value": "homedepot_orders.png",
+          "description": "Screenshot of orders page"
+        }
+      ]
+    },
+    {
+      "id": "homedepot_extract_all_pages",
+      "name": "Extract All Order Pages",
+      "description": "Paginate through all orders and extract",
+      "tags": ["extraction", "pagination"],
+      "credentials": {
+        "hd": "homedepot/Home Depot Account"
+      },
+      "setup": [
+        {
+          "type": "navigate",
+          "target": "${base_url}/auth/view/signin"
+        },
+        {
+          "type": "fill",
+          "target": "#email, input[type='email']",
+          "value": "${hd_username}"
+        },
+        {
+          "type": "fill",
+          "target": "#password, input[type='password']",
+          "value": "${hd_password}"
+        },
+        {
+          "type": "click",
+          "target": "button[type='submit']"
+        },
+        {
+          "type": "wait",
+          "value": 5
+        }
+      ],
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${base_url}/order/view/orders"
+        },
+        {
+          "type": "wait",
+          "value": 3
+        },
+        {
+          "type": "extract",
+          "target": ".order-card, .purchase-history-item, [data-component='OrderCard']",
+          "value": "page_1_orders",
+          "description": "Extract page 1 orders"
+        },
+        {
+          "type": "click",
+          "target": "button:has-text('Next'), a:has-text('Next'), [aria-label='Next page']",
+          "description": "Go to next page",
+          "optional": true,
+          "timeout": 5
+        },
+        {
+          "type": "wait",
+          "value": 2
+        },
+        {
+          "type": "extract",
+          "target": ".order-card, .purchase-history-item",
+          "value": "page_2_orders",
+          "description": "Extract page 2 orders",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "homedepot_order_details",
+      "name": "Extract Order Details",
+      "description": "Click into each order and extract line items",
+      "tags": ["extraction", "details"],
+      "credentials": {
+        "hd": "homedepot/Home Depot Account"
+      },
+      "variables": {
+        "order_to_view": "${first_order_number}"
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${base_url}/order/view/orders"
+        },
+        {
+          "type": "wait",
+          "value": 3
+        },
+        {
+          "type": "click",
+          "target": ".order-card:first-child a, .view-order-details:first-child",
+          "description": "Click first order to view details"
+        },
+        {
+          "type": "wait",
+          "value": 3
+        },
+        {
+          "type": "extract",
+          "target": ".product-name, .item-name, [data-testid='product-title']",
+          "value": "item_names",
+          "description": "Extract item names"
+        },
+        {
+          "type": "extract",
+          "target": ".item-price, .product-price, [data-testid='item-price']",
+          "value": "item_prices",
+          "description": "Extract item prices"
+        },
+        {
+          "type": "extract",
+          "target": ".item-quantity, .qty, [data-testid='quantity']",
+          "value": "item_quantities",
+          "description": "Extract quantities"
+        },
+        {
+          "type": "extract",
+          "target": ".item-sku, .sku, [data-testid='sku']",
+          "value": "item_skus",
+          "description": "Extract SKUs",
+          "optional": true
+        }
+      ]
+    }
+  ]
+}

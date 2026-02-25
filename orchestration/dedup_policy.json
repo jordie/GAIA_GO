@@ -1,0 +1,86 @@
+{
+  "name": "Prompt Deduplication Policy",
+  "version": "1.0",
+  "enabled": true,
+  "purpose": "Prevent duplicate prompts and work sessions from congesting the queue",
+  "rules": {
+    "phase_work": {
+      "enabled": true,
+      "description": "Prevent duplicate phase implementation prompts",
+      "lookback_hours": 2,
+      "match_strategy": "content_hash",
+      "action_on_duplicate": "cancel_older_and_requeue_newer"
+    },
+    "by_phase_id": {
+      "enabled": true,
+      "description": "Track by phase ID (e.g., 8.8.1, 8.8.2) to prevent parallel duplicates",
+      "pattern": "Phase \\d+\\.\\d+(\\.\\d+)?",
+      "action_on_duplicate": "consolidate"
+    },
+    "consolidate_sessions": {
+      "enabled": true,
+      "description": "Consolidate work sessions for same task",
+      "same_content_threshold": 0.95,
+      "max_concurrent_per_task": 1,
+      "action_on_excess": "reassign_to_single_session"
+    },
+    "stale_prompt_cleanup": {
+      "enabled": true,
+      "description": "Auto-clean stale prompts to prevent queue rot",
+      "in_progress_timeout_hours": 4,
+      "pending_timeout_hours": 2,
+      "action_on_stale": "mark_timeout"
+    }
+  },
+  "enforcement": {
+    "queue_check": {
+      "on_enqueue": true,
+      "on_assign": true,
+      "frequency_minutes": 5
+    },
+    "logging": {
+      "enabled": true,
+      "log_duplicates": true,
+      "log_consolidations": true,
+      "log_cleanups": true
+    },
+    "notifications": {
+      "alert_on_duplicate": true,
+      "alert_on_consolidation": true,
+      "alert_to_sessions": ["manager1", "foundation", "inspector"]
+    }
+  },
+  "examples": {
+    "duplicate_detection": {
+      "scenario": "Two Phase 8.8.1 prompts queued within 2 hours",
+      "detection": "Content hash match + phase ID regex",
+      "action": "Cancel prompt 131, keep prompt 136 (newer)"
+    },
+    "session_consolidation": {
+      "scenario": "Same work assigned to dev_typing_1 and dev_typing_2",
+      "detection": "Content similarity > 95%",
+      "action": "Reassign both to single session (dev_typing_1)"
+    },
+    "stale_cleanup": {
+      "scenario": "Prompt in_progress for 4+ hours without status update",
+      "detection": "Timestamp check + status duration",
+      "action": "Mark as timeout, reassign to fresh session"
+    }
+  },
+  "metrics": {
+    "tracked": [
+      "duplicates_detected",
+      "duplicates_cancelled",
+      "sessions_consolidated",
+      "stale_prompts_cleaned",
+      "queue_efficiency_percent"
+    ]
+  },
+  "implementation_notes": {
+    "priority": "HIGH - prevents queue congestion",
+    "location": "/Users/jgirmay/Desktop/gitrepo/GAIA_HOME/orchestration/prompt_deduplicator.py",
+    "integration": "assigner_worker.py",
+    "database": "prompt_dedup.db (in GAIA_HOME/orchestration/)",
+    "requires": "sqlite3, hashlib"
+  }
+}

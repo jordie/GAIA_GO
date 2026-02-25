@@ -1,0 +1,242 @@
+package services
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
+	"architect-go/pkg/models"
+)
+
+// MockErrorLogRepository mocks the ErrorLogRepository
+type MockErrorLogRepository struct {
+	mock.Mock
+}
+
+func (m *MockErrorLogRepository) Create(ctx context.Context, errorLog *models.ErrorLog) error {
+	args := m.Called(ctx, errorLog)
+	return args.Error(0)
+}
+
+func (m *MockErrorLogRepository) Get(ctx context.Context, id string) (*models.ErrorLog, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.ErrorLog), args.Error(1)
+}
+
+func (m *MockErrorLogRepository) ListRecent(ctx context.Context, limit int) ([]*models.ErrorLog, error) {
+	args := m.Called(ctx, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*models.ErrorLog), args.Error(1)
+}
+
+func (m *MockErrorLogRepository) List(ctx context.Context, filters map[string]interface{}, limit int, offset int) ([]*models.ErrorLog, int64, error) {
+	args := m.Called(ctx, filters, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*models.ErrorLog), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockErrorLogRepository) Update(ctx context.Context, errorLog *models.ErrorLog) error {
+	args := m.Called(ctx, errorLog)
+	return args.Error(0)
+}
+
+func (m *MockErrorLogRepository) Delete(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockErrorLogRepository) HardDelete(ctx context.Context, beforeDate string) (int64, error) {
+	args := m.Called(ctx, beforeDate)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *MockErrorLogRepository) GetByType(ctx context.Context, errorType string, limit int, offset int) ([]*models.ErrorLog, int64, error) {
+	args := m.Called(ctx, errorType, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*models.ErrorLog), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockErrorLogRepository) GetBySource(ctx context.Context, source string, limit int, offset int) ([]*models.ErrorLog, int64, error) {
+	args := m.Called(ctx, source, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*models.ErrorLog), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockErrorLogRepository) GetBySeverity(ctx context.Context, severity string, limit int, offset int) ([]*models.ErrorLog, int64, error) {
+	args := m.Called(ctx, severity, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*models.ErrorLog), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockErrorLogRepository) GetByStatus(ctx context.Context, status string, limit int, offset int) ([]*models.ErrorLog, int64, error) {
+	args := m.Called(ctx, status, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*models.ErrorLog), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockErrorLogRepository) Search(ctx context.Context, query string, limit int, offset int) ([]*models.ErrorLog, int64, error) {
+	args := m.Called(ctx, query, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*models.ErrorLog), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockErrorLogRepository) GetStats(ctx context.Context, startDate, endDate string) (map[string]interface{}, error) {
+	args := m.Called(ctx, startDate, endDate)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]interface{}), args.Error(1)
+}
+
+func (m *MockErrorLogRepository) GetByTag(ctx context.Context, tag string, limit int, offset int) ([]*models.ErrorLog, int64, error) {
+	args := m.Called(ctx, tag, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*models.ErrorLog), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockErrorLogRepository) GetByProject(ctx context.Context, projectID string, limit int, offset int) ([]*models.ErrorLog, int64, error) {
+	args := m.Called(ctx, projectID, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]*models.ErrorLog), args.Get(1).(int64), args.Error(2)
+}
+
+// TestErrorLogService_LogError tests error logging
+func TestErrorLogService_LogError(t *testing.T) {
+	mockRepo := new(MockErrorLogRepository)
+	ctx := context.Background()
+
+	mockRepo.On("Create", ctx, mock.MatchedBy(func(e *models.ErrorLog) bool {
+		return e.ErrorType == "runtime_error" && e.Severity == "critical"
+	})).Return(nil)
+
+	service := NewErrorLogService(mockRepo)
+	req := &LogErrorRequest{
+		ErrorType:  "runtime_error",
+		Message:    "Something went wrong",
+		Source:     "api",
+		Severity:   "critical",
+		StackTrace: "stack trace here",
+	}
+
+	result, err := service.LogError(ctx, req)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "runtime_error", result.ErrorType)
+	mockRepo.AssertCalled(t, "Create", ctx, mock.AnythingOfType("*models.ErrorLog"))
+}
+
+// TestErrorLogService_ListCriticalErrors tests critical error filtering
+func TestErrorLogService_ListCriticalErrors(t *testing.T) {
+	mockRepo := new(MockErrorLogRepository)
+	ctx := context.Background()
+
+	errors := []*models.ErrorLog{
+		{ID: "err-1", Severity: "critical"},
+		{ID: "err-2", Severity: "critical"},
+	}
+
+	mockRepo.On("GetBySeverity", ctx, "critical", 10, 0).Return(errors, int64(2), nil)
+
+	service := NewErrorLogService(mockRepo)
+	results, total, err := service.ListCriticalErrors(ctx, 10, 0)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(2), total)
+	assert.Equal(t, 2, len(results))
+	mockRepo.AssertCalled(t, "GetBySeverity", ctx, "critical", 10, 0)
+}
+
+// TestErrorLogService_ResolveError tests error resolution
+func TestErrorLogService_ResolveError(t *testing.T) {
+	mockRepo := new(MockErrorLogRepository)
+	ctx := context.Background()
+
+	errorLog := &models.ErrorLog{
+		ID:     "err-1",
+		Status: "new",
+	}
+
+	mockRepo.On("Get", ctx, "err-1").Return(errorLog, nil)
+	mockRepo.On("Update", ctx, mock.MatchedBy(func(e *models.ErrorLog) bool {
+		return e.Status == "resolved"
+	})).Return(nil)
+
+	service := NewErrorLogService(mockRepo)
+	req := &ResolveErrorRequest{
+		Status:     "resolved",
+		Resolution: "Fixed in v1.2.0",
+	}
+
+	err := service.ResolveError(ctx, "err-1", req)
+
+	assert.NoError(t, err)
+	mockRepo.AssertCalled(t, "Get", ctx, "err-1")
+	mockRepo.AssertCalled(t, "Update", ctx, mock.AnythingOfType("*models.ErrorLog"))
+}
+
+// TestErrorLogService_AddErrorTag tests error tagging
+func TestErrorLogService_AddErrorTag(t *testing.T) {
+	mockRepo := new(MockErrorLogRepository)
+	ctx := context.Background()
+
+	errorLog := &models.ErrorLog{
+		ID:   "err-1",
+		Tags: []byte("[]"),
+	}
+
+	mockRepo.On("Get", ctx, "err-1").Return(errorLog, nil)
+	mockRepo.On("Update", ctx, mock.MatchedBy(func(e *models.ErrorLog) bool {
+		return len(e.Tags) > 0
+	})).Return(nil)
+
+	service := NewErrorLogService(mockRepo)
+	err := service.AddErrorTag(ctx, "err-1", "urgent")
+
+	assert.NoError(t, err)
+	mockRepo.AssertCalled(t, "Get", ctx, "err-1")
+}
+
+// TestErrorLogService_DeduplicateErrors tests error deduplication
+func TestErrorLogService_DeduplicateErrors(t *testing.T) {
+	mockRepo := new(MockErrorLogRepository)
+	ctx := context.Background()
+
+	errors := []*models.ErrorLog{
+		{ID: "err-1", ErrorType: "runtime_error", Source: "api"},
+		{ID: "err-2", ErrorType: "runtime_error", Source: "api"},
+		{ID: "err-3", ErrorType: "network_error", Source: "api"},
+	}
+
+	mockRepo.On("List", ctx, mock.Anything, 10000, 0).Return(errors, int64(3), nil)
+
+	service := NewErrorLogService(mockRepo)
+	groups, err := service.DeduplicateErrors(ctx)
+
+	assert.NoError(t, err)
+	assert.Greater(t, len(groups), 0)
+	mockRepo.AssertCalled(t, "List", ctx, mock.Anything, 10000, 0)
+}

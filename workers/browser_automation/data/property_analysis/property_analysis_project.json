@@ -1,0 +1,33 @@
+{
+  "name": "Property Analysis - Income & Loan Calculator",
+  "prompt": "Analyze this property and calculate income and if it supports 100% loan",
+  "created_at": "2026-02-13T13:49:31.994203",
+  "status": "pending",
+  "research_topics": [
+    {
+      "id": "PROP-001",
+      "name": "Property Value Assessment",
+      "prompt": "Analyze property value and market comparables:\n- Current market value estimation\n- Comparable properties in the area\n- Recent sales data\n- Property appreciation trends\n- Market conditions and forecast"
+    },
+    {
+      "id": "PROP-002",
+      "name": "Income Potential Analysis",
+      "prompt": "Calculate potential rental income:\n- Market rental rates for similar properties\n- Occupancy rate expectations\n- Gross rental income projections\n- Vacancy and maintenance costs\n- Net operating income (NOI) calculation"
+    },
+    {
+      "id": "PROP-003",
+      "name": "100% Loan Feasibility",
+      "prompt": "Assess 100% loan to value (LTV) financing options:\n- Current 100% LTV loan programs available\n- USDA, VA, or specialized lending programs\n- Income requirements for 100% financing\n- Debt-to-income ratio calculations\n- Credit score requirements\n- Alternative financing strategies (seller financing, lease-to-own)"
+    },
+    {
+      "id": "PROP-004",
+      "name": "Cash Flow Analysis",
+      "prompt": "Calculate cash flow and investment returns:\n- Monthly mortgage payment estimation (100% financing)\n- Property taxes and insurance costs\n- HOA fees and utilities\n- Maintenance and repair reserves\n- Total monthly expenses vs rental income\n- Cash-on-cash return analysis\n- Break-even analysis"
+    },
+    {
+      "id": "PROP-005",
+      "name": "Investment Risk Assessment",
+      "prompt": "Evaluate investment risks and considerations:\n- Market volatility and economic factors\n- Property condition and inspection needs\n- Tenant risk and management requirements\n- Interest rate sensitivity\n- Exit strategy options\n- Risk mitigation strategies"
+    }
+  ]
+}

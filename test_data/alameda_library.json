@@ -1,0 +1,191 @@
+{
+  "id": "alameda_library_tests",
+  "name": "Alameda Library Test Suite",
+  "description": "End-to-end tests for Alameda Free Library",
+  "target_service": "alameda_library",
+  "target_url": "https://vegacatalog.alamedafree.org",
+  "tags": ["library", "login", "e2e"],
+
+  "global_variables": {
+    "base_url": "https://vegacatalog.alamedafree.org"
+  },
+
+  "global_setup": [
+    {
+      "type": "vault_get",
+      "target": "alameda_library",
+      "value": "lib",
+      "options": {"name": "Helen Library Card"},
+      "description": "Load library credentials from vault"
+    }
+  ],
+
+  "test_cases": [
+    {
+      "id": "lib_login_success",
+      "name": "Library Login - Success",
+      "description": "Verify successful login with valid credentials",
+      "tags": ["login", "smoke"],
+      "credentials": {
+        "lib": "alameda_library/Helen Library Card"
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${base_url}",
+          "description": "Navigate to library catalog"
+        },
+        {
+          "type": "click",
+          "target": "#onetrust-accept-btn-handler",
+          "description": "Accept cookies",
+          "optional": true,
+          "timeout": 5
+        },
+        {
+          "type": "click",
+          "target": "#user-login-button",
+          "description": "Click login button"
+        },
+        {
+          "type": "wait_for",
+          "target": "#login-form-barcode",
+          "description": "Wait for login form"
+        },
+        {
+          "type": "fill",
+          "target": "#login-form-barcode",
+          "value": "${lib_username}",
+          "description": "Enter library card number"
+        },
+        {
+          "type": "fill",
+          "target": "#login-form-passcode",
+          "value": "${lib_password}",
+          "description": "Enter PIN"
+        },
+        {
+          "type": "click",
+          "target": "button[type='submit']",
+          "description": "Submit login form"
+        },
+        {
+          "type": "wait",
+          "value": 3,
+          "description": "Wait for login to complete"
+        },
+        {
+          "type": "assert_text",
+          "value": "Helen",
+          "description": "Verify logged in user name appears"
+        }
+      ]
+    },
+    {
+      "id": "lib_search_book",
+      "name": "Library Search - Find Book",
+      "description": "Search for a book in the catalog",
+      "tags": ["search"],
+      "variables": {
+        "search_term": "Charlotte's Web"
+      },
+      "credentials": {
+        "lib": "alameda_library/Helen Library Card"
+      },
+      "setup": [
+        {
+          "type": "navigate",
+          "target": "${base_url}",
+          "description": "Navigate to library catalog"
+        },
+        {
+          "type": "click",
+          "target": "#onetrust-accept-btn-handler",
+          "optional": true,
+          "timeout": 5
+        }
+      ],
+      "steps": [
+        {
+          "type": "fill",
+          "target": "input[placeholder*='Search'], [data-automation-id='search-input']",
+          "value": "${search_term}",
+          "description": "Enter search term"
+        },
+        {
+          "type": "click",
+          "target": "[data-automation-id='search-submit'], button[aria-label*='Search']",
+          "description": "Submit search"
+        },
+        {
+          "type": "wait",
+          "value": 5
+        },
+        {
+          "type": "assert_text",
+          "value": "Charlotte",
+          "description": "Verify search results contain expected text"
+        }
+      ]
+    },
+    {
+      "id": "lib_check_holds",
+      "name": "Library - Check Holds",
+      "description": "Login and check current holds",
+      "tags": ["holds", "account"],
+      "credentials": {
+        "lib": "alameda_library/Helen Library Card"
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${base_url}",
+          "description": "Navigate to library"
+        },
+        {
+          "type": "click",
+          "target": "#onetrust-accept-btn-handler",
+          "optional": true,
+          "timeout": 5
+        },
+        {
+          "type": "click",
+          "target": "#user-login-button",
+          "description": "Click login"
+        },
+        {
+          "type": "fill",
+          "target": "#login-form-barcode",
+          "value": "${lib_username}"
+        },
+        {
+          "type": "fill",
+          "target": "#login-form-passcode",
+          "value": "${lib_password}"
+        },
+        {
+          "type": "click",
+          "target": "button[type='submit']"
+        },
+        {
+          "type": "wait",
+          "value": 3
+        },
+        {
+          "type": "navigate",
+          "target": "${base_url}/my-account/holds",
+          "description": "Navigate to holds page"
+        },
+        {
+          "type": "wait",
+          "value": 2
+        },
+        {
+          "type": "assert_url",
+          "value": "holds",
+          "description": "Verify on holds page"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: architect-go-production
+
+namespace: architect-production
+
+# Images to build/pull
+images:
+- name: ghcr.io/architect/architect-go
+  newName: ghcr.io/architect/architect-go
+  newTag: latest
+
+# Resources to deploy
+resources:
+- namespace.yaml
+- configmap.yaml
+- secret.yaml
+- serviceaccount.yaml
+- role.yaml
+- rolebinding.yaml
+- deployment.yaml
+- service.yaml
+- ingress.yaml
+- hpa.yaml
+- pdb.yaml
+
+# Common labels applied to all resources
+commonLabels:
+  environment: production
+  managed-by: kustomize
+  tier: backend
+
+# Common annotations
+commonAnnotations:
+  kustomize.config.k8s.io/version: "v5.0.0"
+  deployment.kubernetes.io/revision: "1"
+
+# Replicas override
+replicas:
+- name: architect-go
+  count: 3

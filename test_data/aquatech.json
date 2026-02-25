@@ -1,0 +1,146 @@
+{
+  "id": "aquatech_tests",
+  "name": "Aquatech Swimming Extraction",
+  "description": "Extract class schedule and token balance from Aquatech",
+  "target_service": "aquatech",
+  "target_url": "https://app.iclasspro.com/portal/aquatech",
+  "tags": ["kids", "swimming", "extraction"],
+
+  "global_variables": {
+    "base_url": "https://app.iclasspro.com/portal/aquatech"
+  },
+
+  "test_cases": [
+    {
+      "id": "aquatech_login",
+      "name": "Aquatech Login",
+      "description": "Login to Aquatech portal",
+      "tags": ["login"],
+      "credentials": {
+        "aqua": "aquatech/Aquatech Swimming"
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${base_url}",
+          "description": "Go to Aquatech portal"
+        },
+        {
+          "type": "wait",
+          "value": 2
+        },
+        {
+          "type": "click",
+          "target": "button:has-text('Yes'), a:has-text('Yes')",
+          "description": "Click Yes for existing customer",
+          "optional": true,
+          "timeout": 5
+        },
+        {
+          "type": "wait_for",
+          "target": "input[type='email'], input[type='text']",
+          "timeout": 10
+        },
+        {
+          "type": "fill",
+          "target": "input[type='email'], input[type='text']",
+          "value": "${aqua_username}",
+          "description": "Enter email"
+        },
+        {
+          "type": "click",
+          "target": "button:has-text('Next'), button[type='submit']",
+          "description": "Click Next"
+        },
+        {
+          "type": "wait",
+          "value": 2
+        },
+        {
+          "type": "fill",
+          "target": "input[type='password']",
+          "value": "${aqua_password}",
+          "description": "Enter password"
+        },
+        {
+          "type": "click",
+          "target": "button:has-text('Log In'), button[type='submit']",
+          "description": "Submit login"
+        },
+        {
+          "type": "wait",
+          "value": 3
+        },
+        {
+          "type": "assert_text",
+          "value": "My Account",
+          "description": "Verify logged in"
+        }
+      ]
+    },
+    {
+      "id": "aquatech_extract_tokens",
+      "name": "Extract Token Balance",
+      "description": "Get current token/credit balance",
+      "tags": ["extraction", "tokens"],
+      "credentials": {
+        "aqua": "aquatech/Aquatech Swimming"
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${base_url}",
+          "description": "Go to portal"
+        },
+        {
+          "type": "click",
+          "target": "button:has-text('Yes')",
+          "optional": true,
+          "timeout": 5
+        },
+        {
+          "type": "fill",
+          "target": "input[type='email'], input[type='text']",
+          "value": "${aqua_username}"
+        },
+        {
+          "type": "click",
+          "target": "button:has-text('Next')"
+        },
+        {
+          "type": "wait",
+          "value": 2
+        },
+        {
+          "type": "fill",
+          "target": "input[type='password']",
+          "value": "${aqua_password}"
+        },
+        {
+          "type": "click",
+          "target": "button:has-text('Log In')"
+        },
+        {
+          "type": "wait",
+          "value": 3
+        },
+        {
+          "type": "click",
+          "target": "a:has-text('My Account'), [href*='account']",
+          "description": "Go to My Account"
+        },
+        {
+          "type": "wait",
+          "value": 2
+        },
+        {
+          "type": "extract",
+          "target": "[class*='token'], [class*='credit'], [class*='balance']",
+          "value": "token_balance",
+          "description": "Extract token balance",
+          "optional": true
+        }
+      ]
+    }
+  ]
+}

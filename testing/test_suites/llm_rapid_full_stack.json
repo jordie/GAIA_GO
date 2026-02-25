@@ -1,0 +1,316 @@
+{
+  "id": "llm_rapid_full_stack",
+  "name": "LLM Rapid Full-Stack Test (5-10 min target)",
+  "description": "Fast but comprehensive test covering full development lifecycle: generation, deployment, UI, API, load testing, cleanup",
+  "target_service": "todo_app",
+  "tags": ["llm", "rapid", "full-stack", "load-test"],
+  "parallel": false,
+  "stop_on_failure": false,
+
+  "global_variables": {
+    "provider": "${LLM_PROVIDER}",
+    "test_run_id": "${TEST_RUN_ID}",
+    "app_name": "todo",
+    "app_port": "5050",
+    "output_dir": "/tmp/llm_rapid_${provider}_${test_run_id}",
+    "deploy_url": "http://localhost:${app_port}",
+    "max_lines": 300,
+    "load_test_users": 10,
+    "load_test_duration": 30
+  },
+
+  "test_cases": [
+    {
+      "id": "rapid_generation",
+      "name": "Rapid Code Generation (2 min target)",
+      "description": "Generate minimal but complete full-stack todo app",
+      "tags": ["generation"],
+      "variables": {
+        "prompt": "Create a minimal TODO app in ${output_dir} (under ${max_lines} lines total):\\n\\nFiles (EXACTLY these, no extras):\\n1. app.py - Flask backend with SQLite:\\n   - GET /api/todos (list all)\\n   - POST /api/todos (create: {text})\\n   - DELETE /api/todos/<id>\\n   - GET /health (return {\"status\": \"ok\"})\\n2. index.html - Single page with:\\n   - Input field + Add button\\n   - Todo list (each item has Delete button)\\n   - Uses fetch() to call API\\n3. style.css - Simple styling\\n4. requirements.txt - Just: flask flask-cors\\n\\nRules:\\n- NO login/auth (too slow)\\n- NO session management (too slow)\\n- NO history feature (too slow)\\n- SQLite in-memory only\\n- CORS enabled\\n- Keep each file under 100 lines\\n- Total under ${max_lines} lines\\n\\nGenerate NOW in ${output_dir}. Be FAST."
+      },
+      "steps": [
+        {
+          "type": "api_post",
+          "target": "http://localhost:8080/api/assigner/send",
+          "value": {
+            "content": "${prompt}",
+            "priority": 10,
+            "target_session": "${provider}",
+            "timeout_minutes": 2
+          },
+          "timeout": 10,
+          "description": "Send rapid generation request (2 min max)"
+        },
+        {
+          "type": "wait",
+          "value": 3,
+          "description": "Wait for generation start"
+        },
+        {
+          "type": "wait_for",
+          "target": "generation_complete",
+          "options": {"max_wait": 120, "check_interval": 3},
+          "description": "Wait max 2 minutes for generation"
+        }
+      ]
+    },
+
+    {
+      "id": "rapid_validation",
+      "name": "Rapid File Validation (10 sec target)",
+      "description": "Quick check that files exist and are reasonable",
+      "tags": ["validation"],
+      "steps": [
+        {
+          "type": "assert_element",
+          "target": "${output_dir}/app.py",
+          "timeout": 5,
+          "description": "Verify app.py exists"
+        },
+        {
+          "type": "assert_element",
+          "target": "${output_dir}/index.html",
+          "timeout": 5,
+          "description": "Verify index.html exists"
+        },
+        {
+          "type": "extract",
+          "target": "total_lines",
+          "value": "count_lines(${output_dir})",
+          "description": "Count total lines"
+        },
+        {
+          "type": "compare",
+          "target": "total_lines",
+          "value": "${max_lines}",
+          "options": {"operator": "<="},
+          "optional": true,
+          "description": "Check line limit (warning only)"
+        }
+      ]
+    },
+
+    {
+      "id": "rapid_deployment",
+      "name": "Rapid Deployment (30 sec target)",
+      "description": "Fast deploy with minimal deps",
+      "tags": ["deployment"],
+      "steps": [
+        {
+          "type": "api_post",
+          "target": "http://localhost:8080/api/tasks",
+          "value": {
+            "task_type": "shell",
+            "task_data": {
+              "command": "cd ${output_dir} && pip install flask flask-cors -q 2>&1 | head -5 && python3 app.py > /tmp/app_${test_run_id}.log 2>&1 &"
+            },
+            "timeout_seconds": 30
+          },
+          "timeout": 35,
+          "description": "Install deps and start app (background)"
+        },
+        {
+          "type": "wait",
+          "value": 5,
+          "description": "Wait for app startup"
+        },
+        {
+          "type": "api_get",
+          "target": "${deploy_url}/health",
+          "timeout": 10,
+          "description": "Health check"
+        },
+        {
+          "type": "assert_status",
+          "value": 200,
+          "description": "Verify running"
+        }
+      ]
+    },
+
+    {
+      "id": "rapid_api_smoke",
+      "name": "Rapid API Smoke Test (20 sec target)",
+      "description": "Quick API functionality check",
+      "tags": ["api", "smoke"],
+      "steps": [
+        {
+          "type": "api_post",
+          "target": "${deploy_url}/api/todos",
+          "value": {"text": "Test todo 1"},
+          "timeout": 5,
+          "description": "Create todo"
+        },
+        {
+          "type": "assert_status",
+          "value": 200,
+          "description": "Verify created"
+        },
+        {
+          "type": "api_get",
+          "target": "${deploy_url}/api/todos",
+          "timeout": 5,
+          "description": "List todos"
+        },
+        {
+          "type": "assert_status",
+          "value": 200,
+          "description": "Verify list works"
+        },
+        {
+          "type": "assert_json",
+          "target": "0.text",
+          "value": "Test todo 1",
+          "description": "Verify todo in list"
+        }
+      ]
+    },
+
+    {
+      "id": "rapid_ui_smoke",
+      "name": "Rapid UI Smoke Test (30 sec target)",
+      "description": "Quick browser check",
+      "tags": ["ui", "smoke"],
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${deploy_url}",
+          "timeout": 10,
+          "description": "Load page"
+        },
+        {
+          "type": "wait_for",
+          "target": "input[type='text'], input#todo-input, .todo-input",
+          "timeout": 5,
+          "description": "Wait for input"
+        },
+        {
+          "type": "fill",
+          "target": "input[type='text'], input#todo-input, .todo-input",
+          "value": "UI test todo",
+          "timeout": 5,
+          "description": "Type todo"
+        },
+        {
+          "type": "click",
+          "target": "button:has-text('Add'), .add-btn, button[type='submit']",
+          "timeout": 5,
+          "description": "Click add"
+        },
+        {
+          "type": "wait",
+          "value": 1,
+          "description": "Wait for render"
+        },
+        {
+          "type": "assert_text",
+          "value": "UI test todo",
+          "optional": true,
+          "description": "Verify todo appears (optional)"
+        }
+      ]
+    },
+
+    {
+      "id": "rapid_load_test",
+      "name": "Rapid Load Test (30 sec target)",
+      "description": "Quick concurrent request test",
+      "tags": ["load", "stress"],
+      "steps": [
+        {
+          "type": "api_post",
+          "target": "http://localhost:8080/api/tasks",
+          "value": {
+            "task_type": "shell",
+            "task_data": {
+              "command": "for i in {1..${load_test_users}}; do curl -s -X POST ${deploy_url}/api/todos -H 'Content-Type: application/json' -d '{\"text\":\"Load test $i\"}' & done; wait"
+            },
+            "timeout_seconds": 30
+          },
+          "timeout": 35,
+          "description": "Send ${load_test_users} concurrent requests"
+        },
+        {
+          "type": "wait",
+          "value": 2,
+          "description": "Wait for processing"
+        },
+        {
+          "type": "api_get",
+          "target": "${deploy_url}/health",
+          "timeout": 5,
+          "description": "Verify still healthy"
+        },
+        {
+          "type": "assert_status",
+          "value": 200,
+          "description": "Verify survived load"
+        },
+        {
+          "type": "api_get",
+          "target": "${deploy_url}/api/todos",
+          "timeout": 5,
+          "description": "Count todos"
+        },
+        {
+          "type": "extract",
+          "target": "todo_count",
+          "value": "length(_json)",
+          "description": "Extract todo count"
+        }
+      ]
+    },
+
+    {
+      "id": "rapid_cleanup",
+      "name": "Rapid Cleanup (10 sec target)",
+      "description": "Fast teardown",
+      "tags": ["cleanup"],
+      "steps": [
+        {
+          "type": "api_post",
+          "target": "http://localhost:8080/api/tasks",
+          "value": {
+            "task_type": "shell",
+            "task_data": {
+              "command": "pkill -f 'python3 ${output_dir}/app.py' 2>/dev/null; rm -rf ${output_dir} /tmp/app_${test_run_id}.log"
+            },
+            "timeout_seconds": 10
+          },
+          "timeout": 15,
+          "optional": true,
+          "description": "Kill app and delete files"
+        },
+        {
+          "type": "wait",
+          "value": 1,
+          "description": "Wait for cleanup"
+        }
+      ]
+    },
+
+    {
+      "id": "rapid_verification",
+      "name": "Rapid Cleanup Verification (5 sec target)",
+      "description": "Confirm clean state",
+      "tags": ["verification"],
+      "steps": [
+        {
+          "type": "api_get",
+          "target": "${deploy_url}/health",
+          "timeout": 3,
+          "optional": true,
+          "description": "Try health check (should fail)"
+        },
+        {
+          "type": "compare",
+          "target": "_status",
+          "value": 200,
+          "options": {"operator": "!="},
+          "optional": true,
+          "description": "Verify app stopped"
+        }
+      ]
+    }
+  ]
+}

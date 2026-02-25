@@ -1,0 +1,19 @@
+TOPIC: Tigray Trip - Axum, Adigrat, Mekele
+
+TIMESTAMP: 2026-02-13T05:21:06.247732
+
+PROMPT:
+Plan a 1-week trip to Tigray region visiting Axum, Adigrat, and Mekele:
+- Duration: 1 week during the 1-month Ethiopia stay
+- Travelers: Family of 6 (2 adults, 4 children ages 6-13)
+- Cities to visit:
+  * Axum - Ancient obelisks, historical sites
+  * Adigrat - Cultural experiences
+  * Mekele - Capital of Tigray
+- Requirements:
+  * Transportation options (rental car, driver, tours)
+  * Family-friendly hotels in each city
+  * Safety considerations and current travel advisories
+  * Key attractions and activities for families
+  * Estimated costs
+Output: Detailed 7-day itinerary with hotels, transportation, activities, and costs

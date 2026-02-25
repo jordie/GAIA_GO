@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Dashboard - Go Wrapper</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            padding: 20px 30px;
+            border-bottom: 3px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            color: #58a6ff;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #238636;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #2ea043;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #21262d;
+            border: 1px solid #30363d;
+        }
+
+        .btn-secondary:hover {
+            background: #30363d;
+        }
+
+        .btn-danger {
+            background: #da3633;
+        }
+
+        .btn-danger:hover {
+            background: #f85149;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: #161b22;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #30363d;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .metric-label {
+            color: #8b949e;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+
+        .metric-subtitle {
+            color: #8b949e;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .agent-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+
+        .agent-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        .agent-header {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #30363d;
+        }
+
+        .agent-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+
+        .agent-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-running {
+            background: #238636;
+            color: white;
+        }
+
+        .status-stopped {
+            background: #8b949e;
+            color: white;
+        }
+
+        .status-failed {
+            background: #da3633;
+            color: white;
+        }
+
+        .agent-body {
+            padding: 15px;
+        }
+
+        .agent-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .agent-stat {
+            background: #0d1117;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 3px solid #58a6ff;
+        }
+
+        .agent-stat-label {
+            color: #8b949e;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .agent-stat-value {
+            color: #c9d1d9;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .agent-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .agent-actions button {
+            flex: 1;
+            padding: 8px;
+            font-size: 12px;
+        }
+
+        .log-viewer {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .log-header {
+            background: #1f2937;
+            padding: 15px;
+            border-bottom: 2px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+
+        .log-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .log-content {
+            height: 400px;
+            overflow-y: auto;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            background: #0d1117;
+        }
+
+        .log-line {
+            padding: 4px 8px;
+            margin: 2px 0;
+            border-radius: 3px;
+            transition: background 0.2s;
+        }
+
+        .log-line:hover {
+            background: #161b22;
+        }
+
+        .log-line-num {
+            color: #6e7681;
+            margin-right: 10px;
+            user-select: none;
+        }
+
+        .log-line-content {
+            color: #c9d1d9;
+        }
+
+        .extraction-panel {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .extraction-header {
+            background: #1f2937;
+            padding: 15px;
+            border-bottom: 2px solid #30363d;
+            font-size: 18px;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+
+        .extraction-grid {
+            padding: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .extraction-item {
+            background: #0d1117;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid #58a6ff;
+        }
+
+        .extraction-type {
+            color: #8b949e;
+            font-size: 11px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .extraction-pattern {
+            color: #79c0ff;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .extraction-value {
+            color: #c9d1d9;
+            word-break: break-all;
+        }
+
+        .extraction-meta {
+            color: #6e7681;
+            font-size: 11px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #21262d;
+        }
+
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            margin: 0;
+        }
+
+        .code-block code {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+        }
+
+        .metrics-chart {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #58a6ff;
+            margin-bottom: 15px;
+        }
+
+        .no-agents {
+            text-align: center;
+            padding: 60px;
+            color: #8b949e;
+        }
+
+        .no-agents-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #58a6ff;
+        }
+
+        .spinner {
+            border: 3px solid #30363d;
+            border-top: 3px solid #58a6ff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #30363d;
+            padding-bottom: 0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            color: #c9d1d9;
+        }
+
+        .tab.active {
+            color: #58a6ff;
+            border-bottom-color: #58a6ff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #484f58;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>
+            <span>🚀</span>
+            Agent Dashboard
+        </h1>
+        <div class="header-controls">
+            <input type="text" id="apiUrl" placeholder="API URL" value="http://localhost:8151"
+                   style="padding: 10px; background: #21262d; border: 1px solid #30363d; color: #c9d1d9; border-radius: 6px;">
+            <button class="btn" onclick="refreshDashboard()">🔄 Refresh</button>
+            <button class="btn btn-secondary" onclick="showCreateAgent()">➕ New Agent</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Total Agents</div>
+                <div class="metric-value" id="totalAgents">0</div>
+                <div class="metric-subtitle">All time</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Running</div>
+                <div class="metric-value" id="runningAgents" style="color: #3fb950;">0</div>
+                <div class="metric-subtitle">Active now</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">SSE Clients</div>
+                <div class="metric-value" id="sseClients" style="color: #79c0ff;">0</div>
+                <div class="metric-subtitle">Connected</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Total Extractions</div>
+                <div class="metric-value" id="totalExtractions" style="color: #d2a8ff;">0</div>
+                <div class="metric-subtitle">Patterns found</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">📊 Overview</button>
+            <button class="tab" onclick="switchTab('logs')">📄 Live Logs</button>
+            <button class="tab" onclick="switchTab('extractions')">🔍 Extractions</button>
+            <button class="tab" onclick="switchTab('metrics')">📈 Metrics</button>
+        </div>
+
+        <!-- Tab: Overview -->
+        <div id="tab-overview" class="tab-content active">
+            <div id="agentsContainer" class="agents-grid">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>Loading agents...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Live Logs -->
+        <div id="tab-logs" class="tab-content">
+            <div class="log-viewer">
+                <div class="log-header">
+                    <div class="log-title">📄 Live Logs</div>
+                    <div class="log-controls">
+                        <select id="logAgentSelect" onchange="connectToAgent(this.value)"
+                                style="padding: 8px; background: #21262d; border: 1px solid #30363d; color: #c9d1d9; border-radius: 4px;">
+                            <option value="">Select agent...</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="clearLogs()">Clear</button>
+                        <button class="btn btn-secondary" onclick="toggleAutoscroll()">
+                            <span id="autoscrollIcon">✓</span> Autoscroll
+                        </button>
+                    </div>
+                </div>
+                <div id="logContent" class="log-content">
+                    <div style="text-align: center; padding: 40px; color: #8b949e;">
+                        Select an agent to view live logs
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Extractions -->
+        <div id="tab-extractions" class="tab-content">
+            <div class="extraction-panel">
+                <div class="extraction-header">🔍 Extracted Data</div>
+                <div id="extractionsContainer" class="extraction-grid">
+                    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #8b949e;">
+                        No extractions yet
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Metrics -->
+        <div id="tab-metrics" class="tab-content">
+            <div class="metrics-chart">
+                <div class="chart-title">📈 Events Per Second</div>
+                <canvas id="eventsChart" height="80"></canvas>
+            </div>
+            <div class="metrics-chart">
+                <div class="chart-title">🔢 Extraction Types</div>
+                <canvas id="extractionTypesChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let agents = {};
+        let sseConnections = {};
+        let currentTab = 'overview';
+        let autoscroll = true;
+        let eventsData = { labels: [], datasets: [{ label: 'Events/sec', data: [], borderColor: '#58a6ff', tension: 0.4 }] };
+        let eventsChart = null;
+        let extractionTypesData = {};
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            refreshDashboard();
+            setInterval(refreshDashboard, 5000);
+            setInterval(updateMetrics, 1000);
+        });
+
+        function initCharts() {
+            const ctx1 = document.getElementById('eventsChart').getContext('2d');
+            eventsChart = new Chart(ctx1, {
+                type: 'line',
+                data: eventsData,
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true, ticks: { color: '#8b949e' }, grid: { color: '#30363d' } },
+                        x: { ticks: { color: '#8b949e' }, grid: { color: '#30363d' } }
+                    },
+                    plugins: { legend: { labels: { color: '#c9d1d9' } } }
+                }
+            });
+        }
+
+        async function refreshDashboard() {
+            const apiUrl = document.getElementById('apiUrl').value;
+
+            try {
+                // Fetch agents
+                const response = await fetch(`${apiUrl}/api/agents`);
+                const data = await response.json();
+
+                agents = {};
+                data.agents.forEach(agent => {
+                    agents[agent.name] = agent;
+                });
+
+                updateAgentsView();
+                updateAgentSelects();
+
+                // Fetch SSE stats
+                const sseResponse = await fetch(`${apiUrl}/api/sse/stats`);
+                const sseStats = await sseResponse.json();
+                document.getElementById('sseClients').textContent = sseStats.total_clients || 0;
+
+            } catch (error) {
+                console.error('Failed to refresh dashboard:', error);
+            }
+        }
+
+        function updateAgentsView() {
+            const container = document.getElementById('agentsContainer');
+            const agentCount = Object.keys(agents).length;
+
+            document.getElementById('totalAgents').textContent = agentCount;
+
+            let runningCount = 0;
+            Object.values(agents).forEach(agent => {
+                if (agent.status === 'running') runningCount++;
+            });
+            document.getElementById('runningAgents').textContent = runningCount;
+
+            if (agentCount === 0) {
+                container.innerHTML = `
+                    <div class="no-agents" style="grid-column: 1/-1;">
+                        <div class="no-agents-icon">🤖</div>
+                        <h2>No agents running</h2>
+                        <p>Create a new agent to get started</p>
+                        <button class="btn" onclick="showCreateAgent()">➕ Create Agent</button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            Object.values(agents).forEach(agent => {
+                const card = createAgentCard(agent);
+                container.appendChild(card);
+            });
+        }
+
+        function createAgentCard(agent) {
+            const card = document.createElement('div');
+            card.className = 'agent-card';
+
+            const statusClass = `status-${agent.status}`;
+            const uptime = agent.uptime || 'N/A';
+
+            card.innerHTML = `
+                <div class="agent-header">
+                    <div class="agent-name">${agent.name}</div>
+                    <div class="agent-status ${statusClass}">${agent.status}</div>
+                </div>
+                <div class="agent-body">
+                    <div class="agent-stats">
+                        <div class="agent-stat">
+                            <div class="agent-stat-label">Uptime</div>
+                            <div class="agent-stat-value">${uptime}</div>
+                        </div>
+                        <div class="agent-stat">
+                            <div class="agent-stat-label">Started</div>
+                            <div class="agent-stat-value">${new Date(agent.started_at).toLocaleTimeString()}</div>
+                        </div>
+                    </div>
+                    <div class="agent-actions">
+                        <button class="btn btn-secondary" onclick="viewAgentLogs('${agent.name}')">📄 Logs</button>
+                        <button class="btn btn-secondary" onclick="viewAgentDetails('${agent.name}')">ℹ️ Details</button>
+                        ${agent.status === 'running' ?
+                            `<button class="btn btn-danger" onclick="stopAgent('${agent.name}')">⏹️ Stop</button>` :
+                            ''}
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        function updateAgentSelects() {
+            const select = document.getElementById('logAgentSelect');
+            const currentValue = select.value;
+
+            select.innerHTML = '<option value="">Select agent...</option>';
+            Object.values(agents).forEach(agent => {
+                const option = document.createElement('option');
+                option.value = agent.name;
+                option.textContent = agent.name;
+                if (agent.name === currentValue) option.selected = true;
+                select.appendChild(option);
+            });
+        }
+
+        function connectToAgent(agentName) {
+            if (!agentName) return;
+
+            // Disconnect previous
+            if (sseConnections[agentName]) {
+                sseConnections[agentName].close();
+            }
+
+            const apiUrl = document.getElementById('apiUrl').value;
+            const eventSource = new EventSource(`${apiUrl}/api/agents/${agentName}/stream`);
+
+            eventSource.addEventListener('log', (e) => {
+                const data = JSON.parse(e.data);
+                addLogLine(data.data.line_num, data.data.line);
+            });
+
+            eventSource.addEventListener('extraction', (e) => {
+                const data = JSON.parse(e.data);
+                addExtraction(data);
+                updateExtractionTypes(data.data.type);
+            });
+
+            eventSource.onerror = () => {
+                console.error('SSE connection error for', agentName);
+            };
+
+            sseConnections[agentName] = eventSource;
+
+            // Switch to logs tab
+            switchTab('logs');
+        }
+
+        function addLogLine(lineNum, content) {
+            const container = document.getElementById('logContent');
+
+            // Clear placeholder
+            if (container.querySelector('[style*="text-align: center"]')) {
+                container.innerHTML = '';
+            }
+
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.innerHTML = `
+                <span class="log-line-num">${lineNum}</span>
+                <span class="log-line-content">${escapeHtml(content)}</span>
+            `;
+
+            container.appendChild(line);
+
+            // Auto-scroll
+            if (autoscroll) {
+                container.scrollTop = container.scrollHeight;
+            }
+
+            // Keep only last 500 lines
+            while (container.children.length > 500) {
+                container.removeChild(container.firstChild);
+            }
+        }
+
+        function addExtraction(data) {
+            const container = document.getElementById('extractionsContainer');
+
+            // Clear placeholder
+            if (container.querySelector('[style*="grid-column"]')) {
+                container.innerHTML = '';
+            }
+
+            const item = document.createElement('div');
+            item.className = 'extraction-item';
+
+            const extractData = data.data || {};
+            item.innerHTML = `
+                <div class="extraction-type">${extractData.type}</div>
+                <div class="extraction-pattern">${extractData.pattern}</div>
+                <div class="extraction-value">${escapeHtml(extractData.value || '')}</div>
+                <div class="extraction-meta">
+                    Line ${extractData.line_num} • ${new Date(data.timestamp).toLocaleTimeString()}
+                </div>
+            `;
+
+            container.insertBefore(item, container.firstChild);
+
+            // Keep only last 50
+            while (container.children.length > 50) {
+                container.removeChild(container.lastChild);
+            }
+
+            // Update total count
+            const total = parseInt(document.getElementById('totalExtractions').textContent) + 1;
+            document.getElementById('totalExtractions').textContent = total;
+        }
+
+        function updateExtractionTypes(type) {
+            extractionTypesData[type] = (extractionTypesData[type] || 0) + 1;
+        }
+
+        function updateMetrics() {
+            // Update events chart
+            const now = new Date().toLocaleTimeString();
+            const eventsPerSec = Math.floor(Math.random() * 10); // Mock data
+
+            eventsData.labels.push(now);
+            eventsData.datasets[0].data.push(eventsPerSec);
+
+            if (eventsData.labels.length > 20) {
+                eventsData.labels.shift();
+                eventsData.datasets[0].data.shift();
+            }
+
+            if (eventsChart && currentTab === 'metrics') {
+                eventsChart.update('none');
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('logContent').innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #8b949e;">
+                    Logs cleared
+                </div>
+            `;
+        }
+
+        function toggleAutoscroll() {
+            autoscroll = !autoscroll;
+            document.getElementById('autoscrollIcon').textContent = autoscroll ? '✓' : '';
+        }
+
+        function viewAgentLogs(agentName) {
+            document.getElementById('logAgentSelect').value = agentName;
+            connectToAgent(agentName);
+        }
+
+        async function viewAgentDetails(agentName) {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const response = await fetch(`${apiUrl}/api/agents/${agentName}?include_matches=true`);
+            const data = await response.json();
+
+            alert(JSON.stringify(data, null, 2));
+        }
+
+        async function stopAgent(agentName) {
+            if (!confirm(`Stop agent "${agentName}"?`)) return;
+
+            const apiUrl = document.getElementById('apiUrl').value;
+            await fetch(`${apiUrl}/api/agents/${agentName}`, { method: 'DELETE' });
+
+            refreshDashboard();
+        }
+
+        function showCreateAgent() {
+            const name = prompt('Agent name:');
+            if (!name) return;
+
+            const command = prompt('Command:', 'bash');
+            if (!command) return;
+
+            const args = prompt('Arguments (comma-separated):', '-c,echo Hello');
+
+            createAgent(name, command, args.split(','));
+        }
+
+        async function createAgent(name, command, args) {
+            const apiUrl = document.getElementById('apiUrl').value;
+
+            await fetch(`${apiUrl}/api/agents`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, command, args })
+            });
+
+            refreshDashboard();
+        }
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

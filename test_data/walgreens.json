@@ -1,0 +1,73 @@
+{
+  "id": "walgreens_tests",
+  "name": "Walgreens Prescription Extraction",
+  "description": "Extract prescription refill status from Walgreens",
+  "target_service": "walgreens",
+  "target_url": "https://www.walgreens.com",
+  "tags": ["pharmacy", "prescriptions", "extraction"],
+
+  "global_variables": {
+    "base_url": "https://www.walgreens.com"
+  },
+
+  "test_cases": [
+    {
+      "id": "walgreens_login",
+      "name": "Walgreens Login",
+      "description": "Login to Walgreens account",
+      "tags": ["login"],
+      "credentials": {
+        "wag": "walgreens/Walgreens Account"
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${base_url}/login.jsp"
+        },
+        {
+          "type": "fill",
+          "target": "#user_name, input[name='userName']",
+          "value": "${wag_username}"
+        },
+        {
+          "type": "fill",
+          "target": "#user_password, input[name='password']",
+          "value": "${wag_password}"
+        },
+        {
+          "type": "click",
+          "target": "#submit_btn, button[type='submit']"
+        },
+        {
+          "type": "wait",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "walgreens_extract_prescriptions",
+      "name": "Extract Prescriptions",
+      "description": "Get prescription refill status",
+      "tags": ["extraction", "prescriptions"],
+      "credentials": {
+        "wag": "walgreens/Walgreens Account"
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${base_url}/pharmacy/refill/prescription"
+        },
+        {
+          "type": "wait",
+          "value": 3
+        },
+        {
+          "type": "extract",
+          "target": ".rx-card, .prescription-item",
+          "value": "prescriptions",
+          "optional": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: architect-db
+    environment:
+      POSTGRES_USER: architect
+      POSTGRES_PASSWORD: architect-dev
+      POSTGRES_DB: architect
+      POSTGRES_INITDB_ARGS: --encoding=UTF8 --locale=en_US.UTF-8
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U architect"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - architect-network
+
+  # Architect Go Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: architect-app
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      # Server configuration
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8080
+
+      # Database configuration
+      DB_TYPE: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: architect
+      DB_PASSWORD: architect-dev
+      DB_NAME: architect
+      DB_SSL_MODE: disable
+
+      # Logging
+      LOG_LEVEL: debug
+      LOG_FORMAT: json
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - architect-network
+    restart: unless-stopped
+
+  # Prometheus for metrics (optional, profile: monitoring)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: architect-prometheus
+    profiles:
+      - monitoring
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    depends_on:
+      - app
+    networks:
+      - architect-network
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+    driver: local
+  prometheus_data:
+    driver: local
+
+networks:
+  architect-network:
+    driver: bridge

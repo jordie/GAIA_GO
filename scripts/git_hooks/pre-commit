@@ -1,0 +1,92 @@
+#!/bin/bash
+#
+# Git pre-commit hook for feature environment enforcement
+#
+# Enforces:
+#   - Feature branches must only modify files in feature_environments/
+#   - Root app files (unified_app.py, etc.) should not be modified in feature branches
+#
+
+# Skip if not in a feature branch
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [[ ! "$BRANCH" =~ ^feature/ ]]; then
+    exit 0
+fi
+
+# Protected root files that should not be modified in feature branches
+PROTECTED_FILES=(
+    "unified_app.py"
+    "deploy.sh"
+    "requirements.txt"
+)
+
+# Protected directories (root level app code)
+PROTECTED_DIRS=(
+    "typing/"
+    "math/"
+    "reading/"
+    "piano/"
+)
+
+# Get staged files
+STAGED_FILES=$(git diff --cached --name-only)
+
+# Check for protected file modifications
+VIOLATIONS=""
+
+for file in $STAGED_FILES; do
+    # Allow feature_environments/ modifications
+    if [[ "$file" =~ ^feature_environments/ ]] || [[ "$file" =~ ^environments/ ]]; then
+        continue
+    fi
+
+    # Allow docs, tests, scripts
+    if [[ "$file" =~ ^docs/ ]] || [[ "$file" =~ ^tests/ ]] || [[ "$file" =~ ^scripts/ ]]; then
+        continue
+    fi
+
+    # Allow config files
+    if [[ "$file" =~ \.md$ ]] || [[ "$file" =~ \.json$ ]] || [[ "$file" =~ \.yaml$ ]]; then
+        continue
+    fi
+
+    # Check protected files
+    for protected in "${PROTECTED_FILES[@]}"; do
+        if [[ "$file" == "$protected" ]]; then
+            VIOLATIONS="$VIOLATIONS\n  - $file (protected root file)"
+        fi
+    done
+
+    # Check protected directories
+    for protected_dir in "${PROTECTED_DIRS[@]}"; do
+        if [[ "$file" =~ ^$protected_dir ]]; then
+            VIOLATIONS="$VIOLATIONS\n  - $file (protected root directory: $protected_dir)"
+        fi
+    done
+done
+
+if [ -n "$VIOLATIONS" ]; then
+    echo ""
+    echo "========================================"
+    echo "  COMMIT BLOCKED - Feature Environment"
+    echo "========================================"
+    echo ""
+    echo "  Feature branches should only modify files in:"
+    echo "    feature_environments/env_X/"
+    echo ""
+    echo "  You're trying to modify protected files:"
+    echo -e "$VIOLATIONS"
+    echo ""
+    echo "  To bypass (emergency only):"
+    echo "    git commit --no-verify"
+    echo ""
+    echo "  Proper workflow:"
+    echo "    1. Copy changes to feature_environments/env_X/"
+    echo "    2. Test in isolated environment"
+    echo "    3. Merge to dev via PR (syncs to root)"
+    echo ""
+    echo "========================================"
+    exit 1
+fi
+
+exit 0

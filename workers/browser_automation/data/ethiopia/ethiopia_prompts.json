@@ -1,0 +1,68 @@
+{
+  "project": "Ethiopia Family Trip - August 2026",
+  "initial_prompt": "Plan a trip to Ethiopia. Its for a trip for the whole family (Yordanos Girmay, Helen Atsibha, Sara Girmay, Ezana Girmay, Eden Girmay, Eden Girmay) ages 47, 46, 13, 12, 11, 6 respectively and flying to Ethiopia on August 20, 2026 with best price. Find hotels to stay for the 1 month duration of the trip and some activities also plan a trip to tigray to visit Axum, Adigrat, and Mekele for one week",
+  "family_members": [
+    {
+      "name": "Yordanos Girmay",
+      "age": 47
+    },
+    {
+      "name": "Helen Atsibha",
+      "age": 46
+    },
+    {
+      "name": "Sara Girmay",
+      "age": 13
+    },
+    {
+      "name": "Ezana Girmay",
+      "age": 12
+    },
+    {
+      "name": "Eden Girmay",
+      "age": 11
+    },
+    {
+      "name": "Eden Girmay",
+      "age": 6
+    }
+  ],
+  "tab_groups": [
+    {
+      "id": "ETH-G001",
+      "name": "Flights - Family of 6 to Ethiopia",
+      "color": "blue",
+      "prompt": "Find the best flight prices for a family of 6 traveling to Ethiopia:\n- Departure: Bay Area (SFO/OAK) or nearest major airport\n- Destination: Addis Ababa, Ethiopia (ADD)\n- Travel dates: July 20, 2026 (departure)\n- Return: August 20, 2026 (1 month trip)\n- Passengers: 2 adults (ages 47, 46), 4 children (ages 13, 12, 11, 6)\n- Priority: Best price while maintaining reasonable comfort and safety\n- Preferences: Direct flights if possible, or minimal layovers\n- Budget considerations: Compare airlines, check for family discounts\nOutput: Top 3-5 flight options with prices, airlines, layovers, and booking links"
+    },
+    {
+      "id": "ETH-G002",
+      "name": "Hotels - 1 Month Accommodation",
+      "prompt": "Find suitable hotels/accommodations in Ethiopia for a 1-month stay (July-August 2026):\n- Location: Addis Ababa (main base)\n- Duration: Approximately 1 month\n- Guests: Family of 6 (2 adults, 4 children ages 6-13)\n- Requirements:\n  * Family-friendly (kid-safe, activities for children)\n  * Kitchen or kitchenette preferred (long stay)\n  * 2-3 bedrooms or family suites\n  * Safe neighborhood\n  * WiFi, air conditioning\n- Budget: Mid-range to budget-friendly\n- Options: Hotels, serviced apartments, Airbnb, or vacation rentals\nOutput: Top 5 accommodation options with prices, amenities, location, and booking info"
+    },
+    {
+      "id": "ETH-G003",
+      "name": "Tigray Trip - Axum, Adigrat, Mekele",
+      "prompt": "Plan a 1-week trip to Tigray region visiting Axum, Adigrat, and Mekele:\n- Duration: 1 week during the 1-month Ethiopia stay\n- Travelers: Family of 6 (2 adults, 4 children ages 6-13)\n- Cities to visit:\n  * Axum - Ancient obelisks, historical sites\n  * Adigrat - Cultural experiences\n  * Mekele - Capital of Tigray\n- Requirements:\n  * Transportation options (rental car, driver, tours)\n  * Family-friendly hotels in each city\n  * Safety considerations and current travel advisories\n  * Key attractions and activities for families\n  * Estimated costs\nOutput: Detailed 7-day itinerary with hotels, transportation, activities, and costs"
+    },
+    {
+      "id": "ETH-G004",
+      "name": "Activities - Family-Friendly Ethiopia",
+      "prompt": "Find family-friendly activities and attractions in Ethiopia for July-August 2026:\n- Travelers: 2 adults + 4 children (ages 13, 12, 11, 6)\n- Location: Primarily Addis Ababa and surrounding areas\n- Duration: Activities throughout 1-month stay\n- Categories:\n  * Cultural sites and museums (child-appropriate)\n  * Outdoor activities and parks\n  * Day trips from Addis Ababa\n  * Educational experiences\n  * Food experiences suitable for children\n  * Shopping and markets\n- Considerations: Age-appropriate for youngest (6 years old), educational value, safety\nOutput: List of 15-20 activities with descriptions, costs, duration, age suitability"
+    },
+    {
+      "id": "ETH-G005",
+      "name": "Documents & Requirements",
+      "prompt": "Research travel document requirements for US citizens traveling to Ethiopia:\n- Travelers: 2 adults, 4 children (US citizens/residents)\n- Travel dates: July-August 2026\n- Requirements to research:\n  * Passport requirements (validity period)\n  * Ethiopia visa requirements and application process\n  * Vaccination requirements (Yellow fever, COVID-19, etc.)\n  * Health insurance recommendations\n  * Minor travel requirements (parental consent forms if needed)\n  * Entry/exit requirements\n  * Travel advisories and safety information\nOutput: Checklist of all required documents and steps with deadlines and application links"
+    },
+    {
+      "id": "ETH-G006",
+      "name": "Budget & Cost Tracking",
+      "prompt": "Create a comprehensive budget for Ethiopia family trip:\n- Trip details: Family of 6, 1 month, July-August 2026\n- Categories to budget:\n  * Flights (6 passengers)\n  * Accommodation (1 month)\n  * Tigray week-long trip (hotels, transport, activities)\n  * Daily food and dining\n  * Activities and attractions\n  * Local transportation (taxis, tours)\n  * Travel insurance\n  * Miscellaneous (souvenirs, emergencies)\n- Currency: Ethiopian Birr (ETB) and USD\n- Output: Detailed budget spreadsheet with estimated costs and tracking columns"
+    },
+    {
+      "id": "ETH-G007",
+      "name": "Packing & Preparation",
+      "prompt": "Create packing list and preparation checklist for Ethiopia family trip:\n- Travelers: Family of 6 (ages 6-47)\n- Duration: 1 month in July-August\n- Climate: Research July-August weather in Ethiopia\n- Categories:\n  * Clothing (adults and children)\n  * Medications and first aid\n  * Electronics and adapters\n  * Entertainment for children (long flights)\n  * Important documents (copies)\n  * Toiletries and essentials\n  * Special items for young children\n- Cultural considerations: Modest dress codes, religious sites\nOutput: Comprehensive packing checklist organized by person and category"
+    }
+  ]
+}

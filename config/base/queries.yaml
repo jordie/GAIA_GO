@@ -1,0 +1,349 @@
+# Database Query Templates
+# Version: 1.0
+# Description: Centralized SQL query definitions for the Architect Dashboard
+
+version: "1.0"
+
+# Query definitions
+queries:
+  # ============================================================================
+  # Task Queries
+  # ============================================================================
+
+  tasks_by_status:
+    description: "Get tasks filtered by status"
+    sql: |
+      SELECT
+        id, type, status, priority, created_at,
+        assigned_to, completed_at, metadata,
+        (strftime('%s', 'now') - strftime('%s', created_at)) / 60.0 AS elapsed_minutes
+      FROM tasks
+      WHERE status = :status
+      ORDER BY priority DESC, created_at ASC
+      LIMIT :limit
+    params:
+      - name: status
+        type: string
+        required: true
+        description: "Task status (pending, in_progress, completed, failed)"
+      - name: limit
+        type: integer
+        default: 100
+        description: "Maximum number of results"
+    cache_ttl: 10
+
+  tasks_pending_high_priority:
+    description: "Get pending tasks with high priority"
+    sql: |
+      SELECT
+        id, type, status, priority, created_at,
+        assigned_to,
+        (strftime('%s', 'now') - strftime('%s', created_at)) / 60.0 AS elapsed_minutes
+      FROM tasks
+      WHERE status = 'pending'
+        AND priority >= :min_priority
+      ORDER BY priority DESC, created_at ASC
+      LIMIT :limit
+    params:
+      - name: min_priority
+        type: integer
+        default: 7
+        description: "Minimum priority threshold"
+      - name: limit
+        type: integer
+        default: 50
+    cache_ttl: 5
+
+  tasks_by_type_and_status:
+    description: "Get tasks filtered by type and status"
+    sql: |
+      SELECT
+        id, type, status, priority, created_at,
+        assigned_to, completed_at, metadata
+      FROM tasks
+      WHERE type = :task_type
+        AND status = :status
+      ORDER BY created_at DESC
+      LIMIT :limit
+    params:
+      - name: task_type
+        type: string
+        required: true
+      - name: status
+        type: string
+        required: true
+      - name: limit
+        type: integer
+        default: 100
+    cache_ttl: 10
+
+  # ============================================================================
+  # Session Queries
+  # ============================================================================
+
+  sessions_active:
+    description: "Get all active Claude sessions"
+    sql: |
+      SELECT
+        name, status, current_task_id, provider,
+        idle_since, last_heartbeat,
+        (strftime('%s', 'now') - strftime('%s', last_heartbeat)) / 60.0 AS minutes_since_heartbeat
+      FROM sessions
+      WHERE status IN ('idle', 'working')
+        AND last_heartbeat > datetime('now', '-5 minutes')
+      ORDER BY idle_since ASC
+    params: []
+    cache_ttl: 5
+
+  sessions_by_status:
+    description: "Get sessions filtered by status"
+    sql: |
+      SELECT
+        name, status, current_task_id, provider,
+        idle_since, last_heartbeat
+      FROM sessions
+      WHERE status = :status
+      ORDER BY last_heartbeat DESC
+      LIMIT :limit
+    params:
+      - name: status
+        type: string
+        required: true
+      - name: limit
+        type: integer
+        default: 50
+    cache_ttl: 10
+
+  sessions_idle:
+    description: "Get idle sessions available for task assignment"
+    sql: |
+      SELECT
+        name, status, provider, idle_since,
+        (strftime('%s', 'now') - strftime('%s', idle_since)) / 60.0 AS idle_minutes
+      FROM sessions
+      WHERE status = 'idle'
+        AND name NOT IN (:excluded_sessions)
+      ORDER BY idle_since ASC
+      LIMIT :limit
+    params:
+      - name: excluded_sessions
+        type: string
+        required: false
+        default: "''"
+        description: "Comma-separated list of excluded session names"
+      - name: limit
+        type: integer
+        default: 20
+    cache_ttl: 5
+
+  # ============================================================================
+  # Statistics Queries
+  # ============================================================================
+
+  stats_dashboard:
+    description: "Get dashboard statistics in one query"
+    sql: |
+      SELECT
+        (SELECT COUNT(*) FROM tasks WHERE status = 'pending') AS pending_tasks,
+        (SELECT COUNT(*) FROM tasks WHERE status = 'in_progress') AS active_tasks,
+        (SELECT COUNT(*) FROM tasks WHERE status = 'completed'
+         AND completed_at > datetime('now', '-1 day')) AS completed_today,
+        (SELECT COUNT(*) FROM tasks WHERE status = 'failed') AS failed_tasks,
+        (SELECT COUNT(*) FROM sessions WHERE status = 'idle') AS idle_sessions,
+        (SELECT COUNT(*) FROM sessions WHERE status = 'working') AS working_sessions,
+        (SELECT COUNT(*) FROM errors WHERE resolved = 0) AS open_errors,
+        (SELECT COUNT(*) FROM projects WHERE status = 'active') AS active_projects
+    params: []
+    cache_ttl: 30
+
+  task_performance_by_type:
+    description: "Analyze task performance metrics by type"
+    sql: |
+      SELECT
+        type,
+        COUNT(*) AS total,
+        COUNT(CASE WHEN status = 'completed' THEN 1 END) AS completed,
+        COUNT(CASE WHEN status = 'failed' THEN 1 END) AS failed,
+        COUNT(CASE WHEN status = 'pending' THEN 1 END) AS pending,
+        COUNT(CASE WHEN status = 'in_progress' THEN 1 END) AS in_progress,
+        AVG(CASE
+          WHEN completed_at IS NOT NULL
+          THEN (strftime('%s', completed_at) - strftime('%s', created_at)) / 60.0
+        END) AS avg_duration_minutes,
+        MIN(CASE
+          WHEN completed_at IS NOT NULL
+          THEN (strftime('%s', completed_at) - strftime('%s', created_at)) / 60.0
+        END) AS min_duration_minutes,
+        MAX(CASE
+          WHEN completed_at IS NOT NULL
+          THEN (strftime('%s', completed_at) - strftime('%s', created_at)) / 60.0
+        END) AS max_duration_minutes,
+        AVG(priority) AS avg_priority
+      FROM tasks
+      WHERE created_at > datetime('now', :days || ' days')
+      GROUP BY type
+      ORDER BY total DESC
+    params:
+      - name: days
+        type: string
+        default: "'-7'"
+        description: "Number of days to look back (use '-7' format)"
+    cache_ttl: 300
+
+  session_utilization:
+    description: "Session utilization metrics"
+    sql: |
+      SELECT
+        name,
+        provider,
+        COUNT(CASE WHEN status = 'working' THEN 1 END) AS times_busy,
+        COUNT(CASE WHEN status = 'idle' THEN 1 END) AS times_idle,
+        AVG(CASE
+          WHEN status = 'working'
+          THEN (strftime('%s', 'now') - strftime('%s', last_heartbeat)) / 60.0
+        END) AS avg_task_duration_minutes
+      FROM sessions
+      WHERE last_heartbeat > datetime('now', '-24 hours')
+      GROUP BY name, provider
+      ORDER BY times_busy DESC
+    params: []
+    cache_ttl: 60
+
+  # ============================================================================
+  # SLA Compliance Queries
+  # ============================================================================
+
+  sla_breaches:
+    description: "Get tasks that have breached SLA targets"
+    sql: |
+      SELECT
+        t.id, t.type, t.status, t.priority, t.created_at,
+        t.assigned_to,
+        (strftime('%s', COALESCE(t.completed_at, 'now')) - strftime('%s', t.created_at)) / 60.0 AS elapsed_minutes,
+        t.metadata
+      FROM tasks t
+      WHERE (strftime('%s', COALESCE(t.completed_at, 'now')) - strftime('%s', t.created_at)) / 60.0 > :sla_threshold
+        AND t.created_at > datetime('now', '-7 days')
+      ORDER BY elapsed_minutes DESC
+      LIMIT :limit
+    params:
+      - name: sla_threshold
+        type: integer
+        default: 60
+        description: "SLA threshold in minutes"
+      - name: limit
+        type: integer
+        default: 50
+    cache_ttl: 30
+
+  # ============================================================================
+  # Prompt/Assignment Queries
+  # ============================================================================
+
+  prompts_by_status:
+    description: "Get prompts from assigner queue by status"
+    sql: |
+      SELECT
+        id, content, status, priority, created_at,
+        target_session, timeout_minutes, retry_count,
+        (strftime('%s', 'now') - strftime('%s', created_at)) / 60.0 AS elapsed_minutes
+      FROM prompts
+      WHERE status = :status
+      ORDER BY priority DESC, created_at ASC
+      LIMIT :limit
+    params:
+      - name: status
+        type: string
+        required: true
+      - name: limit
+        type: integer
+        default: 100
+    cache_ttl: 5
+
+  prompts_active_assignments:
+    description: "Get all active prompt assignments"
+    sql: |
+      SELECT
+        p.id, p.content, p.status, p.priority,
+        p.target_session, p.created_at, p.assigned_at,
+        (strftime('%s', 'now') - strftime('%s', p.assigned_at)) / 60.0 AS assignment_duration_minutes,
+        s.name AS session_name, s.status AS session_status
+      FROM prompts p
+      LEFT JOIN sessions s ON p.target_session = s.name
+      WHERE p.status IN ('assigned', 'in_progress')
+      ORDER BY p.assigned_at ASC
+      LIMIT :limit
+    params:
+      - name: limit
+        type: integer
+        default: 50
+    cache_ttl: 5
+
+  # ============================================================================
+  # Error Queries
+  # ============================================================================
+
+  errors_unresolved:
+    description: "Get unresolved errors grouped by type"
+    sql: |
+      SELECT
+        error_type, message, source,
+        COUNT(*) AS occurrence_count,
+        MIN(first_seen) AS first_seen,
+        MAX(last_seen) AS last_seen,
+        node_id
+      FROM errors
+      WHERE resolved = 0
+      GROUP BY error_type, message, source, node_id
+      ORDER BY occurrence_count DESC
+      LIMIT :limit
+    params:
+      - name: limit
+        type: integer
+        default: 50
+    cache_ttl: 30
+
+# ============================================================================
+# Index Definitions
+# ============================================================================
+
+indexes:
+  - table: tasks
+    name: idx_tasks_status_priority
+    columns: [status, priority, created_at]
+    description: "Optimize task queries by status and priority"
+
+  - table: tasks
+    name: idx_tasks_type_status
+    columns: [type, status]
+    description: "Optimize task queries by type and status"
+
+  - table: tasks
+    name: idx_tasks_assigned_to
+    columns: [assigned_to, status]
+    description: "Optimize queries for tasks assigned to specific sessions"
+
+  - table: sessions
+    name: idx_sessions_status_heartbeat
+    columns: [status, last_heartbeat]
+    description: "Optimize session health monitoring queries"
+
+  - table: prompts
+    name: idx_prompts_status_priority
+    columns: [status, priority, created_at]
+    description: "Optimize prompt queue queries"
+
+  - table: errors
+    name: idx_errors_resolved_type
+    columns: [resolved, error_type, last_seen]
+    description: "Optimize error dashboard queries"
+
+# ============================================================================
+# Query Optimization Settings
+# ============================================================================
+
+optimization:
+  default_cache_ttl: 30
+  max_results_without_limit: 1000
+  enable_query_logging: true
+  slow_query_threshold_ms: 100

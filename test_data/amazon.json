@@ -1,0 +1,151 @@
+{
+  "id": "amazon_tests",
+  "name": "Amazon Order Extraction",
+  "description": "Extract order status, tracking, and subscriptions from Amazon",
+  "target_service": "amazon",
+  "target_url": "https://www.amazon.com",
+  "tags": ["shopping", "orders", "extraction"],
+
+  "global_variables": {
+    "base_url": "https://www.amazon.com"
+  },
+
+  "test_cases": [
+    {
+      "id": "amazon_login",
+      "name": "Amazon Login",
+      "description": "Login to Amazon account",
+      "tags": ["login"],
+      "credentials": {
+        "amz": "amazon/Amazon Account"
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${base_url}/ap/signin",
+          "description": "Go to Amazon sign in"
+        },
+        {
+          "type": "fill",
+          "target": "#ap_email, input[name='email']",
+          "value": "${amz_username}",
+          "description": "Enter email"
+        },
+        {
+          "type": "click",
+          "target": "#continue, input[type='submit']",
+          "description": "Continue"
+        },
+        {
+          "type": "wait",
+          "value": 2
+        },
+        {
+          "type": "fill",
+          "target": "#ap_password, input[name='password']",
+          "value": "${amz_password}",
+          "description": "Enter password"
+        },
+        {
+          "type": "click",
+          "target": "#signInSubmit, input[type='submit']",
+          "description": "Sign in"
+        },
+        {
+          "type": "wait",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "amazon_extract_orders",
+      "name": "Extract Recent Orders",
+      "description": "Get list of recent orders and their status",
+      "tags": ["extraction", "orders"],
+      "credentials": {
+        "amz": "amazon/Amazon Account"
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${base_url}/gp/css/order-history",
+          "description": "Go to order history"
+        },
+        {
+          "type": "wait",
+          "value": 3
+        },
+        {
+          "type": "extract",
+          "target": ".order-card, .a-box-group .a-box",
+          "value": "recent_orders",
+          "description": "Extract order cards"
+        }
+      ]
+    },
+    {
+      "id": "amazon_extract_tracking",
+      "name": "Extract Shipment Tracking",
+      "description": "Get tracking info for in-transit orders",
+      "tags": ["extraction", "tracking"],
+      "credentials": {
+        "amz": "amazon/Amazon Account"
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${base_url}/gp/css/order-history",
+          "description": "Go to orders"
+        },
+        {
+          "type": "wait",
+          "value": 2
+        },
+        {
+          "type": "click",
+          "target": "a:has-text('Track package'), a[href*='track']",
+          "description": "Click track package",
+          "optional": true
+        },
+        {
+          "type": "wait",
+          "value": 2
+        },
+        {
+          "type": "extract",
+          "target": ".tracking-event, .milestone-primaryMessage",
+          "value": "tracking_status",
+          "description": "Extract tracking status",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "amazon_extract_subscriptions",
+      "name": "Extract Subscribe & Save",
+      "description": "Get list of active subscriptions",
+      "tags": ["extraction", "subscriptions"],
+      "credentials": {
+        "amz": "amazon/Amazon Account"
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "target": "${base_url}/gp/subscribe-and-save/manager/viewsubscriptions",
+          "description": "Go to subscriptions"
+        },
+        {
+          "type": "wait",
+          "value": 3
+        },
+        {
+          "type": "extract",
+          "target": ".subscription-item, .a-section.subscription",
+          "value": "subscriptions",
+          "description": "Extract subscription list",
+          "optional": true
+        }
+      ]
+    }
+  ]
+}

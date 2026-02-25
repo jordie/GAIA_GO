@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: architect-config
+  namespace: architect-staging
+  labels:
+    app: architect-go
+    environment: staging
+data:
+  # Server configuration
+  SERVER_HOST: "0.0.0.0"
+  SERVER_PORT: "8080"
+  SERVER_READ_TIMEOUT: "15"
+  SERVER_WRITE_TIMEOUT: "15"
+
+  # Database configuration
+  DB_TYPE: "postgres"
+  DB_HOST: "postgres.architect-staging.svc.cluster.local"
+  DB_PORT: "5432"
+  DB_NAME: "architect"
+  DB_SSL_MODE: "disable"
+
+  # Logging configuration
+  LOG_LEVEL: "info"
+  LOG_FORMAT: "json"
+
+  # Metrics configuration
+  METRICS_ENABLED: "true"
+  METRICS_PATH: "/metrics"
+
+  # Feature flags
+  AUTOPILOT_ENABLED: "true"
+  TASK_QUEUE_ENABLED: "true"
+  ERROR_AGGREGATION_ENABLED: "true"
+
+  # Cache configuration
+  CACHE_ENABLED: "true"
+  CACHE_TTL_SECONDS: "3600"
+
+  # Health check configuration
+  HEALTH_PATH: "/health"
+  HEALTH_DETAILED: "false"
+
+  # API configuration
+  API_BASE_PATH: "/api"
+  API_VERSION: "v1"
+  API_DOCS_ENABLED: "true"
+
+  # WebSocket configuration
+  WEBSOCKET_ENABLED: "true"
+  WEBSOCKET_PATH: "/ws"
+  WEBSOCKET_MAX_CONNECTIONS: "1000"

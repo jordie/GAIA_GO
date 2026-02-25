@@ -1,0 +1,30 @@
+{
+  "total_operations": 3,
+  "verified": 2,
+  "failed": 1,
+  "history": [
+    {
+      "timestamp": "2026-02-14T18:37:32.426005",
+      "operation": "perplexity_submission",
+      "url": "https://www.perplexity.ai/search/test-query-abc123",
+      "expected": "/search/",
+      "verified": true
+    },
+    {
+      "timestamp": "2026-02-14T18:37:32.426274",
+      "operation": "perplexity_submission",
+      "url": "https://www.perplexity.ai/",
+      "expected": "/search/",
+      "verified": false,
+      "error": "URL missing '/search/'",
+      "screenshot": "data/screenshots/perplexity_failed_20260214_183732.png"
+    },
+    {
+      "timestamp": "2026-02-14T18:37:32.682523",
+      "operation": "file_creation",
+      "filepath": "/tmp/test_verification.txt",
+      "verified": true,
+      "size": 4
+    }
+  ]
+}

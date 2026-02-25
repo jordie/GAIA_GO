@@ -1,0 +1,89 @@
+{
+  "start_time": "2026-02-17T14:56:08.793952",
+  "tests": [
+    {
+      "test_name": "ST-5: Concurrent API Load Test",
+      "elapsed_seconds": 0.5,
+      "total_requests": 1000,
+      "success_count": 0,
+      "fail_count": 1000,
+      "success_rate": 0.0,
+      "response_times_ms": {
+        "min": 6.55,
+        "max": 102.11,
+        "avg": 40.18,
+        "median": 38.08,
+        "p95": 73.26,
+        "p99": 90.99
+      },
+      "throughput_rps": 1982.39,
+      "errors": [
+        "HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /api/browser-tasks/metrics (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8080): Failed to establish a new connection: [Errno 61] Connection refused\"))",
+        "HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /api/browser-tasks/queue/status (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8080): Failed to establish a new connection: [Errno 61] Connection refused\"))",
+        "HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /api/browser-tasks (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8080): Failed to establish a new connection: [Errno 61] Connection refused\"))"
+      ]
+    },
+    {
+      "test_name": "ST-6: Database Query Performance",
+      "elapsed_seconds": 15.15,
+      "total_requests": 10000,
+      "success_count": 5000,
+      "fail_count": 5000,
+      "success_rate": 50.0,
+      "response_times_ms": {
+        "min": 1.09,
+        "max": 14146.16,
+        "avg": 147.96,
+        "median": 49.26,
+        "p95": 518.35,
+        "p99": 647.86
+      },
+      "throughput_rps": 660.04,
+      "errors": [
+        "no such column: created_at",
+        "no such table: tasks"
+      ]
+    },
+    {
+      "test_name": "ST-10: Browser Automation Workload",
+      "elapsed_seconds": 0.26,
+      "total_requests": 50,
+      "success_count": 0,
+      "fail_count": 50,
+      "success_rate": 0.0,
+      "response_times_ms": {
+        "min": 1.85,
+        "max": 20.7,
+        "avg": 9.45,
+        "median": 9.03,
+        "p95": 15.18,
+        "p99": 20.7
+      },
+      "throughput_rps": 191.49,
+      "errors": [
+        "HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /api/browser-tasks (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8080): Failed to establish a new connection: [Errno 61] Connection refused\"))"
+      ]
+    },
+    {
+      "test_name": "ST-11: End-to-End System Stress",
+      "elapsed_seconds": 0.02,
+      "total_requests": 50,
+      "success_count": 0,
+      "fail_count": 50,
+      "success_rate": 0.0,
+      "response_times_ms": {
+        "min": 2.33,
+        "max": 13.26,
+        "avg": 7.67,
+        "median": 7.25,
+        "p95": 12.72,
+        "p99": 13.26
+      },
+      "throughput_rps": 2009.25,
+      "errors": [
+        "HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /api/browser-tasks (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8080): Failed to establish a new connection: [Errno 61] Connection refused\"))"
+      ]
+    }
+  ],
+  "end_time": "2026-02-17T14:56:24.743376"
+}
