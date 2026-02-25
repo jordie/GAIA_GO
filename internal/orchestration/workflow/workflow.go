@@ -215,7 +215,7 @@ func (dag *TaskDAG) TopologicalSort() ([][]*Task, error) {
 func (dag *TaskDAG) GetReadyTasks() []*Task {
 	ready := make([]*Task, 0)
 
-	for taskID, task := range dag.tasks {
+	for _, task := range dag.tasks {
 		if task.Status != TaskStatusPending {
 			continue // Skip if not pending
 		}
