@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -87,7 +86,7 @@ func (r *DistributedTaskRepositoryImpl) Delete(ctx context.Context, id uuid.UUID
 
 // Claim claims a task for execution
 func (r *DistributedTaskRepositoryImpl) Claim(ctx context.Context, id uuid.UUID, sessionID uuid.UUID, expiresAt time.Time) error {
-	return r.db.WithContext(ctx).Model(&models.DistributedTask{}, "id = ?", id).
+	return r.db.WithContext(ctx).Model(&models.DistributedTask{}).Where("id = ?", id).
 		Updates(map[string]interface{}{
 			"status":           "assigned",
 			"claimed_by":       sessionID,
@@ -99,7 +98,7 @@ func (r *DistributedTaskRepositoryImpl) Claim(ctx context.Context, id uuid.UUID,
 
 // Complete marks a task as completed
 func (r *DistributedTaskRepositoryImpl) Complete(ctx context.Context, id uuid.UUID, result interface{}) error {
-	return r.db.WithContext(ctx).Model(&models.DistributedTask{}, "id = ?", id).
+	return r.db.WithContext(ctx).Model(&models.DistributedTask{}).Where("id = ?", id).
 		Updates(map[string]interface{}{
 			"status":     "completed",
 			"result":     result,
@@ -109,7 +108,7 @@ func (r *DistributedTaskRepositoryImpl) Complete(ctx context.Context, id uuid.UU
 
 // Fail marks a task as failed
 func (r *DistributedTaskRepositoryImpl) Fail(ctx context.Context, id uuid.UUID, errorMsg string) error {
-	return r.db.WithContext(ctx).Model(&models.DistributedTask{}, "id = ?", id).
+	return r.db.WithContext(ctx).Model(&models.DistributedTask{}).Where("id = ?", id).
 		Updates(map[string]interface{}{
 			"status":          "failed",
 			"error_message":   errorMsg,
@@ -120,7 +119,7 @@ func (r *DistributedTaskRepositoryImpl) Fail(ctx context.Context, id uuid.UUID, 
 
 // Retry increments retry count and resets status to pending
 func (r *DistributedTaskRepositoryImpl) Retry(ctx context.Context, id uuid.UUID) error {
-	return r.db.WithContext(ctx).Model(&models.DistributedTask{}, "id = ?", id).
+	return r.db.WithContext(ctx).Model(&models.DistributedTask{}).Where("id = ?", id).
 		Updates(map[string]interface{}{
 			"status":           "pending",
 			"retry_count":      gorm.Expr("retry_count + 1"),

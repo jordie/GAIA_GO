@@ -57,7 +57,7 @@ func (r *LessonRepositoryImpl) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 func (r *LessonRepositoryImpl) UpdateProgress(ctx context.Context, id uuid.UUID, completed int) error {
-	return r.db.WithContext(ctx).Model(&models.Lesson{}, "id = ?", id).
+	return r.db.WithContext(ctx).Model(&models.Lesson{}).Where("id = ?", id).
 		Update("tasks_completed", completed).
 		Update("updated_at", time.Now()).Error
 }
@@ -106,7 +106,7 @@ func (r *SessionAffinityRepositoryImpl) GetBestSessionForLesson(ctx context.Cont
 }
 
 func (r *SessionAffinityRepositoryImpl) UpdateLastUsed(ctx context.Context, id uuid.UUID) error {
-	return r.db.WithContext(ctx).Model(&models.SessionAffinity{}, "id = ?", id).
+	return r.db.WithContext(ctx).Model(&models.SessionAffinity{}).Where("id = ?", id).
 		Update("last_used", time.Now()).Error
 }
 

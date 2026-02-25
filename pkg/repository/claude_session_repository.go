@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -79,7 +78,7 @@ func (r *ClaudeSessionRepositoryImpl) Delete(ctx context.Context, id uuid.UUID) 
 
 // UpdateStatus updates session status
 func (r *ClaudeSessionRepositoryImpl) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
-	return r.db.WithContext(ctx).Model(&models.ClaudeSession{}, "id = ?", id).
+	return r.db.WithContext(ctx).Model(&models.ClaudeSession{}).Where("id = ?", id).
 		Update("status", status).
 		Update("updated_at", time.Now()).Error
 }
@@ -95,20 +94,20 @@ func (r *ClaudeSessionRepositoryImpl) UpdateHealthStatus(ctx context.Context, id
 		updates["consecutive_failures"] = 0
 	}
 
-	return r.db.WithContext(ctx).Model(&models.ClaudeSession{}, "id = ?", id).
+	return r.db.WithContext(ctx).Model(&models.ClaudeSession{}).Where("id = ?", id).
 		Updates(updates).Error
 }
 
 // RecordHeartbeat records a heartbeat
 func (r *ClaudeSessionRepositoryImpl) RecordHeartbeat(ctx context.Context, id uuid.UUID) error {
-	return r.db.WithContext(ctx).Model(&models.ClaudeSession{}, "id = ?", id).
+	return r.db.WithContext(ctx).Model(&models.ClaudeSession{}).Where("id = ?", id).
 		Update("last_heartbeat", time.Now()).
 		Update("updated_at", time.Now()).Error
 }
 
 // IncrementTaskCount increments current task count
 func (r *ClaudeSessionRepositoryImpl) IncrementTaskCount(ctx context.Context, id uuid.UUID, count int) error {
-	return r.db.WithContext(ctx).Model(&models.ClaudeSession{}, "id = ?", id).
+	return r.db.WithContext(ctx).Model(&models.ClaudeSession{}).Where("id = ?", id).
 		Update("current_task_count", gorm.Expr("current_task_count + ?", count)).
 		Update("updated_at", time.Now()).Error
 }

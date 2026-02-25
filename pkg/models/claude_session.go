@@ -1,7 +1,6 @@
 package models
 
 import (
-	"database/sql/driver"
 	"encoding/json"
 	"time"
 
@@ -162,20 +161,5 @@ func (l *Lesson) ProgressPercentage() float64 {
 	return float64(l.TasksCompleted) / float64(l.TasksTotal) * 100
 }
 
-// Scan implements sql.Scanner
-func (m *json.RawMessage) Scan(value interface{}) error {
-	bytes, ok := value.([]byte)
-	if !ok {
-		return nil
-	}
-	*m = json.RawMessage(bytes)
-	return nil
-}
-
-// Value implements driver.Valuer
-func (m json.RawMessage) Value() (driver.Value, error) {
-	if len(m) == 0 {
-		return nil, nil
-	}
-	return []byte(m), nil
-}
+// Note: json.RawMessage already implements sql.Scanner and driver.Valuer
+// via GORM's builtin support for JSON types, so no custom methods needed

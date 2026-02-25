@@ -37,7 +37,11 @@ func (r *DistributedLockRepositoryImpl) Acquire(ctx context.Context, lockKey str
 		return true, nil
 	}
 
-	if result.Error != gorm.ErrDuplicateKey {
+	// Check if it's a constraint violation (duplicate key)
+	if result.Error.Error() == "UNIQUE constraint failed: distributed_locks.lock_key" ||
+		result.Error.Error() == "pq: duplicate key value violates unique constraint \"distributed_locks_pkey\"" {
+		// Lock already exists
+	} else {
 		return false, result.Error
 	}
 
@@ -49,7 +53,7 @@ func (r *DistributedLockRepositoryImpl) Acquire(ctx context.Context, lockKey str
 
 	if existing.OwnerID == ownerID {
 		// We already own it, renew it
-		return true, r.db.WithContext(ctx).Model(&models.DistributedLock{}, "lock_key = ?", lockKey).
+		return true, r.db.WithContext(ctx).Model(&models.DistributedLock{}).Where("lock_key = ?", lockKey).
 			Updates(map[string]interface{}{
 				"acquired_at":   now,
 				"expires_at":    expiresAt,
@@ -59,7 +63,7 @@ func (r *DistributedLockRepositoryImpl) Acquire(ctx context.Context, lockKey str
 
 	if existing.ExpiresAt.Before(now) {
 		// Lock is expired, claim it
-		return true, r.db.WithContext(ctx).Model(&models.DistributedLock{}, "lock_key = ?", lockKey).
+		return true, r.db.WithContext(ctx).Model(&models.DistributedLock{}).Where("lock_key = ?", lockKey).
 			Updates(map[string]interface{}{
 				"owner_id":      ownerID,
 				"acquired_at":   now,
