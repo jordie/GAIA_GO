@@ -3833,6 +3833,13 @@ def monitor_share(token):
         return render_template("login.html"), 401
 
 
+@app.route("/rate-limiting-dashboard")
+@require_auth
+def rate_limiting_dashboard():
+    """Rate limiting monitoring and management dashboard."""
+    return render_template("rate_limiting_dashboard.html")
+
+
 @app.route("/login", methods=["GET", "POST"])
 @rate_limit(
     requests_per_minute=100

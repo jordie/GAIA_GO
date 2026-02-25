@@ -1,0 +1,238 @@
+{
+  "project": "mentor_v2",
+  "project_path": "/Users/jgirmay/Desktop/gitrepo/pyWork/mentor_v2",
+  "generated_at": "2025-12-25T02:00:00",
+  "analysis": {
+    "codebase_size": "40 Python files, 435 lines (auto_usb.py)",
+    "test_coverage": "8 test files covering core functionality",
+    "current_status": "USB drive automation for MEMOQ audio data offloading - functional, needs enhancements",
+    "tech_stack": ["Python", "Watchdog", "Audio Processing (librosa, torch)", "Google Drive API", "macOS"]
+  },
+  "total_tasks": 24,
+  "total_milestones": 4,
+  "estimated_duration_days": 14,
+  "milestones": [
+    {
+      "id": "mentor_m1_monitoring",
+      "name": "Enhanced USB Monitoring",
+      "description": "Improve drive detection, multi-drive handling, and automation reliability",
+      "phase": "enhancement",
+      "start_date": "2025-12-26",
+      "target_date": "2026-01-02",
+      "duration_days": 7,
+      "priority": 2,
+      "tasks": [
+        {
+          "title": "Implement multi-drive concurrent processing",
+          "description": "Process multiple MEMOQ drives simultaneously instead of sequentially",
+          "priority": 2,
+          "complexity": "complex",
+          "estimated_hours": 10,
+          "category": "feature",
+          "dependencies": [],
+          "technical_notes": "Add thread pool or async processing for parallel drive operations"
+        },
+        {
+          "title": "Add drive state persistence",
+          "description": "Track processed drives to prevent duplicate processing on reconnection",
+          "priority": 2,
+          "complexity": "medium",
+          "estimated_hours": 6,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Improve error handling and logging",
+          "description": "Add comprehensive error logging with rotation and structured logging",
+          "priority": 2,
+          "complexity": "medium",
+          "estimated_hours": 4,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Add configurable poll interval",
+          "description": "Make monitoring interval configurable via CLI --interval flag",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 2,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Implement notification gating",
+          "description": "Add --notify/--no-notify flags to control voice notifications",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 2,
+          "category": "feature",
+          "dependencies": []
+        }
+      ]
+    },
+    {
+      "id": "mentor_m2_audio_processing",
+      "name": "Audio Processing Improvements",
+      "description": "Enhance audio analysis, duplicate detection, and indexing",
+      "phase": "enhancement",
+      "start_date": "2026-01-03",
+      "target_date": "2026-01-09",
+      "duration_days": 6,
+      "priority": 2,
+      "tasks": [
+        {
+          "title": "Optimize audio signature generation",
+          "description": "Improve performance of audio fingerprinting for faster duplicate detection",
+          "priority": 2,
+          "complexity": "complex",
+          "estimated_hours": 12,
+          "category": "feature",
+          "dependencies": [],
+          "technical_notes": "Use librosa/torch optimizations and caching"
+        },
+        {
+          "title": "Implement background indexing service",
+          "description": "Run continuous audio indexing in background for faster duplicate checks",
+          "priority": 2,
+          "complexity": "complex",
+          "estimated_hours": 10,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Add audio quality validation",
+          "description": "Detect and flag low-quality or corrupted audio files during processing",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 6,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Improve voice activity detection",
+          "description": "Enhance VAD accuracy to better identify speech segments",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 8,
+          "category": "feature",
+          "dependencies": []
+        }
+      ]
+    },
+    {
+      "id": "mentor_m3_transfer_optimization",
+      "name": "Transfer & Sync Optimization",
+      "description": "Optimize file transfers and Google Drive integration",
+      "phase": "enhancement",
+      "start_date": "2026-01-10",
+      "target_date": "2026-01-16",
+      "duration_days": 6,
+      "priority": 3,
+      "tasks": [
+        {
+          "title": "Implement rsync for faster transfers",
+          "description": "Replace standard copy with rsync for better speed and resumability",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 6,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Add transfer progress tracking",
+          "description": "Show real-time progress for large file transfers",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 4,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Implement retry logic for failed transfers",
+          "description": "Auto-retry failed transfers with exponential backoff",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Add Google Drive quota monitoring",
+          "description": "Check and warn about Google Drive storage limits",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 3,
+          "category": "feature",
+          "dependencies": []
+        }
+      ]
+    },
+    {
+      "id": "mentor_m4_ui_reporting",
+      "name": "UI & Reporting Features",
+      "description": "Add dashboard and reporting capabilities",
+      "phase": "feature",
+      "start_date": "2026-01-17",
+      "target_date": "2026-01-23",
+      "duration_days": 6,
+      "priority": 3,
+      "tasks": [
+        {
+          "title": "Build web dashboard for monitoring",
+          "description": "Create Flask web UI showing drive status, processing history, and stats",
+          "priority": 3,
+          "complexity": "complex",
+          "estimated_hours": 16,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Add drive statistics reporting",
+          "description": "Generate reports showing files processed per drive and location",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 6,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Implement drive reminder system",
+          "description": "Set future reminders to move drives between locations",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4,
+          "category": "feature",
+          "dependencies": []
+        },
+        {
+          "title": "Add error summary visualization",
+          "description": "Show processing errors in dashboard with filtering",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 4,
+          "category": "feature",
+          "dependencies": ["Build web dashboard for monitoring"]
+        }
+      ]
+    }
+  ],
+  "cross_project_dependencies": [],
+  "risk_assessment": {
+    "technical_risks": [
+      "USB drive corruption during processing",
+      "Google Drive API rate limiting",
+      "Audio processing library dependencies (torch/librosa) version conflicts"
+    ],
+    "resource_risks": [
+      "Requires physical USB drives for testing",
+      "Audio processing is CPU/memory intensive",
+      "Google Drive storage limits"
+    ],
+    "mitigation_strategies": [
+      "Implement file verification before deletion",
+      "Add exponential backoff for API calls",
+      "Use test fixtures for unit tests",
+      "Add memory profiling and optimization"
+    ]
+  }
+}

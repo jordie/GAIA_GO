@@ -1,0 +1,132 @@
+{
+  "comparisons": [
+    {
+      "test_name": "simple_question",
+      "category": "knowledge",
+      "prompt_length": 15,
+      "timestamp": "2026-02-16T22:04:00.753349",
+      "providers": {
+        "claude": {
+          "provider": "claude",
+          "prompt_length": 15,
+          "success": false,
+          "duration": 0,
+          "response_length": 0,
+          "response": "\"Could not resolve authentication method. Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key` or `Authorization` headers to be explicitly omitted\"",
+          "timestamp": "2026-02-16T22:04:00.840663"
+        },
+        "gemini": {
+          "provider": "gemini",
+          "prompt_length": 15,
+          "success": false,
+          "duration": 0,
+          "response_length": 0,
+          "response": "\n  No API_KEY or ADC found. Please either:\n    - Set the `GOOGLE_API_KEY` environment variable.\n    - Manually pass the key with `genai.configure(api_key=my_api_key)`.\n    - Or set up Application Default Credentials, see https://ai.google.dev/gemini-api/docs/oauth for more information.",
+          "timestamp": "2026-02-16T22:04:04.154117"
+        },
+        "ollama": {
+          "provider": "ollama",
+          "prompt_length": 15,
+          "success": false,
+          "duration": 0,
+          "response_length": 0,
+          "response": "HTTP 404",
+          "timestamp": "2026-02-16T22:04:04.195367"
+        }
+      }
+    },
+    {
+      "test_name": "code_generation",
+      "category": "coding",
+      "prompt_length": 46,
+      "timestamp": "2026-02-16T22:04:04.195593",
+      "providers": {
+        "claude": {
+          "provider": "claude",
+          "prompt_length": 46,
+          "success": false,
+          "duration": 0,
+          "response_length": 0,
+          "response": "\"Could not resolve authentication method. Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key` or `Authorization` headers to be explicitly omitted\"",
+          "timestamp": "2026-02-16T22:04:04.200541"
+        },
+        "gemini": {
+          "provider": "gemini",
+          "prompt_length": 46,
+          "success": false,
+          "duration": 0,
+          "response_length": 0,
+          "response": "\n  No API_KEY or ADC found. Please either:\n    - Set the `GOOGLE_API_KEY` environment variable.\n    - Manually pass the key with `genai.configure(api_key=my_api_key)`.\n    - Or set up Application Default Credentials, see https://ai.google.dev/gemini-api/docs/oauth for more information.",
+          "timestamp": "2026-02-16T22:04:07.320472"
+        },
+        "ollama": {
+          "provider": "ollama",
+          "prompt_length": 46,
+          "success": false,
+          "duration": 0,
+          "response_length": 0,
+          "response": "HTTP 404",
+          "timestamp": "2026-02-16T22:04:07.326326"
+        }
+      }
+    },
+    {
+      "test_name": "explanation",
+      "category": "explanation",
+      "prompt_length": 42,
+      "timestamp": "2026-02-16T22:04:07.326411",
+      "providers": {
+        "claude": {
+          "provider": "claude",
+          "prompt_length": 42,
+          "success": false,
+          "duration": 0,
+          "response_length": 0,
+          "response": "\"Could not resolve authentication method. Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key` or `Authorization` headers to be explicitly omitted\"",
+          "timestamp": "2026-02-16T22:04:07.332027"
+        },
+        "gemini": {
+          "provider": "gemini",
+          "prompt_length": 42,
+          "success": false,
+          "duration": 0,
+          "response_length": 0,
+          "response": "\n  No API_KEY or ADC found. Please either:\n    - Set the `GOOGLE_API_KEY` environment variable.\n    - Manually pass the key with `genai.configure(api_key=my_api_key)`.\n    - Or set up Application Default Credentials, see https://ai.google.dev/gemini-api/docs/oauth for more information.",
+          "timestamp": "2026-02-16T22:04:10.445299"
+        },
+        "ollama": {
+          "provider": "ollama",
+          "prompt_length": 42,
+          "success": false,
+          "duration": 0,
+          "response_length": 0,
+          "response": "HTTP 404",
+          "timestamp": "2026-02-16T22:04:10.451760"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "claude": {
+      "success": 0,
+      "avg_duration": 0.0,
+      "total_duration": 0,
+      "count": 3,
+      "success_rate": 0.0
+    },
+    "gemini": {
+      "success": 0,
+      "avg_duration": 0.0,
+      "total_duration": 0,
+      "count": 3,
+      "success_rate": 0.0
+    },
+    "ollama": {
+      "success": 0,
+      "avg_duration": 0.0,
+      "total_duration": 0,
+      "count": 3,
+      "success_rate": 0.0
+    }
+  }
+}

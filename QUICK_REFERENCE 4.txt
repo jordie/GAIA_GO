@@ -1,0 +1,131 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                   5 PROJECT PARALLEL DEVELOPMENT                         ║
+║                       Quick Reference Card                               ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+📊 YOUR SYSTEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  MAIN PRODUCTION               PARALLEL DEVELOPMENT
+  ┌──────────────┐              ┌─────────────────────────────────┐
+  │  architect   │ (port 8080)  │ 5 Isolated Environments         │
+  │ Production   │              │ ├─ architect-dev1 (port 8081)   │
+  └──────────────┘              │ ├─ architect-dev2 (port 8082)   │
+                                │ ├─ architect-dev3 (port 8083)   │
+                                │ ├─ architect-dev4 (port 8084)   │
+                                │ └─ architect-dev5 (port 8085)   │
+                                └─────────────────────────────────┘
+
+🔧 START A PROJECT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  cd ~/Desktop/gitrepo/pyWork/architect-dev1
+  ./launch.sh              # Start development environment
+  ./git feature my-feature # Create feature branch
+  # ... do your work ...
+  ./git commit -m "msg"    # Commit changes
+  ./git push               # Push to origin
+
+💼 ASSIGN WORK TO WORKERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  # Send to Project 1 worker
+  python3 workers/assigner_worker.py --send "Task" --target dev1_worker
+
+  # Send to Project 2 worker
+  python3 workers/assigner_worker.py --send "Task" --target dev2_worker
+
+  # Send to PR review group
+  python3 workers/assigner_worker.py --send "Review PR" --target pr_review1
+
+  # Send to implementation group
+  python3 workers/assigner_worker.py --send "Implement" --target pr_impl1
+
+📋 MONITOR PROGRESS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  python3 gaia.py --multi-env-status    # All environments
+  python3 gaia.py --group-status        # Sessions by type
+  python3 workers/assigner_worker.py --prompts  # Active tasks
+  ./scripts/dev_env_monitor.sh          # Health check
+
+🚀 TYPICAL DAY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  09:00  Launch all 5 environments (stagger by 10 sec each)
+  09:15  Assign work to dev1_worker, dev2_worker, etc.
+  12:00  Check progress with --multi-env-status
+  14:00  First PR ready - send to pr_review1
+  15:00  PR approved - send feedback to pr_impl1
+  16:00  All feedback implemented - send to pr_integ1
+  17:00  Tests pass - merge to main
+         dev1_worker starts next task
+
+👥 SESSION GROUPS (26 total)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Dev Workers (5)           Project-specific
+  ├─ dev1_worker → architect-dev1
+  ├─ dev2_worker → architect-dev2
+  ├─ dev3_worker → architect-dev3
+  ├─ dev4_worker → architect-dev4
+  └─ dev5_worker → architect-dev5
+
+  PR Review (3)             Code review & quality
+  ├─ pr_review1 (Claude)
+  ├─ pr_review2 (Claude)
+  └─ pr_review3 (Ollama)
+
+  PR Implement (4)          Implement feedback
+  ├─ pr_impl1 (Codex)
+  ├─ pr_impl2 (Codex)
+  ├─ pr_impl3 (Ollama)
+  └─ pr_impl4 (Ollama)
+
+  PR Integrate (3)          Testing & validation
+  ├─ pr_integ1 (Ollama)
+  ├─ pr_integ2 (Ollama)
+  └─ pr_integ3 (Ollama)
+
+  High-Level (3)            System oversight
+  ├─ architect (Protected)
+  ├─ foundation (Protected)
+  └─ inspector (Protected)
+
+  Plus existing workers     Legacy support
+
+💰 COST EFFICIENCY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Component        Provider         Cost/Month
+  ─────────────────────────────────────────────
+  Dev Workers      Ollama (local)   $0
+  PR Review        Claude/Ollama    $104
+  PR Implement     Codex/Ollama     $104
+  PR Integrate     Ollama (local)   $0
+                                    ─────────
+  TOTAL                             ~$100
+
+  SAVINGS vs All-Claude: ~$1,000/month (91% reduction)
+
+🎯 KEYS TO SUCCESS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ✓ Keep projects isolated on separate dev environments
+  ✓ Use dev1_worker-dev5_worker for project-specific tasks
+  ✓ Use PR groups for cross-project review & integration
+  ✓ Stagger environment launches to avoid resource spikes
+  ✓ Monitor with --multi-env-status for bottlenecks
+  ✓ Commit regularly to keep history clean
+  ✓ Use --priority flag for urgent work
+
+📚 DOCUMENTATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  MULTI_PROJECT_WORKFLOW.md     Complete guide (read this first!)
+  docs/MULTI_ENVIRONMENT_ORCHESTRATION.md   Deep dive
+  docs/MULTI_ENV_QUICKSTART.md  5-minute setup
+
+═══════════════════════════════════════════════════════════════════════════
+
+Ready to build 5 projects in parallel? Let's go! 🚀

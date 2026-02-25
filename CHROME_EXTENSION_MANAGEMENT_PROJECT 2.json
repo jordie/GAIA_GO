@@ -1,0 +1,202 @@
+{
+  "id": "chrome-extension-mgmt",
+  "name": "Chrome Extension Management & Control Center",
+  "description": "Build comprehensive extension management system in GAIA Dashboard - deploy updates, monitor health, manage permissions, stream logs",
+  "status": "ready_to_queue",
+  "priority": 7,
+  "type": "Infrastructure Enhancement",
+  "target": "GAIA Dashboard",
+  "created_at": "2026-02-21T15:45:00Z",
+  "estimated_lines": 1500,
+  "estimated_hours": 12,
+  "dependencies": [
+    "GAIA Dashboard infrastructure",
+    "Current extension implementation (background.js WebSocket)",
+    "Database (SQLite)",
+    "File sync capability (SCP/rsync)"
+  ],
+  "blocking": [
+    "Future extension enhancements",
+    "Multi-machine extension management",
+    "Automated extension updates"
+  ],
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Core Status Monitoring",
+      "hours": 2,
+      "tasks": [
+        "Extension status widget",
+        "Machine registry in database",
+        "WebSocket heartbeat integration",
+        "Real-time status updates"
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "File Management & Deployment",
+      "hours": 3,
+      "tasks": [
+        "File upload/sync to machines",
+        "Hash-based change detection",
+        "Deploy interface",
+        "Version history tracking"
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Real-time Logs",
+      "hours": 2,
+      "tasks": [
+        "Service worker console streaming",
+        "Log filtering & search",
+        "Export functionality",
+        "Persistent log storage"
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Advanced Features",
+      "hours": 3,
+      "tasks": [
+        "Permission editor UI",
+        "Settings configurator",
+        "Batch operations",
+        "Rollback system"
+      ]
+    },
+    {
+      "phase": 5,
+      "name": "Integration & Polish",
+      "hours": 2,
+      "tasks": [
+        "GAIA Dashboard panel integration",
+        "Permissions/auth system",
+        "Activity logging",
+        "Notifications"
+      ]
+    }
+  ],
+  "critical_issues": [
+    {
+      "id": "issue-1",
+      "title": "Multi-machine extension management",
+      "description": "Currently managing extensions via SSH/SCP - need centralized dashboard control",
+      "severity": "high"
+    },
+    {
+      "id": "issue-2",
+      "title": "Extension health monitoring",
+      "description": "No visibility into WebSocket status, message queues, or service worker health",
+      "severity": "high"
+    },
+    {
+      "id": "issue-3",
+      "title": "Real-time debugging",
+      "description": "Cannot see extension logs without SSH access - need streaming console",
+      "severity": "medium"
+    },
+    {
+      "id": "issue-4",
+      "title": "Version control & rollback",
+      "description": "No way to track extension versions or quickly rollback failed deployments",
+      "severity": "medium"
+    },
+    {
+      "id": "issue-5",
+      "title": "Permission management",
+      "description": "Cannot edit manifest permissions via UI - requires code changes",
+      "severity": "low"
+    }
+  ],
+  "deliverables": [
+    {
+      "name": "Extension Status Dashboard",
+      "description": "Real-time status widget showing all machines, versions, WebSocket status",
+      "status": "pending"
+    },
+    {
+      "name": "File Management System",
+      "description": "Upload, version, and deploy extension files via dashboard",
+      "status": "pending"
+    },
+    {
+      "name": "Real-time Logs Viewer",
+      "description": "Stream service worker console output with filtering and search",
+      "status": "pending"
+    },
+    {
+      "name": "Permission Editor",
+      "description": "Visual UI to edit manifest permissions without code changes",
+      "status": "pending"
+    },
+    {
+      "name": "Settings Configurator",
+      "description": "Dashboard UI to adjust extension settings (WebSocket URL, intervals, etc)",
+      "status": "pending"
+    },
+    {
+      "name": "Machine Registry",
+      "description": "Database tables for tracking machines, versions, deployments",
+      "status": "pending"
+    },
+    {
+      "name": "Deployment API",
+      "description": "REST endpoints for file sync, deployment, rollback, logs",
+      "status": "pending"
+    },
+    {
+      "name": "Integration Tests",
+      "description": "Test multi-machine deployment, log streaming, permission changes",
+      "status": "pending"
+    }
+  ],
+  "success_criteria": [
+    "Dashboard shows extension status for all machines",
+    "Can deploy files to machines via UI (no SSH needed)",
+    "Real-time log streaming works with filtering",
+    "Version history tracked with rollback capability",
+    "Permission editor allows manifest changes without code",
+    "Settings configurator updates extension behavior dynamically",
+    "Machine registry auto-discovers extensions via heartbeat",
+    "Deployment API provides REST interface for all operations",
+    "Can manage 10+ machines from single dashboard",
+    "100% test coverage for deployment operations"
+  ],
+  "required_knowledge": [
+    "REST API design",
+    "Real-time WebSocket communication",
+    "File versioning & deployment",
+    "Extension manifest structure",
+    "Chrome extension APIs",
+    "Database design (SQLite)",
+    "Frontend dashboard development",
+    "Deployment orchestration"
+  ],
+  "architectural_patterns": [
+    "Pub/sub for real-time updates",
+    "Version control pattern",
+    "Registry pattern for machine tracking",
+    "Deployment pipeline pattern",
+    "Health check/heartbeat pattern"
+  ],
+  "technical_details": {
+    "database_tables": [
+      "extensions",
+      "extension_machines",
+      "extension_files",
+      "extension_deployments",
+      "extension_logs"
+    ],
+    "api_endpoints": 15,
+    "frontend_components": 8,
+    "websocket_messages": 6
+  },
+  "team": {
+    "assignee": "available",
+    "reviewer": "architect_manager",
+    "estimated_effort": "12 hours"
+  },
+  "queue_command": "os: Build Chrome Extension Management System for GAIA Dashboard --priority 7",
+  "notes": "This project solves the multi-machine extension management problem. Currently using SSH/SCP for updates which is error-prone and doesn't scale. Dashboard control provides centralized management, real-time monitoring, and automated deployments."
+}

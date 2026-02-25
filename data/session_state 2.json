@@ -1,0 +1,552 @@
+{
+  "sessions": {
+    "arch_fix_8081": {
+      "project": "architect",
+      "env_info": {
+        "scope": "readonly"
+      },
+      "task": "List all Python files in the current directory and count them",
+      "assigned_at": "2025-12-29T01:53:25.313156",
+      "status": "assigned"
+    },
+    "arch_overview": {
+      "project": "architect",
+      "env_info": {
+        "scope": "frontend"
+      },
+      "task": "Fix broken queue buttons - Output and Details buttons not working on queue panel. The captureTmuxOutput and showRunDetail functions may be missing or broken. Check dashboard.html for these onclick handlers and fix them.",
+      "assigned_at": "2025-12-28T18:20:21.042326",
+      "status": "assigned"
+    },
+    "basic_edu_dev": {
+      "project": "edu_apps",
+      "env_info": {
+        "port": 5054,
+        "branch": "feature/journey-system",
+        "path": "feature_environments/env_1"
+      },
+      "task": "Fix piano note placement and spacing - notes not positioned correctly, spacing issues in completed results display. URL: https://100.112.58.92:5063/piano/",
+      "assigned_at": "2025-12-28T06:21:13.739625",
+      "status": "assigned"
+    },
+    "kanban_frontend": {
+      "project": "kanbanflow",
+      "env_info": {
+        "port": 6053,
+        "branch": "feature/feature2"
+      },
+      "task": "Fix create board modal functionality",
+      "assigned_at": "2025-12-28T01:47:42.088855",
+      "status": "assigned"
+    },
+    "kanban_backend": {
+      "project": "kanbanflow",
+      "env_info": {
+        "port": 6052,
+        "branch": "feature/feature1"
+      },
+      "task": "Add board templates API endpoint",
+      "assigned_at": "2025-12-28T01:47:42.673608",
+      "status": "assigned"
+    },
+    "kanban_tests": {
+      "project": "kanbanflow",
+      "env_info": {
+        "port": 6051,
+        "branch": "dev"
+      },
+      "task": "Run full test suite and fix failures",
+      "assigned_at": "2025-12-28T01:47:43.225405",
+      "status": "assigned"
+    },
+    "edu_worker1": {
+      "project": "edu_apps",
+      "env_info": {
+        "port": 5054,
+        "branch": "feature/journey-system",
+        "path": "feature_environments/env_1",
+        "purpose": "Feature: journey-system",
+        "isolation": "full"
+      },
+      "task": "Implement threshold-based error tracking in edu apps:\n1. Add error frequency tracking to unified_app.py\n2. Track repeated errors with timestamps\n3. If same error occurs 3+ times in 1 hour, log to architect dashboard\n4. Use the pattern from config/thresholds.yaml\n5. Test error tracking works\n\nProject: edu_apps, Env: env_1\nURL: https://100.112.58.92:5054/",
+      "assigned_at": "2025-12-28T11:08:47.770040",
+      "status": "assigned"
+    },
+    "error_fixer": {
+      "project": "edu_apps",
+      "env_info": {
+        "port": 5058,
+        "branch": "feature/error-handling",
+        "path": "feature_environments/env_5"
+      },
+      "task": "Fix error handling across all edu apps",
+      "assigned_at": "2025-12-28T01:47:52.270992",
+      "status": "assigned"
+    },
+    "task_worker1": {
+      "project": "edu_apps",
+      "env_info": {
+        "port": 5055,
+        "branch": "feature/gamification-system",
+        "path": "feature_environments/env_2"
+      },
+      "task": "Test gamification system features",
+      "assigned_at": "2025-12-28T01:47:52.851252",
+      "status": "assigned"
+    },
+    "task_worker2": {
+      "project": "edu_apps",
+      "env_info": {
+        "port": 5056,
+        "branch": "feature/dark-mode",
+        "path": "feature_environments/env_3"
+      },
+      "task": "Test dark mode implementation",
+      "assigned_at": "2025-12-28T01:47:53.419110",
+      "status": "assigned"
+    },
+    "arch_fix_8085": {
+      "project": "architect",
+      "env_info": {
+        "scope": "api"
+      },
+      "task": "Refactor session_assigner.py to be config-driven:\n\n1. Create config/session_assigner.yaml with:\n   - projects (edu_apps, kanbanflow, architect) with envs/scopes/ports/branches\n   - rules (principles, prohibited, always) from SOP\n   - session_routing prefixes\n   - prompt_templates\n\n2. Add ConfigLoader class to load YAML config\n3. Replace hardcoded PROJECTS, EDU_FEATURE_ENVS, KANBAN_ENVS, ARCHITECT_SCOPES with config lookups\n4. Update build_task_prompt to pull rules from config instead of duplicating SOP\n5. Make paths dynamic using config + env vars (no hardcoded /Users/jgirmay paths)\n6. Add --config CLI arg (default: config/session_assigner.yaml)\n\nConfig location: /Users/jgirmay/Desktop/gitrepo/pyWork/architect/config/session_assigner.yaml\n\nReference SOP at: /Users/jgirmay/Desktop/gitrepo/pyWork/architect/scripts/SOP.md",
+      "assigned_at": "2025-12-28T06:48:18.000642",
+      "status": "assigned"
+    },
+    "arch_fix_8082": {
+      "project": "architect",
+      "env_info": {
+        "scope": "frontend"
+      },
+      "task": "Fix health check URLs in dashboard - change from absolute URLs (http://127.0.0.1:8080/health) to relative URLs (/health). The loadEnvironmentsStatus function at line 8756 is using 127.0.0.1 which gets blocked. Search for 127.0.0.1 in templates/dashboard.html and static/js files and replace with relative paths.",
+      "assigned_at": "2025-12-28T06:41:48.219294",
+      "status": "assigned"
+    },
+    "kanban_integration": {
+      "project": "architect",
+      "env_info": {
+        "scope": "frontend"
+      },
+      "task": "Fix projects panel filters and archive feature",
+      "assigned_at": "2025-12-28T01:48:02.767400",
+      "status": "assigned"
+    },
+    "server_manager": {
+      "project": "architect",
+      "env_info": {
+        "scope": "workers"
+      },
+      "task": "Verify all monitoring workers are functioning:\n\n1. ERROR DETECTION WORKERS - Check workers that find and fix errors:\n   - Verify error aggregation from /api/errors is working\n   - Check if errors are being logged and grouped properly\n   - Ensure error-to-bug conversion works\n\n2. SERVER HEALTH WORKERS - Check workers that verify servers are running:\n   - Test health checks on all ports: 5051-5058, 6051-6054, 8080-8085\n   - Verify /api/system/health-matrix returns correct status\n   - Check if offline services are detected\n\n3. SESSION MONITORING - Check workers that detect stuck sessions:\n   - Verify tmux session status detection (working/idle/stuck)\n   - Check if sessions in loops are detected\n   - Ensure /api/system/sessions/summary is accurate\n\n4. FIX any workers that are not functioning properly\n\nTest URLs:\n- http://100.112.58.92:8080/api/errors\n- http://100.112.58.92:8080/api/system/health-matrix\n- http://100.112.58.92:8080/api/system/sessions/summary\n- http://100.112.58.92:8080/api/system/decision-data",
+      "assigned_at": "2025-12-28T08:01:39.564675",
+      "status": "assigned"
+    },
+    "nodes_manager": {
+      "project": "architect",
+      "env_info": {
+        "scope": "frontend"
+      },
+      "task": "Improve nodes panel - add node health charts, implement auto-refresh for node metrics",
+      "assigned_at": "2025-12-28T02:12:49.189309",
+      "status": "assigned"
+    },
+    "queue_manager": {
+      "project": "architect",
+      "env_info": {
+        "scope": "frontend"
+      },
+      "task": "Improve task queue panel - add task priority sorting, implement batch operations for task management",
+      "assigned_at": "2025-12-28T02:12:59.181983",
+      "status": "assigned"
+    },
+    "task_worker3": {
+      "project": "kanbanflow",
+      "env_info": {
+        "port": 6054,
+        "branch": "main"
+      },
+      "task": "Run production smoke tests - verify KanbanFlow main branch deployment is stable",
+      "assigned_at": "2025-12-28T02:13:00.624345",
+      "status": "assigned"
+    },
+    "termus": {
+      "project": "architect",
+      "env_info": {
+        "scope": "frontend"
+      },
+      "task": "Test and improve Termius export feature - verify CSV format, test snippet generation",
+      "assigned_at": "2025-12-28T02:13:02.083265",
+      "status": "assigned"
+    },
+    "arch_fix_8080": {
+      "project": "architect",
+      "env_info": {
+        "scope": "readonly"
+      },
+      "task": "Test system overview panel - verify all metrics display correctly, check auto-refresh works, test navigation and alerts rendering",
+      "assigned_at": "2025-12-28T06:12:19.854271",
+      "status": "assigned"
+    },
+    "command_runner": {
+      "project": "architect",
+      "env_info": {
+        "scope": "readonly"
+      },
+      "task": "Run comprehensive test suite - check all API endpoints return valid JSON, verify no 500 errors, test authentication flow",
+      "assigned_at": "2025-12-28T06:12:21.342908",
+      "status": "assigned"
+    },
+    "fastapi_assessment": {
+      "project": "architect",
+      "env_info": {
+        "scope": "readonly"
+      },
+      "task": "Code quality review - identify unused imports, check for proper error handling patterns, review database connection usage",
+      "assigned_at": "2025-12-28T06:12:22.915460",
+      "status": "assigned"
+    },
+    "link_checker": {
+      "project": "architect",
+      "env_info": {
+        "scope": "readonly"
+      },
+      "task": "Validate documentation links in CLAUDE.md and README files, verify all referenced file paths exist, check for broken URLs",
+      "assigned_at": "2025-12-28T06:12:24.495095",
+      "status": "assigned"
+    }
+  },
+  "env_assignments": {
+    "edu_apps": {
+      "basic_edu_dev": "env_1",
+      "edu_worker1": "env_1",
+      "error_fixer": "env_5",
+      "task_worker1": "env_2",
+      "task_worker2": "env_3"
+    },
+    "kanbanflow": {
+      "kanban_frontend": "feature2",
+      "kanban_backend": "feature1",
+      "kanban_tests": "dev",
+      "task_worker3": "prod"
+    }
+  },
+  "scope_locks": {
+    "architect": {
+      "arch_fix_8081": "readonly",
+      "arch_overview": "frontend",
+      "arch_fix_8085": "api",
+      "arch_fix_8082": "frontend",
+      "kanban_integration": "frontend",
+      "server_manager": "workers",
+      "nodes_manager": "frontend",
+      "queue_manager": "frontend",
+      "termus": "frontend",
+      "arch_fix_8080": "readonly",
+      "command_runner": "readonly",
+      "fastapi_assessment": "readonly",
+      "link_checker": "readonly"
+    }
+  },
+  "task_history": [
+    {
+      "session": "arch_fix_8081",
+      "project": "architect",
+      "task": "Fix database locking - add WAL mode, proper connection handling",
+      "timestamp": "2025-12-28T01:37:15.063831"
+    },
+    {
+      "session": "arch_overview",
+      "project": "architect",
+      "task": "Fix dataStore.js null response handling",
+      "timestamp": "2025-12-28T01:37:16.607675"
+    },
+    {
+      "session": "arch_fix_8082",
+      "project": "architect",
+      "task": "Fix CSS and template issues",
+      "timestamp": "2025-12-28T01:37:18.119680"
+    },
+    {
+      "session": "arch_fix_8080",
+      "project": "architect",
+      "task": "Investigate port 8080 startup issues",
+      "timestamp": "2025-12-28T01:37:28.265132"
+    },
+    {
+      "session": "arch_fix_8085",
+      "project": "architect",
+      "task": "Fix API routes and endpoints",
+      "timestamp": "2025-12-28T01:37:29.653492"
+    },
+    {
+      "session": "basic_edu_dev",
+      "project": "edu_apps",
+      "task": "Fix piano app - no notes displayed, make fully functional",
+      "timestamp": "2025-12-28T01:37:40.150176"
+    },
+    {
+      "session": "edu_worker1",
+      "project": "edu_apps",
+      "task": "Fix piano accessibility features",
+      "timestamp": "2025-12-28T01:37:41.609036"
+    },
+    {
+      "session": "error_fixer",
+      "project": "edu_apps",
+      "task": "Fix error handling across all edu apps",
+      "timestamp": "2025-12-28T01:37:43.057243"
+    },
+    {
+      "session": "task_worker1",
+      "project": "edu_apps",
+      "task": "Test gamification system features",
+      "timestamp": "2025-12-28T01:37:54.833361"
+    },
+    {
+      "session": "task_worker2",
+      "project": "edu_apps",
+      "task": "Test dark mode implementation",
+      "timestamp": "2025-12-28T01:37:56.262878"
+    },
+    {
+      "session": "kanban_backend",
+      "project": "kanbanflow",
+      "task": "Add board templates API endpoint",
+      "timestamp": "2025-12-28T01:37:57.686787"
+    },
+    {
+      "session": "kanban_frontend",
+      "project": "kanbanflow",
+      "task": "Fix create board modal functionality",
+      "timestamp": "2025-12-28T01:37:59.123894"
+    },
+    {
+      "session": "kanban_tests",
+      "project": "kanbanflow",
+      "task": "Run full test suite and fix failures",
+      "timestamp": "2025-12-28T01:38:09.457026"
+    },
+    {
+      "session": "kanban_integration",
+      "project": "architect",
+      "task": "Fix architect projects panel filters and archive feature",
+      "timestamp": "2025-12-28T01:38:11.044434"
+    },
+    {
+      "session": "server_manager",
+      "project": "architect",
+      "task": "Monitor server health and restart failing services",
+      "timestamp": "2025-12-28T01:38:12.457399"
+    },
+    {
+      "session": "arch_fix_8081",
+      "project": "architect",
+      "task": "Fix database locking - add WAL mode, proper connection handling",
+      "timestamp": "2025-12-28T01:47:32.455395"
+    },
+    {
+      "session": "arch_overview",
+      "project": "architect",
+      "task": "Fix dataStore.js null response handling",
+      "timestamp": "2025-12-28T01:47:33.029810"
+    },
+    {
+      "session": "basic_edu_dev",
+      "project": "edu_apps",
+      "task": "Fix piano app - ensure notes display and audio works",
+      "timestamp": "2025-12-28T01:47:33.613006"
+    },
+    {
+      "session": "kanban_frontend",
+      "project": "kanbanflow",
+      "task": "Fix create board modal functionality",
+      "timestamp": "2025-12-28T01:47:42.088878"
+    },
+    {
+      "session": "kanban_backend",
+      "project": "kanbanflow",
+      "task": "Add board templates API endpoint",
+      "timestamp": "2025-12-28T01:47:42.673623"
+    },
+    {
+      "session": "kanban_tests",
+      "project": "kanbanflow",
+      "task": "Run full test suite and fix failures",
+      "timestamp": "2025-12-28T01:47:43.225416"
+    },
+    {
+      "session": "edu_worker1",
+      "project": "edu_apps",
+      "task": "Fix piano accessibility features",
+      "timestamp": "2025-12-28T01:47:51.711890"
+    },
+    {
+      "session": "error_fixer",
+      "project": "edu_apps",
+      "task": "Fix error handling across all edu apps",
+      "timestamp": "2025-12-28T01:47:52.271013"
+    },
+    {
+      "session": "task_worker1",
+      "project": "edu_apps",
+      "task": "Test gamification system features",
+      "timestamp": "2025-12-28T01:47:52.851271"
+    },
+    {
+      "session": "task_worker2",
+      "project": "edu_apps",
+      "task": "Test dark mode implementation",
+      "timestamp": "2025-12-28T01:47:53.419123"
+    },
+    {
+      "session": "arch_fix_8085",
+      "project": "architect",
+      "task": "Fix API routes and endpoints",
+      "timestamp": "2025-12-28T01:48:01.609745"
+    },
+    {
+      "session": "arch_fix_8082",
+      "project": "architect",
+      "task": "Fix CSS and template issues",
+      "timestamp": "2025-12-28T01:48:02.171085"
+    },
+    {
+      "session": "kanban_integration",
+      "project": "architect",
+      "task": "Fix projects panel filters and archive feature",
+      "timestamp": "2025-12-28T01:48:02.767415"
+    },
+    {
+      "session": "server_manager",
+      "project": "architect",
+      "task": "Monitor server health",
+      "timestamp": "2025-12-28T01:48:03.326270"
+    },
+    {
+      "session": "arch_fix_8080",
+      "project": "architect",
+      "task": "architect",
+      "timestamp": "2025-12-28T02:12:17.886788"
+    },
+    {
+      "session": "command_runner",
+      "project": "architect",
+      "task": "Run comprehensive test suite - check all API endpoints return valid JSON, verify no 500 errors",
+      "timestamp": "2025-12-28T02:12:44.747610"
+    },
+    {
+      "session": "fastapi_assessment",
+      "project": "architect",
+      "task": "Code quality review - identify unused imports, check for proper error handling patterns",
+      "timestamp": "2025-12-28T02:12:46.212763"
+    },
+    {
+      "session": "link_checker",
+      "project": "architect",
+      "task": "Validate documentation links in CLAUDE.md and README files, verify all referenced file paths exist",
+      "timestamp": "2025-12-28T02:12:47.652446"
+    },
+    {
+      "session": "nodes_manager",
+      "project": "architect",
+      "task": "Improve nodes panel - add node health charts, implement auto-refresh for node metrics",
+      "timestamp": "2025-12-28T02:12:49.189323"
+    },
+    {
+      "session": "queue_manager",
+      "project": "architect",
+      "task": "Improve task queue panel - add task priority sorting, implement batch operations for task management",
+      "timestamp": "2025-12-28T02:12:59.181997"
+    },
+    {
+      "session": "task_worker3",
+      "project": "kanbanflow",
+      "task": "Run production smoke tests - verify KanbanFlow main branch deployment is stable",
+      "timestamp": "2025-12-28T02:13:00.624358"
+    },
+    {
+      "session": "termus",
+      "project": "architect",
+      "task": "Test and improve Termius export feature - verify CSV format, test snippet generation",
+      "timestamp": "2025-12-28T02:13:02.083280"
+    },
+    {
+      "session": "command_runner",
+      "project": "architect",
+      "task": "Run comprehensive test suite - check all API endpoints return valid JSON, verify no 500 errors",
+      "timestamp": "2025-12-28T05:38:46.890978"
+    },
+    {
+      "session": "arch_fix_8080",
+      "project": "architect",
+      "task": "Test system overview panel - verify all metrics display correctly, check auto-refresh works, test navigation and alerts rendering",
+      "timestamp": "2025-12-28T06:12:19.854287"
+    },
+    {
+      "session": "command_runner",
+      "project": "architect",
+      "task": "Run comprehensive test suite - check all API endpoints return valid JSON, verify no 500 errors, test authentication flow",
+      "timestamp": "2025-12-28T06:12:21.342921"
+    },
+    {
+      "session": "fastapi_assessment",
+      "project": "architect",
+      "task": "Code quality review - identify unused imports, check for proper error handling patterns, review database connection usage",
+      "timestamp": "2025-12-28T06:12:22.915473"
+    },
+    {
+      "session": "link_checker",
+      "project": "architect",
+      "task": "Validate documentation links in CLAUDE.md and README files, verify all referenced file paths exist, check for broken URLs",
+      "timestamp": "2025-12-28T06:12:24.495110"
+    },
+    {
+      "session": "arch_fix_8082",
+      "project": "architect",
+      "task": "Fix testing panel - test_runs table is empty, investigate why tests are missing, check if there's a backup or if test configurations need to be re-created. The API endpoint is /api/tests/runs. Port 8085 is the HTTPS architect instance.",
+      "timestamp": "2025-12-28T06:13:02.775963"
+    },
+    {
+      "session": "basic_edu_dev",
+      "project": "edu_apps",
+      "task": "Fix piano note placement and spacing - notes not positioned correctly, spacing issues in completed results display. URL: https://100.112.58.92:5063/piano/",
+      "timestamp": "2025-12-28T06:21:13.739643"
+    },
+    {
+      "session": "arch_fix_8082",
+      "project": "architect",
+      "task": "Fix health check URLs in dashboard - change from absolute URLs (http://127.0.0.1:8080/health) to relative URLs (/health). The loadEnvironmentsStatus function at line 8756 is using 127.0.0.1 which gets blocked. Search for 127.0.0.1 in templates/dashboard.html and static/js files and replace with relative paths.",
+      "timestamp": "2025-12-28T06:41:48.219315"
+    },
+    {
+      "session": "arch_fix_8085",
+      "project": "architect",
+      "task": "Refactor session_assigner.py to be config-driven:\n\n1. Create config/session_assigner.yaml with:\n   - projects (edu_apps, kanbanflow, architect) with envs/scopes/ports/branches\n   - rules (principles, prohibited, always) from SOP\n   - session_routing prefixes\n   - prompt_templates\n\n2. Add ConfigLoader class to load YAML config\n3. Replace hardcoded PROJECTS, EDU_FEATURE_ENVS, KANBAN_ENVS, ARCHITECT_SCOPES with config lookups\n4. Update build_task_prompt to pull rules from config instead of duplicating SOP\n5. Make paths dynamic using config + env vars (no hardcoded /Users/jgirmay paths)\n6. Add --config CLI arg (default: config/session_assigner.yaml)\n\nConfig location: /Users/jgirmay/Desktop/gitrepo/pyWork/architect/config/session_assigner.yaml\n\nReference SOP at: /Users/jgirmay/Desktop/gitrepo/pyWork/architect/scripts/SOP.md",
+      "timestamp": "2025-12-28T06:48:18.000666"
+    },
+    {
+      "session": "server_manager",
+      "project": "architect",
+      "task": "Verify all monitoring workers are functioning:\n\n1. ERROR DETECTION WORKERS - Check workers that find and fix errors:\n   - Verify error aggregation from /api/errors is working\n   - Check if errors are being logged and grouped properly\n   - Ensure error-to-bug conversion works\n\n2. SERVER HEALTH WORKERS - Check workers that verify servers are running:\n   - Test health checks on all ports: 5051-5058, 6051-6054, 8080-8085\n   - Verify /api/system/health-matrix returns correct status\n   - Check if offline services are detected\n\n3. SESSION MONITORING - Check workers that detect stuck sessions:\n   - Verify tmux session status detection (working/idle/stuck)\n   - Check if sessions in loops are detected\n   - Ensure /api/system/sessions/summary is accurate\n\n4. FIX any workers that are not functioning properly\n\nTest URLs:\n- http://100.112.58.92:8080/api/errors\n- http://100.112.58.92:8080/api/system/health-matrix\n- http://100.112.58.92:8080/api/system/sessions/summary\n- http://100.112.58.92:8080/api/system/decision-data",
+      "timestamp": "2025-12-28T08:01:39.564701"
+    },
+    {
+      "session": "edu_worker1",
+      "project": "edu_apps",
+      "task": "Implement threshold-based error tracking in edu apps:\n1. Add error frequency tracking to unified_app.py\n2. Track repeated errors with timestamps\n3. If same error occurs 3+ times in 1 hour, log to architect dashboard\n4. Use the pattern from config/thresholds.yaml\n5. Test error tracking works\n\nProject: edu_apps, Env: env_1\nURL: https://100.112.58.92:5054/",
+      "timestamp": "2025-12-28T11:08:47.770065"
+    },
+    {
+      "session": "arch_overview",
+      "project": "architect",
+      "task": "Fix broken queue buttons - Output and Details buttons not working on queue panel. The captureTmuxOutput and showRunDetail functions may be missing or broken. Check dashboard.html for these onclick handlers and fix them.",
+      "timestamp": "2025-12-28T18:20:21.042349"
+    },
+    {
+      "session": "arch_fix_8081",
+      "project": "architect",
+      "task": "List all Python files in the current directory and count them",
+      "timestamp": "2025-12-29T01:53:25.313184"
+    }
+  ]
+}

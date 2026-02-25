@@ -1,0 +1,102 @@
+{
+  "environments": [
+    {
+      "name": "dev1",
+      "directory": "architect-dev1",
+      "path": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect-dev1",
+      "git_branch": "env/dev1",
+      "ports": {
+        "dev": 8081,
+        "qa": 8091,
+        "staging": 8101
+      },
+      "databases": {
+        "dev": "data/dev/architect.db",
+        "qa": "data/qa/architect.db",
+        "staging": "data/staging/architect.db"
+      },
+      "worker_session": "dev1_worker",
+      "pid_file": "/tmp/architect_dashboard_dev1.pid",
+      "log_file": "logs/architect_dev1.log"
+    },
+    {
+      "name": "dev2",
+      "directory": "architect-dev2",
+      "path": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect-dev2",
+      "git_branch": "env/dev2",
+      "ports": {
+        "dev": 8082,
+        "qa": 8092,
+        "staging": 8102
+      },
+      "databases": {
+        "dev": "data/dev/architect.db",
+        "qa": "data/qa/architect.db",
+        "staging": "data/staging/architect.db"
+      },
+      "worker_session": "dev2_worker",
+      "pid_file": "/tmp/architect_dashboard_dev2.pid",
+      "log_file": "logs/architect_dev2.log"
+    },
+    {
+      "name": "dev3",
+      "directory": "architect-dev3",
+      "path": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect-dev3",
+      "git_branch": "env/dev3",
+      "ports": {
+        "dev": 8083,
+        "qa": 8093,
+        "staging": 8103
+      },
+      "databases": {
+        "dev": "data/dev/architect.db",
+        "qa": "data/qa/architect.db",
+        "staging": "data/staging/architect.db"
+      },
+      "worker_session": "dev3_worker",
+      "pid_file": "/tmp/architect_dashboard_dev3.pid",
+      "log_file": "logs/architect_dev3.log"
+    },
+    {
+      "name": "dev4",
+      "directory": "architect-dev4",
+      "path": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect-dev4",
+      "git_branch": "env/dev4",
+      "ports": {
+        "dev": 8084,
+        "qa": 8094,
+        "staging": 8104
+      },
+      "databases": {
+        "dev": "data/dev/architect.db",
+        "qa": "data/qa/architect.db",
+        "staging": "data/staging/architect.db"
+      },
+      "worker_session": "dev4_worker",
+      "pid_file": "/tmp/architect_dashboard_dev4.pid",
+      "log_file": "logs/architect_dev4.log"
+    },
+    {
+      "name": "dev5",
+      "directory": "architect-dev5",
+      "path": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect-dev5",
+      "git_branch": "env/dev5",
+      "ports": {
+        "dev": 8085,
+        "qa": 8095,
+        "staging": 8105
+      },
+      "databases": {
+        "dev": "data/dev/architect.db",
+        "qa": "data/qa/architect.db",
+        "staging": "data/staging/architect.db"
+      },
+      "worker_session": "dev5_worker",
+      "pid_file": "/tmp/architect_dashboard_dev5.pid",
+      "log_file": "logs/architect_dev5.log"
+    }
+  ],
+  "last_updated": "2026-02-16T15:59:28.241761",
+  "total_environments": 5,
+  "total_sessions": 0
+}

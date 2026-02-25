@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-02-14T19:00:50.856951",
+  "task": "What is the best time to visit Ethiopia?",
+  "routing": {
+    "target": "perplexity",
+    "confidence": 0.45999999999999996,
+    "reasoning": "Matches: Keyword: 'what is', Pattern match | Quick facts, current events, simple searches"
+  },
+  "execution": {
+    "status": "success",
+    "method": "perplexity_url",
+    "url": "https://www.perplexity.ai/search/what-is-the-best-time-to-visit-txDn66vfRNuC0erupYTMgQ",
+    "verified": true
+  }
+}

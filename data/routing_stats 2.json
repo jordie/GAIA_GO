@@ -1,0 +1,155 @@
+{
+  "total_routes": 12,
+  "by_target": {
+    "claude": 6,
+    "perplexity": 5,
+    "comet": 1
+  },
+  "feedback": {},
+  "history": [
+    {
+      "timestamp": "2026-02-14T18:59:55.997945",
+      "task": "Research the best hotels in Addis Ababa for families",
+      "target": "claude",
+      "confidence": 0.222,
+      "quality_needed": 0.65,
+      "scores": {
+        "claude": 0.222,
+        "perplexity": 0.0,
+        "comet": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-14T18:59:55.998252",
+      "task": "What is the capital of Ethiopia?",
+      "target": "perplexity",
+      "confidence": 0.46,
+      "quality_needed": 0.5,
+      "scores": {
+        "claude": 0.095,
+        "perplexity": 0.46,
+        "comet": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-14T18:59:55.998464",
+      "task": "Open Perplexity and search for flight prices",
+      "target": "perplexity",
+      "confidence": 0.28,
+      "quality_needed": 0.5,
+      "scores": {
+        "claude": 0.095,
+        "perplexity": 0.28,
+        "comet": 0.28
+      }
+    },
+    {
+      "timestamp": "2026-02-14T18:59:55.999058",
+      "task": "Analyze the implications of the new tax policy",
+      "target": "claude",
+      "confidence": 0.443,
+      "quality_needed": 0.5,
+      "scores": {
+        "claude": 0.443,
+        "perplexity": 0.0,
+        "comet": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-14T18:59:55.999305",
+      "task": "Find the phone number for Ethiopian Airlines",
+      "target": "perplexity",
+      "confidence": 0.74,
+      "quality_needed": 0.5,
+      "scores": {
+        "claude": 0.095,
+        "perplexity": 0.74,
+        "comet": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-14T18:59:55.999582",
+      "task": "Create a Python function to calculate compound interest",
+      "target": "claude",
+      "confidence": 0.095,
+      "quality_needed": 0.5,
+      "scores": {
+        "claude": 0.095,
+        "perplexity": 0.0,
+        "comet": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-14T18:59:55.999932",
+      "task": "Click the submit button on the registration form",
+      "target": "comet",
+      "confidence": 0.74,
+      "quality_needed": 0.5,
+      "scores": {
+        "claude": 0.095,
+        "perplexity": 0.0,
+        "comet": 0.74
+      }
+    },
+    {
+      "timestamp": "2026-02-14T18:59:56.000222",
+      "task": "Compare PostgreSQL vs MySQL for our use case",
+      "target": "claude",
+      "confidence": 0.222,
+      "quality_needed": 0.5,
+      "scores": {
+        "claude": 0.222,
+        "perplexity": 0.0,
+        "comet": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-14T18:59:56.000468",
+      "task": "What's the current weather in Addis Ababa?",
+      "target": "perplexity",
+      "confidence": 0.56,
+      "quality_needed": 0.5,
+      "scores": {
+        "claude": 0.095,
+        "perplexity": 0.56,
+        "comet": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-14T18:59:56.000708",
+      "task": "Design a scalable architecture for the payment system",
+      "target": "claude",
+      "confidence": 0.222,
+      "quality_needed": 0.5,
+      "scores": {
+        "claude": 0.222,
+        "perplexity": 0.0,
+        "comet": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-14T19:00:02.944464",
+      "task": "Research the best flight options for a family of 6 traveling to Ethiopia in July 2026",
+      "target": "claude",
+      "confidence": 0.222,
+      "quality_needed": 0.65,
+      "scores": {
+        "claude": 0.222,
+        "perplexity": 0.0,
+        "comet": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-14T19:00:50.856657",
+      "task": "What is the best time to visit Ethiopia?",
+      "target": "perplexity",
+      "confidence": 0.46,
+      "quality_needed": 0.5,
+      "scores": {
+        "claude": 0.142,
+        "perplexity": 0.46,
+        "comet": 0.0
+      }
+    }
+  ]
+}

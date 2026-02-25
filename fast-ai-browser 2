@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+"""
+Fast AI Browser - Text-only, no vision (much faster)
+Uses Ollama to intelligently navigate using page text only
+"""
+
+import sys
+import time
+import json
+import requests
+from pathlib import Path
+
+
+def ask_ollama_fast(prompt, model="llama3:latest"):
+    """Ask Ollama quickly (text-only, no images)."""
+    try:
+        response = requests.post(
+            "http://localhost:11434/api/generate",
+            json={"model": model, "prompt": prompt, "stream": False},
+            timeout=30
+        )
+        if response.status_code == 200:
+            return response.json()['response']
+    except Exception as e:
+        print(f"❌ Ollama error: {e}")
+    return None
+
+
+def navigate_fast(goal, url, username=None, password=None):
+    """Fast navigation using text analysis only."""
+    from selenium import webdriver
+    from selenium.webdriver.chrome.service import Service
+    from selenium.webdriver.chrome.options import Options
+    from selenium.webdriver.common.by import By
+    from webdriver_manager.chrome import ChromeDriverManager
+
+    options = Options()
+    options.add_argument('--headless=new')  # Faster
+    options.add_argument('--disable-blink-features=AutomationControlled')
+
+    print("🚀 Starting fast AI browser (headless, text-only)...")
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=options)
+
+    try:
+        print(f"🎯 Goal: {goal}")
+        print(f"🌐 Starting: {url}\n")
+
+        driver.get(url)
+        time.sleep(2)
+
+        for step in range(10):
+            print(f"📍 Step {step + 1}/10")
+
+            page_text = driver.find_element(By.TAG_NAME, 'body').text
+            current_url = driver.current_url
+            title = driver.title
+
+            print(f"  Page: {title}")
+            print(f"  URL: {current_url}")
+
+            # Check if goal achieved
+            check_prompt = f"""Goal: {goal}
+
+Current page: {title}
+Content (first 1000 chars):
+{page_text[:1000]}
+
+Question: Is the answer to the goal on this page?
+If YES, extract and return: ANSWER: [the answer]
+If NO, return: NOT_FOUND"""
+
+            print("  🤔 Checking if answer is here...")
+            check = ask_ollama_fast(check_prompt)
+
+            if check and "ANSWER:" in check:
+                answer = check.split("ANSWER:")[1].strip()
+                print(f"\n✅ FOUND: {answer}")
+                return {'success': True, 'answer': answer, 'url': current_url}
+
+            # Decide next action
+            action_prompt = f"""You are helping navigate a website to: {goal}
+
+Current page: {title}
+Available links (first 20 lines):
+{chr(10).join(page_text.split(chr(10))[:20])}
+
+What should I do? Choose ONE:
+1. CLICK: [exact link text] - to click a link
+2. LOGIN - if you see email/password fields
+3. IMPOSSIBLE - if goal unreachable
+
+Respond with ONLY the action."""
+
+            print("  🤔 Deciding next action...")
+            action = ask_ollama_fast(action_prompt)
+            print(f"  💭 Action: {action}")
+
+            if not action:
+                continue
+
+            if "CLICK:" in action:
+                link_text = action.split("CLICK:")[1].strip()
+                print(f"  🖱️  Clicking: {link_text}")
+                try:
+                    driver.find_element(By.PARTIAL_LINK_TEXT, link_text).click()
+                    time.sleep(2)
+                except:
+                    print(f"  ⚠️  Link not found")
+
+            elif "LOGIN" in action and username and password:
+                print("  📝 Filling login form...")
+                try:
+                    driver.find_element(By.CSS_SELECTOR, 'input[type="email"]').send_keys(username)
+                    driver.find_element(By.CSS_SELECTOR, 'input[type="password"]').send_keys(password)
+                    driver.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()
+                    time.sleep(3)
+                except Exception as e:
+                    print(f"  ⚠️  Login failed: {e}")
+
+            elif "IMPOSSIBLE" in action:
+                return {'success': False, 'error': 'Goal unreachable'}
+
+            print()
+
+        return {'success': False, 'error': 'Max steps reached'}
+
+    finally:
+        driver.quit()
+
+
+if __name__ == '__main__':
+    if len(sys.argv) < 3:
+        print('Usage: fast-ai-browser "question" <url> [user] [pass]')
+        sys.exit(1)
+
+    result = navigate_fast(sys.argv[1], sys.argv[2],
+                          sys.argv[3] if len(sys.argv) > 3 else None,
+                          sys.argv[4] if len(sys.argv) > 4 else None)
+
+    print("\n" + "="*60)
+    print(json.dumps(result, indent=2))
+
+    with open('/tmp/fast_ai_result.json', 'w') as f:
+        json.dump(result, f, indent=2)
+    print("📄 Saved: /tmp/fast_ai_result.json")

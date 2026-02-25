@@ -1,0 +1,571 @@
+{
+  "project": "claude_browser_agent",
+  "generated_at": "2025-12-25T01:31:40.364515",
+  "total_tasks": 42,
+  "total_milestones": 7,
+  "milestones": [
+    {
+      "id": "claude_browser_agent_dev_1",
+      "name": "Claude_Browser_Agent - Development Phase 1",
+      "description": "Feature implementation: 10 features",
+      "phase": "development",
+      "start_date": "2025-12-25T01:31:40.364434",
+      "target_date": "2026-01-01T01:31:40.364434",
+      "tasks": [
+        {
+          "title": "Create migration system",
+          "description": "Create migration system",
+          "priority": 3,
+          "complexity": "complex",
+          "estimated_hours": 16.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/bubbly-splashing-puppy.md",
+          "line_number": 228
+        },
+        {
+          "title": "Create race view HTML structure",
+          "description": "Create race view HTML structure",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/shimmering-herding-fairy.md",
+          "line_number": 189
+        },
+        {
+          "title": "Create race-mode.js with basic car movement",
+          "description": "Create race-mode.js with basic car movement",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/shimmering-herding-fairy.md",
+          "line_number": 191
+        },
+        {
+          "title": "Create backup: `cp unified_app.py unified_app.py.backup`",
+          "description": "Create backup: `cp unified_app.py unified_app.py.backup`",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/mossy-marinating-patterson.md",
+          "line_number": 226
+        },
+        {
+          "title": "Create race lobby view (difficulty selection, start button)",
+          "description": "Create race lobby view (difficulty selection, start button)",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/abundant-wishing-tulip.md",
+          "line_number": 131
+        },
+        {
+          "title": "Create race track component with CSS animations",
+          "description": "Create race track component with CSS animations",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/abundant-wishing-tulip.md",
+          "line_number": 132
+        },
+        {
+          "title": "Create results modal",
+          "description": "Create results modal",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/abundant-wishing-tulip.md",
+          "line_number": 133
+        },
+        {
+          "title": "Implement `RacingGame` class in `script.js`",
+          "description": "Implement `RacingGame` class in `script.js`",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/abundant-wishing-tulip.md",
+          "line_number": 136
+        },
+        {
+          "title": "Create `.gitignore` for data/, *.pyc, __pycache__, etc.",
+          "description": "Create `.gitignore` for data/, *.pyc, __pycache__, etc.",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/bubbly-splashing-puppy.md",
+          "line_number": 37
+        },
+        {
+          "title": "Create branches: main, dev, qa",
+          "description": "Create branches: main, dev, qa",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/bubbly-splashing-puppy.md",
+          "line_number": 38
+        }
+      ],
+      "total_hours": 52.0,
+      "status": "pending"
+    },
+    {
+      "id": "claude_browser_agent_dev_2",
+      "name": "Claude_Browser_Agent - Development Phase 2",
+      "description": "Feature implementation: 10 features",
+      "phase": "development",
+      "start_date": "2026-01-01T01:31:40.364446",
+      "target_date": "2026-01-08T01:31:40.364446",
+      "tasks": [
+        {
+          "title": "Add Race tab to navigation",
+          "description": "Add Race tab to navigation",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/shimmering-herding-fairy.md",
+          "line_number": 188
+        },
+        {
+          "title": "Add race track CSS (lanes, cars, finish line)",
+          "description": "Add race track CSS (lanes, cars, finish line)",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/shimmering-herding-fairy.md",
+          "line_number": 190
+        },
+        {
+          "title": "Add 3-2-1-GO countdown animation",
+          "description": "Add 3-2-1-GO countdown animation",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/shimmering-herding-fairy.md",
+          "line_number": 195
+        },
+        {
+          "title": "Add finish line celebration",
+          "description": "Add finish line celebration",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/shimmering-herding-fairy.md",
+          "line_number": 196
+        },
+        {
+          "title": "Add \"Race Again\" button",
+          "description": "Add \"Race Again\" button",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/shimmering-herding-fairy.md",
+          "line_number": 198
+        },
+        {
+          "title": "Add ghost car elements",
+          "description": "Add ghost car elements",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/shimmering-herding-fairy.md",
+          "line_number": 201
+        },
+        {
+          "title": "Add difficulty selector (Easy/Medium/Hard ghosts)",
+          "description": "Add difficulty selector (Easy/Medium/Hard ghosts)",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/shimmering-herding-fairy.md",
+          "line_number": 204
+        },
+        {
+          "title": "Add `RacingGame` class to `static/script.js`",
+          "description": "Add `RacingGame` class to `static/script.js`",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/abundant-wishing-tulip.md",
+          "line_number": 92
+        },
+        {
+          "title": "Add racing styles to `static/style.css`",
+          "description": "Add racing styles to `static/style.css`",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/abundant-wishing-tulip.md",
+          "line_number": 93
+        },
+        {
+          "title": "Add race sounds to `static/sounds.js`",
+          "description": "Add race sounds to `static/sounds.js`",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/abundant-wishing-tulip.md",
+          "line_number": 94
+        }
+      ],
+      "total_hours": 10.0,
+      "status": "pending"
+    },
+    {
+      "id": "claude_browser_agent_dev_3",
+      "name": "Claude_Browser_Agent - Development Phase 3",
+      "description": "Feature implementation: 10 features",
+      "phase": "development",
+      "start_date": "2026-01-08T01:31:40.364450",
+      "target_date": "2026-01-15T01:31:40.364450",
+      "tasks": [
+        {
+          "title": "Add `races` and `user_racing_stats` tables to database",
+          "description": "Add `races` and `user_racing_stats` tables to database",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/abundant-wishing-tulip.md",
+          "line_number": 124
+        },
+        {
+          "title": "Add `/api/race/start` endpoint - generates text, creates AI opponents",
+          "description": "Add `/api/race/start` endpoint - generates text, creates AI opponents",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/abundant-wishing-tulip.md",
+          "line_number": 125
+        },
+        {
+          "title": "Add `/api/race/finish` endpoint - saves results, calculates XP",
+          "description": "Add `/api/race/finish` endpoint - saves results, calculates XP",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/abundant-wishing-tulip.md",
+          "line_number": 126
+        },
+        {
+          "title": "Add `/api/race/stats` and `/api/race/leaderboard` endpoints",
+          "description": "Add `/api/race/stats` and `/api/race/leaderboard` endpoints",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/abundant-wishing-tulip.md",
+          "line_number": 127
+        },
+        {
+          "title": "Add \"Race\" tab to navigation in `index.html`",
+          "description": "Add \"Race\" tab to navigation in `index.html`",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/abundant-wishing-tulip.md",
+          "line_number": 130
+        },
+        {
+          "title": "Add AI opponent simulation (progress over time based on target WPM)",
+          "description": "Add AI opponent simulation (progress over time based on target WPM)",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/abundant-wishing-tulip.md",
+          "line_number": 138
+        },
+        {
+          "title": "Add countdown, race timer, finish detection",
+          "description": "Add countdown, race timer, finish detection",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/abundant-wishing-tulip.md",
+          "line_number": 139
+        },
+        {
+          "title": "Add race sounds (countdown, engine, finish)",
+          "description": "Add race sounds (countdown, engine, finish)",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/abundant-wishing-tulip.md",
+          "line_number": 142
+        },
+        {
+          "title": "Add car animations (movement, speed effects)",
+          "description": "Add car animations (movement, speed effects)",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/abundant-wishing-tulip.md",
+          "line_number": 143
+        },
+        {
+          "title": "Add XP animations and level-up notifications",
+          "description": "Add XP animations and level-up notifications",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/abundant-wishing-tulip.md",
+          "line_number": 144
+        }
+      ],
+      "total_hours": 10.0,
+      "status": "pending"
+    },
+    {
+      "id": "claude_browser_agent_dev_4",
+      "name": "Claude_Browser_Agent - Development Phase 4",
+      "description": "Feature implementation: 4 features",
+      "phase": "development",
+      "start_date": "2026-01-15T01:31:40.364454",
+      "target_date": "2026-01-22T01:31:40.364454",
+      "tasks": [
+        {
+          "title": "Update dashboard UI",
+          "description": "Update dashboard UI",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/bubbly-splashing-puppy.md",
+          "line_number": 233
+        },
+        {
+          "title": "TODO: Implement actual Google Sheets API",
+          "description": "Implement actual Google Sheets API",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/Desktop/gitrepo/pyWork/claude_browser_agent/core/sync.py",
+          "line_number": 62
+        },
+        {
+          "title": "TODO: Exchange auth code for tokens",
+          "description": "Exchange auth code for tokens",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/Desktop/gitrepo/pyWork/claude_browser_agent/core/sync.py",
+          "line_number": 73
+        },
+        {
+          "title": "TODO: Implement Google Sheets sync",
+          "description": "Implement Google Sheets sync",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/Desktop/gitrepo/pyWork/claude_browser_agent/webapp/app.py",
+          "line_number": 416
+        }
+      ],
+      "total_hours": 4.0,
+      "status": "pending"
+    },
+    {
+      "id": "claude_browser_agent_bugfix",
+      "name": "Claude_Browser_Agent - Bug Fixes",
+      "description": "Critical bug fixes: 1 issues",
+      "phase": "development",
+      "start_date": "2026-01-22T01:31:40.364458",
+      "target_date": "2026-01-27T01:31:40.364458",
+      "tasks": [
+        {
+          "title": "Implement ghost racer logic (fixed WPM targets)",
+          "description": "Implement ghost racer logic (fixed WPM targets)",
+          "priority": 2,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "bug",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/shimmering-herding-fairy.md",
+          "line_number": 202
+        }
+      ],
+      "total_hours": 4.0,
+      "status": "pending"
+    },
+    {
+      "id": "claude_browser_agent_testing",
+      "name": "Claude_Browser_Agent - Testing",
+      "description": "Testing and QA: 6 test suites",
+      "phase": "testing",
+      "start_date": "2026-01-08T01:31:40.364465",
+      "target_date": "2026-01-13T01:31:40.364465",
+      "tasks": [
+        {
+          "title": "Create test framework",
+          "description": "Create test framework",
+          "priority": 3,
+          "complexity": "complex",
+          "estimated_hours": 16.0,
+          "category": "test",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/bubbly-splashing-puppy.md",
+          "line_number": 230
+        },
+        {
+          "title": "Add test tables migration",
+          "description": "Add test tables migration",
+          "priority": 3,
+          "complexity": "complex",
+          "estimated_hours": 16.0,
+          "category": "test",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/bubbly-splashing-puppy.md",
+          "line_number": 231
+        },
+        {
+          "title": "Create `tests/` directory with pytest structure",
+          "description": "Create `tests/` directory with pytest structure",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "test",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/bubbly-splashing-puppy.md",
+          "line_number": 65
+        },
+        {
+          "title": "Add test categories:",
+          "description": "Add test categories:",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "test",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/bubbly-splashing-puppy.md",
+          "line_number": 66
+        },
+        {
+          "title": "Add test runner API endpoint: `POST /api/tests/run`",
+          "description": "Add test runner API endpoint: `POST /api/tests/run`",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "test",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/bubbly-splashing-puppy.md",
+          "line_number": 70
+        },
+        {
+          "title": "Add dashboard Testing panel showing:",
+          "description": "Add dashboard Testing panel showing:",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "test",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/bubbly-splashing-puppy.md",
+          "line_number": 71
+        }
+      ],
+      "total_hours": 39.0,
+      "status": "pending"
+    },
+    {
+      "id": "claude_browser_agent_deployment",
+      "name": "Claude_Browser_Agent - Deployment",
+      "description": "Deployment and release: 1 tasks",
+      "phase": "deployment",
+      "start_date": "2026-01-15T01:31:40.364469",
+      "target_date": "2026-01-18T01:31:40.364469",
+      "tasks": [
+        {
+          "title": "Create deployment scripts",
+          "description": "Create deployment scripts",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "deployment",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/bubbly-splashing-puppy.md",
+          "line_number": 232
+        }
+      ],
+      "total_hours": 4.0,
+      "status": "pending"
+    }
+  ],
+  "tasks_by_category": {
+    "by_category": {
+      "feature": 34,
+      "bug": 1,
+      "test": 6,
+      "deployment": 1
+    },
+    "by_priority": {
+      "priority_3": 41,
+      "priority_2": 1
+    },
+    "by_complexity": {
+      "simple": 27,
+      "medium": 12,
+      "complex": 3
+    }
+  }
+}

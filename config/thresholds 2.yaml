@@ -1,0 +1,196 @@
+# Threshold Configuration for Smart Automation
+# These thresholds prevent the system from repeating erroneous behavior
+
+# ============================================================================
+# Token Thresholds for Session Management (GAIA)
+# ============================================================================
+
+token_thresholds:
+  # When to start additional sessions based on token usage
+  start_session:
+    low: 10000           # Start thinking about new sessions
+    medium: 50000        # Definitely need more capacity
+    high: 100000         # Urgently need sessions
+    critical: 200000     # Must spawn new sessions immediately
+
+  # When to stop idle sessions
+  stop_session:
+    idle_minutes: 30          # Stop after idle this long
+    low_budget_tokens: 5000   # Stop if remaining budget this low
+    max_idle_sessions: 5      # Keep max N idle sessions
+
+  # Per-session limits before switching
+  switch_threshold:
+    warning: 0.70        # Warn at 70% of limit
+    switch: 0.80         # Switch sessions at 80%
+    hard: 0.90           # Hard switch at 90%
+    critical: 0.95       # Critical - must switch immediately
+
+  # Provider-specific token limits (per hour)
+  provider_limits:
+    claude: 100000       # 100K tokens/hour for Claude API
+    ollama: 500000       # 500K tokens/hour for Ollama (local)
+    codex: 50000         # 50K tokens/hour for Codex
+    comet: 50000         # 50K tokens/hour for Comet
+    gemini: 75000        # 75K tokens/hour for Gemini
+
+  # Cost thresholds (USD)
+  cost_limits:
+    hourly: 5.0          # $5/hour max
+    daily: 50.0          # $50/day max
+    monthly: 1000.0      # $1000/month max
+
+# ============================================================================
+# Codex Identification Thresholds
+# ============================================================================
+
+codex_thresholds:
+  # Session name patterns that indicate Codex/lower-level workers
+  name_patterns:
+    - "codex"
+    - "code_worker"
+    - "code-worker"
+    - "coder"
+    - "dev_worker\\d*"           # dev_worker1, dev_worker2, etc.
+    - "qa_tester\\d*"            # qa_tester1, qa_tester2, etc.
+    - "mcp_worker\\d*"           # mcp_worker1, mcp_worker2, etc.
+    - "task_worker\\d*"          # task_worker1, etc.
+    - "concurrent_worker"
+    - "edu_worker"
+    - "gemini"
+    - "ollama_worker"
+    - "local_worker"
+    - "background_worker"
+    - "batch_worker"
+
+  # Output patterns that indicate Codex-style session
+  output_patterns:
+    - "codex>"
+    - "Code\\s*assistant"
+    - "OpenAI"
+    - "gpt-"
+    - "\\[codex\\]"
+    - "ollama>"
+    - ">>>>"
+    - "llama"
+    - "mistral"
+
+  # Provider detection patterns
+  provider_indicators:
+    codex:
+      - "codex"
+      - "openai"
+      - "gpt-"
+    ollama:
+      - "ollama"
+      - "llama"
+      - "mistral"
+      - "phi"
+      - "gemma"
+      - "qwen"
+      - "deepseek"
+    claude:
+      - "claude"
+      - "anthropic"
+      - "sonnet"
+      - "opus"
+      - "haiku"
+    comet:
+      - "comet"
+      - "ui_worker"
+      - "frontend"
+
+  # Complexity-based routing preferences
+  complexity_routing:
+    low:
+      - "ollama"
+      - "codex"
+    medium:
+      - "codex"
+      - "ollama"
+      - "claude"
+    high:
+      - "claude"
+      - "codex"
+
+# ============================================================================
+# Standard Operational Thresholds
+# ============================================================================
+
+thresholds:
+  # Service restart thresholds
+  restart:
+    max_per_hour: 3           # Max restarts before flagging as error
+    cooldown_minutes: 30      # Wait time after threshold exceeded
+    escalate_after: 3         # Create ticket after N restarts
+    warning_at: 2             # Log warning at N restarts
+
+  # Error frequency thresholds
+  errors:
+    duplicate_window_hours: 24    # Time window for counting duplicates
+    duplicate_count_escalate: 5   # Escalate after N duplicates
+    priority_boost_after: 3       # Boost priority after N occurrences
+    auto_assign_after: 2          # Auto-assign to session after N
+
+  # Deployment thresholds
+  deployment:
+    min_interval_minutes: 10      # Minimum time between deploys
+    max_failures_per_day: 2       # Block auto-deploy after N failures
+    required_health_checks: 3     # Consecutive health checks needed
+    test_pass_rate: 100           # Required test pass percentage
+    error_rate_max: 1             # Max error rate % for 5 minutes
+
+  # Resource thresholds
+  resources:
+    cpu_alert_percent: 90
+    cpu_alert_duration_minutes: 5
+    cpu_critical_percent: 95
+    memory_alert_percent: 85
+    memory_alert_duration_minutes: 10
+    memory_critical_percent: 95
+    disk_alert_percent: 80
+    disk_critical_percent: 90
+
+  # Health check thresholds
+  health:
+    consecutive_failures: 3       # Failures before restart
+    check_interval_seconds: 120   # Time between checks
+    timeout_seconds: 10           # Request timeout
+    recovery_checks: 3            # Successful checks to clear alert
+
+  # Session monitoring thresholds
+  sessions:
+    idle_warning_minutes: 30      # Warn if idle this long
+    idle_reassign_minutes: 60     # Reassign if idle this long
+    stuck_detection_minutes: 15   # Consider stuck after no output
+    max_concurrent_errors: 5      # Max errors before session review
+
+# Pattern detection settings
+patterns:
+  # Cyclical failure detection
+  cyclical:
+    same_fix_threshold: 3         # Same fix applied N times = wrong fix
+    window_hours: 24              # Time window for detection
+
+  # Cascading error detection
+  cascading:
+    chain_length: 3               # Detect chains of N errors
+    time_window_minutes: 5        # Errors within this window = chain
+
+  # Time-based pattern detection
+  temporal:
+    same_time_occurrences: 3      # N occurrences at same time
+    time_tolerance_minutes: 15    # Within this window = same time
+
+# Action mappings
+actions:
+  on_threshold_exceeded:
+    restart: "create_error_ticket"
+    errors: "escalate_priority"
+    deployment: "block_and_notify"
+    resources: "alert_and_log"
+
+  on_pattern_detected:
+    cyclical: "request_architecture_review"
+    cascading: "identify_root_cause"
+    temporal: "investigate_scheduled_tasks"

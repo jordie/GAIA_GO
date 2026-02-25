@@ -1,0 +1,336 @@
+#!/usr/bin/env python3
+"""
+Claude-Powered Browser Agent
+Uses Claude's vision API to intelligently navigate websites
+"""
+
+import sys
+import time
+import json
+import base64
+import os
+from pathlib import Path
+
+
+class ClaudeWebAgent:
+    """Web agent that uses Claude vision to make navigation decisions."""
+
+    def __init__(self):
+        self.driver = None
+        self.max_steps = 15
+        self.history = []
+        # Get Claude API key from environment or credentials file
+        self.api_key = os.environ.get('ANTHROPIC_API_KEY')
+        if not self.api_key:
+            # Try to read from Claude Code credentials
+            try:
+                creds_path = Path.home() / '.claude' / '.credentials.json'
+                if creds_path.exists():
+                    import json
+                    with open(creds_path) as f:
+                        creds = json.load(f)
+                        self.api_key = creds.get('apiKey')
+            except:
+                pass
+
+        if not self.api_key:
+            raise Exception("Claude API key not found. Set ANTHROPIC_API_KEY or ensure Claude Code credentials exist.")
+
+    def ask_claude_vision(self, prompt, image_path):
+        """Ask Claude to analyze a screenshot."""
+        import anthropic
+
+        # Read and encode image
+        with open(image_path, 'rb') as f:
+            image_data = base64.standard_b64encode(f.read()).decode('utf-8')
+
+        client = anthropic.Anthropic(api_key=self.api_key)
+
+        message = client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=1024,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/png",
+                                "data": image_data,
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": prompt
+                        }
+                    ],
+                }
+            ],
+        )
+
+        return message.content[0].text
+
+    def start_browser(self):
+        """Start browser."""
+        from selenium import webdriver
+        from selenium.webdriver.chrome.service import Service
+        from selenium.webdriver.chrome.options import Options
+        from webdriver_manager.chrome import ChromeDriverManager
+
+        options = Options()
+        options.add_argument('--start-maximized')
+        options.add_argument('--disable-blink-features=AutomationControlled')
+
+        print("🚀 Starting browser...")
+        service = Service(ChromeDriverManager().install())
+        self.driver = webdriver.Chrome(service=service, options=options)
+        self.driver.implicitly_wait(5)
+        print("✅ Browser ready")
+
+    def take_screenshot(self, name="screenshot"):
+        """Take screenshot and return path."""
+        path = f"/tmp/claude_browser_{name}_{int(time.time())}.png"
+        self.driver.save_screenshot(path)
+        return path
+
+    def get_page_info(self):
+        """Get current page information."""
+        from selenium.webdriver.common.by import By
+
+        return {
+            'url': self.driver.current_url,
+            'title': self.driver.title,
+            'text': self.driver.find_element(By.TAG_NAME, 'body').text[:2000],
+        }
+
+    def navigate_with_claude(self, goal, start_url, username=None, password=None):
+        """
+        Navigate website using Claude vision to achieve a goal.
+        """
+        from selenium.webdriver.common.by import By
+        from selenium.common.exceptions import NoSuchElementException
+
+        print(f"\n🎯 Goal: {goal}")
+        print(f"🌐 Starting at: {start_url}")
+        print("="*70)
+
+        self.driver.get(start_url)
+        time.sleep(3)
+
+        for step in range(self.max_steps):
+            print(f"\n📍 Step {step + 1}/{self.max_steps}")
+            print("-"*70)
+
+            page_info = self.get_page_info()
+            print(f"📄 Current page: {page_info['title']}")
+            print(f"🔗 URL: {page_info['url']}")
+
+            # Take screenshot
+            screenshot_path = self.take_screenshot(f"step_{step}")
+            print(f"📸 Screenshot: {screenshot_path}")
+
+            # Ask Claude to analyze and decide
+            prompt = f"""You are helping navigate a website to achieve this goal:
+"{goal}"
+
+Current page title: {page_info['title']}
+Current URL: {page_info['url']}
+
+Credentials available:
+Username: {username if username else 'None'}
+Password: {'Available' if password else 'None'}
+
+Looking at this screenshot, please analyze and respond in this exact format:
+
+STATUS: [GOAL_ACHIEVED or CONTINUE]
+ANSWER: [if GOAL_ACHIEVED, provide the answer here]
+ACTION: [one of: CLICK_LINK, FILL_LOGIN, SUBMIT_FORM, SCROLL_DOWN, or IMPOSSIBLE]
+TARGET: [exact text of link to click, or specific instructions]
+REASONING: [brief explanation]
+
+Be specific about link text. Look carefully at the screenshot."""
+
+            print("🤔 Asking Claude to analyze screenshot...")
+            response = self.ask_claude_vision(prompt, screenshot_path)
+            print(f"💭 Claude says:\n{response}\n")
+
+            # Parse Claude's response
+            if "STATUS: GOAL_ACHIEVED" in response or "GOAL_ACHIEVED" in response:
+                # Extract answer
+                if "ANSWER:" in response:
+                    answer = response.split("ANSWER:")[1].split("\n")[0].strip()
+                else:
+                    answer = response
+
+                print(f"\n✅ SUCCESS! Answer: {answer}")
+                return {
+                    'success': True,
+                    'answer': answer,
+                    'steps': step + 1,
+                    'final_url': page_info['url'],
+                    'screenshot': screenshot_path
+                }
+
+            # Execute action based on Claude's decision
+            if "ACTION: CLICK_LINK" in response or "CLICK_LINK" in response:
+                # Extract target
+                if "TARGET:" in response:
+                    target = response.split("TARGET:")[1].split("\n")[0].strip()
+                    print(f"🖱️  Attempting to click: {target}")
+
+                    try:
+                        element = self.driver.find_element(By.PARTIAL_LINK_TEXT, target)
+                        element.click()
+                        print("✅ Clicked!")
+                        time.sleep(3)
+                    except NoSuchElementException:
+                        print(f"⚠️  Link not found, trying XPath...")
+                        try:
+                            element = self.driver.find_element(By.XPATH, f"//*[contains(text(), '{target}')]")
+                            element.click()
+                            print("✅ Clicked via XPath!")
+                            time.sleep(3)
+                        except:
+                            print(f"❌ Could not find: {target}")
+
+            elif "ACTION: FILL_LOGIN" in response or "FILL_LOGIN" in response:
+                print("📝 Attempting to fill login form...")
+                if username and password:
+                    try:
+                        # Find email field
+                        for selector in ['input[type="email"]', 'input[name="email"]', 'input[name="username"]', 'input[id*="email"]', 'input[id*="user"]']:
+                            try:
+                                email_field = self.driver.find_element(By.CSS_SELECTOR, selector)
+                                email_field.clear()
+                                email_field.send_keys(username)
+                                print(f"✅ Filled username with: {selector}")
+                                break
+                            except:
+                                continue
+
+                        # Find password field
+                        pass_field = self.driver.find_element(By.CSS_SELECTOR, 'input[type="password"]')
+                        pass_field.clear()
+                        pass_field.send_keys(password)
+                        print(f"✅ Filled password")
+                        time.sleep(1)
+
+                    except Exception as e:
+                        print(f"⚠️  Could not fill form: {e}")
+                else:
+                    print("⚠️  No credentials provided")
+
+            elif "ACTION: SUBMIT_FORM" in response or "SUBMIT" in response:
+                print("🚀 Attempting to submit form...")
+                try:
+                    submit_btn = self.driver.find_element(By.CSS_SELECTOR, 'button[type="submit"], input[type="submit"], button:contains("Log in"), button:contains("Sign in")')
+                    submit_btn.click()
+                    print("✅ Submitted!")
+                    time.sleep(5)
+                except Exception as e:
+                    print(f"⚠️  Could not submit: {e}")
+                    # Try Enter key
+                    try:
+                        from selenium.webdriver.common.keys import Keys
+                        self.driver.find_element(By.CSS_SELECTOR, 'input[type="password"]').send_keys(Keys.RETURN)
+                        print("✅ Submitted via Enter key!")
+                        time.sleep(5)
+                    except:
+                        print("❌ Could not submit form")
+
+            elif "ACTION: SCROLL_DOWN" in response or "SCROLL" in response:
+                print("📜 Scrolling down...")
+                self.driver.execute_script("window.scrollBy(0, 800)")
+                time.sleep(2)
+
+            elif "ACTION: IMPOSSIBLE" in response or "IMPOSSIBLE" in response:
+                print("❌ Goal cannot be achieved according to Claude")
+                return {
+                    'success': False,
+                    'error': 'Goal not achievable',
+                    'steps': step + 1,
+                    'reasoning': response
+                }
+
+            self.history.append({
+                'step': step + 1,
+                'action': response,
+                'url': page_info['url'],
+                'screenshot': screenshot_path
+            })
+
+        print("\n⚠️  Reached maximum steps")
+        return {
+            'success': False,
+            'error': 'Max steps reached',
+            'steps': self.max_steps,
+            'history': self.history
+        }
+
+    def close(self):
+        """Close browser."""
+        if self.driver:
+            self.driver.quit()
+            print("✅ Browser closed")
+
+
+def main():
+    if len(sys.argv) < 3:
+        print("Usage:")
+        print('  claude-browser "question" <url> [username] [password]')
+        print('')
+        print('Example:')
+        print('  claude-browser "What is the monthly price?" https://site.com user@email.com password')
+        sys.exit(1)
+
+    question = sys.argv[1]
+    url = sys.argv[2]
+    username = sys.argv[3] if len(sys.argv) > 3 else None
+    password = sys.argv[4] if len(sys.argv) > 4 else None
+
+    agent = ClaudeWebAgent()
+
+    try:
+        agent.start_browser()
+
+        result = agent.navigate_with_claude(
+            goal=question,
+            start_url=url,
+            username=username,
+            password=password
+        )
+
+        # Save results
+        output_file = '/tmp/claude_browser_result.json'
+        with open(output_file, 'w') as f:
+            json.dump(result, f, indent=2)
+
+        print("\n" + "="*70)
+        print("📊 FINAL RESULT")
+        print("="*70)
+        print(json.dumps(result, indent=2))
+        print(f"\n📄 Saved to: {output_file}")
+
+        # Keep browser open briefly
+        print("\n⏸  Browser will close in 10 seconds (Ctrl+C to keep open)...")
+        try:
+            time.sleep(10)
+        except KeyboardInterrupt:
+            input("\nPress Enter to close...")
+
+    except KeyboardInterrupt:
+        print("\n\n👋 Interrupted by user")
+
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+
+    finally:
+        agent.close()
+
+
+if __name__ == '__main__':
+    main()
