@@ -2333,6 +2333,42 @@ def init_database():
                 VALUES (OLD.key, OLD.value, NEW.value, NEW.updated_by);
             END;
 
+            -- Secrets table for encrypted credential storage (Secure Vault)
+            CREATE TABLE IF NOT EXISTS secrets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL,
+                encrypted_value BLOB NOT NULL,
+                category TEXT NOT NULL DEFAULT 'general',
+                description TEXT,
+                project_id INTEGER,
+                service TEXT,
+                username TEXT,
+                url TEXT,
+                expires_at TIMESTAMP,
+                last_accessed TIMESTAMP,
+                access_count INTEGER DEFAULT 0,
+                created_by TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_secrets_category ON secrets(category);
+            CREATE INDEX IF NOT EXISTS idx_secrets_service ON secrets(service);
+            CREATE INDEX IF NOT EXISTS idx_secrets_project ON secrets(project_id);
+
+            -- Secret access audit log
+            CREATE TABLE IF NOT EXISTS secret_access_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                secret_id INTEGER NOT NULL,
+                accessed_by TEXT,
+                action TEXT NOT NULL,
+                ip_address TEXT,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (secret_id) REFERENCES secrets(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_secret_access_secret ON secret_access_log(secret_id);
+            CREATE INDEX IF NOT EXISTS idx_secret_access_timestamp ON secret_access_log(timestamp DESC);
+
             -- Sprint retrospectives for milestone reviews
             CREATE TABLE IF NOT EXISTS sprint_retrospectives (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -4395,7 +4431,7 @@ def get_projects():
             )
 
             projects = conn.execute(
-                """
+                f"""
                 SELECT p.*,
                        COALESCE(fc.cnt, 0) as feature_count,
                        COALESCE(bc.cnt, 0) as bug_count,

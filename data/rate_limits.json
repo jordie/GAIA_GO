@@ -1,0 +1,91 @@
+{
+  "providers": {
+    "claude": {
+      "provider": "claude",
+      "is_limited": false,
+      "limit_hit_at": null,
+      "limit_resets_at": null,
+      "consecutive_limits": 0,
+      "total_limits_today": 0,
+      "last_success_at": "2026-02-25T09:20:56.511533",
+      "requests_since_limit": 20,
+      "minute_requests": 0,
+      "minute_tokens": 0,
+      "minute_start": "2026-02-25T09:20:38.664858",
+      "daily_tokens": 0,
+      "daily_start": "2026-02-25T09:08:15.394806",
+      "total_tokens_used": 0,
+      "total_requests": 0
+    },
+    "ollama": {
+      "provider": "ollama",
+      "is_limited": false,
+      "limit_hit_at": null,
+      "limit_resets_at": null,
+      "consecutive_limits": 0,
+      "total_limits_today": 0,
+      "last_success_at": "2026-02-25T09:20:56.503849",
+      "requests_since_limit": 45,
+      "minute_requests": 0,
+      "minute_tokens": 0,
+      "minute_start": "2026-02-25T09:20:56.499183",
+      "daily_tokens": 0,
+      "daily_start": "2026-02-25T09:09:14.652215",
+      "total_tokens_used": 0,
+      "total_requests": 0
+    },
+    "openai": {
+      "provider": "openai",
+      "is_limited": false,
+      "limit_hit_at": null,
+      "limit_resets_at": null,
+      "consecutive_limits": 0,
+      "total_limits_today": 0,
+      "last_success_at": "2026-02-25T09:20:21.275357",
+      "requests_since_limit": 5,
+      "minute_requests": 0,
+      "minute_tokens": 0,
+      "minute_start": "2026-02-25T09:20:56.492596",
+      "daily_tokens": 0,
+      "daily_start": "2026-02-25T09:09:31.917756",
+      "total_tokens_used": 0,
+      "total_requests": 0
+    },
+    "anythingllm": {
+      "provider": "anythingllm",
+      "is_limited": false,
+      "limit_hit_at": null,
+      "limit_resets_at": null,
+      "consecutive_limits": 0,
+      "total_limits_today": 0,
+      "last_success_at": "2026-02-25T09:20:38.481959",
+      "requests_since_limit": 5,
+      "minute_requests": 0,
+      "minute_tokens": 0,
+      "minute_start": "2026-02-25T09:20:56.499204",
+      "daily_tokens": 0,
+      "daily_start": "2026-02-25T09:09:49.181194",
+      "total_tokens_used": 0,
+      "total_requests": 0
+    }
+  },
+  "ollama_endpoints": {
+    "local": {
+      "name": "local",
+      "url": "http://localhost:11434",
+      "is_available": true,
+      "last_check": null,
+      "response_time_ms": 0,
+      "error_count": 0
+    },
+    "pinklaptop": {
+      "name": "pinklaptop",
+      "url": "http://pinklaptop.local:11434",
+      "is_available": true,
+      "last_check": null,
+      "response_time_ms": 0,
+      "error_count": 0
+    }
+  },
+  "updated_at": "2026-02-25T09:20:56.511558"
+}
