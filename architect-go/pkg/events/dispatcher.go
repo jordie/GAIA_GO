@@ -1,40 +1,12 @@
 package events
 
 import (
-<<<<<<< HEAD
-=======
 	"log"
->>>>>>> origin/feature/fix-db-connections-workers-distributed-0107
 	"time"
 
 	"architect-go/pkg/websocket"
 )
 
-<<<<<<< HEAD
-const (
-	EventTaskCreated        = "task.created"
-	EventTaskUpdated        = "task.updated"
-	EventTaskCompleted      = "task.completed"
-	EventProjectCreated     = "project.created"
-	EventProjectUpdated     = "project.updated"
-	EventRealTimePublish    = "realtime.publish"
-	EventPresenceOnline     = "presence.online"
-	EventPresenceOffline    = "presence.offline"
-	EventPresenceUpdated    = "presence.updated"
-	EventActivityLogged     = "activity.logged"
-)
-
-// Event represents a domain event to be dispatched
-type Event struct {
-	Type      string
-	Channel   string
-	UserID    string
-	Data      interface{}
-	Timestamp time.Time
-}
-
-// EventDispatcher defines the interface for dispatching events
-=======
 // Event constants for different event types
 const (
 	EventTaskCreated     = "task.created"
@@ -43,58 +15,41 @@ const (
 	EventProjectCreated  = "project.created"
 	EventProjectUpdated  = "project.updated"
 	EventRealTimePublish = "realtime.publish"
+	EventPresenceOnline  = "presence.online"
+	EventPresenceOffline = "presence.offline"
+	EventPresenceUpdated = "presence.updated"
+	EventActivityLogged  = "activity.logged"
 )
 
 // Event represents an application event to be dispatched to connected clients
 type Event struct {
-	Type    string      // Event type constant (e.g., EventTaskCreated)
-	Channel string      // Optional: channel name for subscriber filtering
-	UserID  string      // Optional: send only to this user's WS sessions
-	Data    interface{} // Event payload
+	Type      string      // Event type constant (e.g., EventTaskCreated)
+	Channel   string      // Optional: channel name for subscriber filtering
+	UserID    string      // Optional: send only to this user's WS sessions
+	Data      interface{} // Event payload
+	Timestamp time.Time   // When event occurred
 }
 
 // EventDispatcher sends events to connected WebSocket clients
->>>>>>> origin/feature/fix-db-connections-workers-distributed-0107
 type EventDispatcher interface {
 	Dispatch(event Event)
 }
 
-<<<<<<< HEAD
-// HubInterface — narrow interface in events package to avoid import cycles
-// This allows events package to remain independent of websocket package
-=======
 // HubInterface defines the interface for WebSocket hub operations
->>>>>>> origin/feature/fix-db-connections-workers-distributed-0107
 type HubInterface interface {
 	Broadcast(msg *websocket.Message)
 	SendToUserID(userID string, msg *websocket.Message)
 	GetClients() []*websocket.Client
-<<<<<<< HEAD
 	BroadcastToChannel(channel string, msg *websocket.Message)
-}
-
-// hubEventDispatcher implements EventDispatcher using a WebSocket Hub
-type hubEventDispatcher struct {
-=======
 }
 
 // HubEventDispatcher implements EventDispatcher using the WebSocket hub
 type HubEventDispatcher struct {
->>>>>>> origin/feature/fix-db-connections-workers-distributed-0107
 	hub HubInterface
 }
 
 // NewHubEventDispatcher creates a new event dispatcher backed by a WebSocket hub
 func NewHubEventDispatcher(hub HubInterface) EventDispatcher {
-<<<<<<< HEAD
-	return &hubEventDispatcher{hub: hub}
-}
-
-// Dispatch sends an event to appropriate WebSocket clients
-func (d *hubEventDispatcher) Dispatch(event Event) {
-	if event.Timestamp.IsZero() {
-		event.Timestamp = time.Now()
-=======
 	return &HubEventDispatcher{
 		hub: hub,
 	}
@@ -108,29 +63,18 @@ func (d *HubEventDispatcher) Dispatch(event Event) {
 	if d.hub == nil {
 		log.Printf("Warning: HubEventDispatcher received nil hub, skipping dispatch")
 		return
->>>>>>> origin/feature/fix-db-connections-workers-distributed-0107
+	}
+
+	if event.Timestamp.IsZero() {
+		event.Timestamp = time.Now()
 	}
 
 	msg := &websocket.Message{
 		Type:      event.Type,
 		Data:      event.Data,
-<<<<<<< HEAD
 		Timestamp: event.Timestamp,
 		UserID:    event.UserID,
 		Channel:   event.Channel,
-	}
-
-	switch {
-	case event.UserID != "":
-		d.hub.SendToUserID(event.UserID, msg)
-	case event.Channel != "":
-		d.hub.BroadcastToChannel(event.Channel, msg)
-	default:
-		d.hub.Broadcast(msg)
-	}
-}
-=======
-		Timestamp: time.Now(),
 	}
 
 	// Send to specific user
@@ -201,4 +145,3 @@ func (d *HubEventDispatcher) isClientSubscribedToChannel(client *websocket.Clien
 
 	return false
 }
->>>>>>> origin/feature/fix-db-connections-workers-distributed-0107

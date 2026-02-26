@@ -1,0 +1,51 @@
+{
+  "ai_backends": {
+    "ollama": {
+      "name": "Ollama",
+      "model": "llava",
+      "endpoint": "http://localhost:11434",
+      "requires_api_key": false,
+      "vision_support": true,
+      "speed": "medium",
+      "cost": "free"
+    },
+    "claude": {
+      "name": "Claude (Codex)",
+      "model": "claude-3-5-sonnet-20241022",
+      "endpoint": "https://api.anthropic.com",
+      "requires_api_key": true,
+      "env_var": "ANTHROPIC_API_KEY",
+      "vision_support": true,
+      "speed": "fast",
+      "cost": "paid"
+    },
+    "grok": {
+      "name": "Grok Code Fast 1",
+      "model": "grok-code-fast-1",
+      "endpoint": "https://api.x.ai/v1/chat/completions",
+      "requires_api_key": true,
+      "env_var": "XAI_API_KEY",
+      "vision_support": true,
+      "speed": "very_fast",
+      "cost": "paid"
+    },
+    "gemini": {
+      "name": "Google Gemini",
+      "model": "gemini-1.5-flash",
+      "endpoint": "https://generativelanguage.googleapis.com",
+      "requires_api_key": true,
+      "env_var": "GOOGLE_API_KEY",
+      "vision_support": true,
+      "speed": "fast",
+      "cost": "paid"
+    }
+  },
+  "default_backend": "ollama",
+  "fallback_order": ["ollama", "gemini", "claude", "grok"],
+  "task_routing": {
+    "simple_navigation": "ollama",
+    "complex_forms": "claude",
+    "speed_critical": "grok",
+    "cost_sensitive": "gemini"
+  }
+}

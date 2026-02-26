@@ -1,0 +1,247 @@
+{
+  "team": {
+    "developers": [
+      {
+        "name": "dev-backend-1",
+        "tool": "codex",
+        "role": "Backend Developer",
+        "focus": "API development"
+      },
+      {
+        "name": "dev-frontend-1",
+        "tool": "codex",
+        "role": "Frontend Developer",
+        "focus": "UI/UX implementation"
+      },
+      {
+        "name": "dev-fullstack-1",
+        "tool": "gemini",
+        "role": "Full Stack Developer",
+        "focus": "Feature development"
+      }
+    ],
+    "qa": [
+      {
+        "name": "qa-tester-1",
+        "tool": "codex",
+        "role": "QA Engineer",
+        "focus": "Test automation"
+      },
+      {
+        "name": "qa-tester-2",
+        "tool": "codex",
+        "role": "QA Engineer",
+        "focus": "Manual testing"
+      }
+    ],
+    "managers": [
+      {
+        "name": "manager-product",
+        "tool": "claude",
+        "role": "Product Manager",
+        "focus": "Requirements and planning"
+      },
+      {
+        "name": "manager-tech",
+        "tool": "claude",
+        "role": "Technical Manager",
+        "focus": "Architecture decisions"
+      }
+    ],
+    "operations": [
+      {
+        "name": "architect",
+        "tool": "claude",
+        "role": "Solutions Architect",
+        "focus": "System design"
+      },
+      {
+        "name": "devops",
+        "tool": "gemini",
+        "role": "DevOps Engineer",
+        "focus": "CI/CD and infrastructure"
+      }
+    ],
+    "automation": [
+      {
+        "name": "claw",
+        "tool": "openclaw",
+        "role": "Browser Automation Agent",
+        "focus": "Web scraping and browser automation"
+      },
+      {
+        "name": "playwright-agent",
+        "tool": "playwright",
+        "role": "Authenticated Browser Agent",
+        "focus": "Authenticated web scraping, form filling, account access"
+      },
+      {
+        "name": "ai-browser-claude",
+        "tool": "ai-browser",
+        "ai_backend": "claude",
+        "role": "AI Browser Agent (Claude/Codex)",
+        "focus": "Intelligent web navigation with Claude vision, complex form filling"
+      },
+      {
+        "name": "ai-browser-grok",
+        "tool": "ai-browser",
+        "ai_backend": "grok",
+        "role": "AI Browser Agent (Grok Code Fast)",
+        "focus": "Speed-critical web automation with Grok vision, fast navigation"
+      },
+      {
+        "name": "ai-browser-gemini",
+        "tool": "ai-browser",
+        "ai_backend": "gemini",
+        "role": "AI Browser Agent (Gemini)",
+        "focus": "Cost-effective web automation with Gemini vision"
+      },
+      {
+        "name": "ai-browser-ollama",
+        "tool": "ai-browser",
+        "ai_backend": "ollama",
+        "role": "AI Browser Agent (Ollama)",
+        "focus": "Free local web automation with llava vision"
+      }
+    ]
+  },
+  "agents": [
+    {
+      "name": "dev-backend-1",
+      "tool": "codex",
+      "role": "Backend Developer",
+      "focus": "API development",
+      "status": "running"
+    },
+    {
+      "name": "dev-frontend-1",
+      "tool": "codex",
+      "role": "Frontend Developer",
+      "focus": "UI/UX implementation",
+      "status": "running"
+    },
+    {
+      "name": "dev-fullstack-1",
+      "tool": "gemini",
+      "role": "Full Stack Developer",
+      "focus": "Feature development",
+      "status": "running"
+    },
+    {
+      "name": "qa-tester-1",
+      "tool": "codex",
+      "role": "QA Engineer",
+      "focus": "Test automation",
+      "status": "running"
+    },
+    {
+      "name": "qa-tester-2",
+      "tool": "codex",
+      "role": "QA Engineer",
+      "focus": "Manual testing",
+      "status": "running"
+    },
+    {
+      "name": "manager-product",
+      "tool": "claude",
+      "role": "Product Manager",
+      "focus": "Requirements and planning",
+      "status": "running"
+    },
+    {
+      "name": "manager-tech",
+      "tool": "claude",
+      "role": "Technical Manager",
+      "focus": "Architecture decisions",
+      "status": "running"
+    },
+    {
+      "name": "devops",
+      "tool": "gemini",
+      "role": "DevOps Engineer",
+      "focus": "CI/CD and infrastructure",
+      "status": "running"
+    },
+    {
+      "name": "pink-dev-1",
+      "tool": "gemini",
+      "role": "Remote Backend Developer",
+      "focus": "Distributed backend tasks",
+      "node": "pink-laptop",
+      "node_ip": "192.168.1.172",
+      "status": "running"
+    },
+    {
+      "name": "pink-dev-2",
+      "tool": "gemini",
+      "role": "Remote Full Stack Developer",
+      "focus": "Distributed full stack tasks",
+      "node": "pink-laptop",
+      "node_ip": "192.168.1.172",
+      "status": "running"
+    },
+    {
+      "name": "claw",
+      "tool": "openclaw",
+      "role": "Browser Automation Agent",
+      "focus": "Web scraping and browser automation",
+      "node": "pink-laptop",
+      "node_ip": "192.168.1.172",
+      "status": "running"
+    },
+    {
+      "name": "playwright-agent",
+      "tool": "playwright",
+      "role": "Authenticated Browser Agent",
+      "focus": "Authenticated web scraping, form filling, account access",
+      "status": "running"
+    },
+    {
+      "name": "ai-browser-claude",
+      "tool": "ai-browser",
+      "ai_backend": "claude",
+      "role": "AI Browser Agent (Claude/Codex)",
+      "focus": "Intelligent web navigation with Claude vision, complex form filling",
+      "status": "available"
+    },
+    {
+      "name": "ai-browser-grok",
+      "tool": "ai-browser",
+      "ai_backend": "grok",
+      "role": "AI Browser Agent (Grok Code Fast)",
+      "focus": "Speed-critical web automation with Grok vision, fast navigation",
+      "status": "available"
+    },
+    {
+      "name": "ai-browser-gemini",
+      "tool": "ai-browser",
+      "ai_backend": "gemini",
+      "role": "AI Browser Agent (Gemini)",
+      "focus": "Cost-effective web automation with Gemini vision",
+      "status": "available"
+    },
+    {
+      "name": "ai-browser-ollama",
+      "tool": "ai-browser",
+      "ai_backend": "ollama",
+      "role": "AI Browser Agent (Ollama)",
+      "focus": "Free local web automation with llava vision",
+      "status": "running"
+    }
+  ],
+  "api_server": "http://100.112.58.92:8151",
+  "created_at": "2026-02-10 22:56:15",
+  "nodes": [
+    {
+      "node_id": "pink-laptop",
+      "node_ip": "192.168.1.172",
+      "api_url": "http://192.168.1.172:8151",
+      "status": "online",
+      "agents": [
+        "pink-dev-1",
+        "pink-dev-2",
+        "claw"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rate Limiting Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .card-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: #a0aec0;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .status-healthy {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-warning {
+            background: #fefcbf;
+            color: #7c2d12;
+        }
+
+        .status-critical {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 16px;
+        }
+
+        .chart {
+            height: 250px;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .chart-bar {
+            flex: 1;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px 4px 0 0;
+            min-height: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .chart-bar:hover {
+            opacity: 0.8;
+            transform: scaleY(1.05);
+        }
+
+        .chart-bar.high {
+            background: linear-gradient(180deg, #f56565 0%, #c53030 100%);
+        }
+
+        .chart-labels {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 8px;
+            padding: 0 4px;
+        }
+
+        .chart-label {
+            flex: 1;
+            text-align: center;
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .config-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .config-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 16px;
+        }
+
+        .config-list {
+            list-style: none;
+        }
+
+        .config-item {
+            padding: 12px;
+            border-left: 3px solid #667eea;
+            background: #f7fafc;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .config-item-name {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .config-item-value {
+            color: #718096;
+            font-size: 13px;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-right: 8px;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        .button.secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .button.secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .refresh-info {
+            font-size: 12px;
+            color: #a0aec0;
+            text-align: center;
+            margin-top: 16px;
+        }
+
+        .loading {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .violations-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .violation-item {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        .violation-item:last-child {
+            border-bottom: none;
+        }
+
+        .violation-time {
+            color: #a0aec0;
+            font-size: 11px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>⚡ Rate Limiting Dashboard</h1>
+            <p>Real-time monitoring and configuration of rate limits and resource usage</p>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="grid">
+            <div class="card">
+                <div class="card-title">Total Requests (24h)</div>
+                <div class="card-value" id="totalRequests">0</div>
+                <div class="card-subtitle">All requests processed</div>
+                <div class="status-badge status-healthy">✓ Normal</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Rate Limit Violations</div>
+                <div class="card-value" id="totalViolations">0</div>
+                <div class="card-subtitle">Blocked requests</div>
+                <div class="status-badge status-healthy" id="violationBadge">✓ None</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">System CPU Usage</div>
+                <div class="card-value" id="cpuPercent">--</div>
+                <div class="card-subtitle">Current system load</div>
+                <div class="status-badge status-healthy" id="cpuBadge">✓ Normal</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">System Memory Usage</div>
+                <div class="card-value" id="memoryPercent">--</div>
+                <div class="card-subtitle">RAM utilization</div>
+                <div class="status-badge status-healthy" id="memoryBadge">✓ Normal</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Throttling Status</div>
+                <div class="card-value" id="throttleStatus">OFF</div>
+                <div class="card-subtitle">Auto-throttle state</div>
+                <div class="status-badge status-healthy" id="throttleBadge">✓ Normal</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Active Rules</div>
+                <div class="card-value" id="activeRules">0</div>
+                <div class="card-subtitle">Rate limit configurations</div>
+                <div class="status-badge status-healthy">✓ Configured</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid">
+            <div class="chart-container">
+                <div class="chart-title">Requests Per Hour (Last 24h)</div>
+                <div class="chart" id="requestChart"></div>
+                <div class="chart-labels" id="requestLabels"></div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Violations Per Hour (Last 24h)</div>
+                <div class="chart" id="violationChart"></div>
+                <div class="chart-labels" id="violationLabels"></div>
+            </div>
+        </div>
+
+        <!-- Resource Trends -->
+        <div class="grid">
+            <div class="chart-container">
+                <div class="chart-title">CPU Usage Trend (Last 6h)</div>
+                <div class="chart" id="cpuChart"></div>
+                <div class="chart-labels" id="cpuLabels"></div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Memory Usage Trend (Last 6h)</div>
+                <div class="chart" id="memoryChart"></div>
+                <div class="chart-labels" id="memoryLabels"></div>
+            </div>
+        </div>
+
+        <!-- Configuration -->
+        <div class="config-section">
+            <div class="config-title">Active Rate Limit Rules</div>
+            <ul class="config-list" id="configList">
+                <li class="config-item">
+                    <span>Loading configurations...</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Recent Violations -->
+        <div class="config-section">
+            <div class="config-title">Recent Violations</div>
+            <div class="violations-list" id="violationsList">
+                <div class="violation-item">Loading violations...</div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="config-section">
+            <div class="config-title">Dashboard Controls</div>
+            <button class="button" onclick="refreshDashboard()">
+                🔄 Refresh Now
+            </button>
+            <button class="button secondary" onclick="downloadReport()">
+                📥 Download Report
+            </button>
+            <button class="button secondary" onclick="toggleAutoRefresh()">
+                ⏱️ Toggle Auto-Refresh
+            </button>
+            <div class="refresh-info">
+                Last updated: <span id="lastUpdate">Never</span>
+                <br>
+                Auto-refresh: <span id="autoRefreshStatus">ON (every 30s)</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefreshInterval = null;
+        let autoRefreshEnabled = true;
+        const API_BASE = '/api/rate-limiting';
+
+        // Initialize dashboard
+        function initDashboard() {
+            refreshDashboard();
+            startAutoRefresh();
+        }
+
+        // Start auto-refresh
+        function startAutoRefresh() {
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+            autoRefreshInterval = setInterval(() => {
+                if (autoRefreshEnabled) refreshDashboard();
+            }, 30000); // 30 seconds
+        }
+
+        // Toggle auto-refresh
+        function toggleAutoRefresh() {
+            autoRefreshEnabled = !autoRefreshEnabled;
+            document.getElementById('autoRefreshStatus').textContent =
+                autoRefreshEnabled ? 'ON (every 30s)' : 'OFF';
+        }
+
+        // Refresh all data
+        async function refreshDashboard() {
+            try {
+                await Promise.all([
+                    fetchStats(),
+                    fetchHealth(),
+                    fetchViolations(),
+                    fetchConfigs(),
+                    fetchTrends()
+                ]);
+                updateLastUpdate();
+            } catch (error) {
+                console.error('Dashboard refresh failed:', error);
+            }
+        }
+
+        // Fetch statistics
+        async function fetchStats() {
+            try {
+                const response = await fetch(`${API_BASE}/stats`);
+                const data = await response.json();
+
+                const stats = data.stats || {};
+                document.getElementById('totalRequests').textContent =
+                    formatNumber(stats.total_requests || 0);
+                document.getElementById('totalViolations').textContent =
+                    formatNumber(stats.total_violations || 0);
+
+                updateViolationBadge(stats.total_violations || 0);
+                renderRequestChart(stats.hourly_requests || []);
+                renderViolationChart(stats.hourly_violations || []);
+            } catch (error) {
+                console.error('Failed to fetch stats:', error);
+            }
+        }
+
+        // Fetch resource health
+        async function fetchHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/resource-health`);
+                const data = await response.json();
+
+                const current = data.current || {};
+                document.getElementById('cpuPercent').textContent =
+                    current.cpu_percent?.toFixed(1) + '%' || '--';
+                document.getElementById('memoryPercent').textContent =
+                    current.memory_percent?.toFixed(1) + '%' || '--';
+                document.getElementById('throttleStatus').textContent =
+                    data.throttling ? 'ON' : 'OFF';
+
+                updateHealthBadges(current);
+            } catch (error) {
+                console.error('Failed to fetch health:', error);
+            }
+        }
+
+        // Fetch violations
+        async function fetchViolations() {
+            try {
+                const response = await fetch(`${API_BASE}/violations?hours=1`);
+                const data = await response.json();
+
+                const violations = data.violations?.violations || [];
+                renderViolationsList(violations.slice(0, 10));
+            } catch (error) {
+                console.error('Failed to fetch violations:', error);
+            }
+        }
+
+        // Fetch configurations
+        async function fetchConfigs() {
+            try {
+                const response = await fetch(`${API_BASE}/config`);
+                const data = await response.json();
+
+                const configs = data.configs || [];
+                document.getElementById('activeRules').textContent = configs.length;
+                renderConfigList(configs);
+            } catch (error) {
+                console.error('Failed to fetch configs:', error);
+            }
+        }
+
+        // Fetch trends
+        async function fetchTrends() {
+            try {
+                const response = await fetch(`${API_BASE}/resource-trends?hours=6`);
+                const data = await response.json();
+
+                renderCpuTrend(data.cpu_trend || []);
+                renderMemoryTrend(data.memory_trend || []);
+            } catch (error) {
+                console.error('Failed to fetch trends:', error);
+            }
+        }
+
+        // Render request chart
+        function renderRequestChart(data) {
+            const container = document.getElementById('requestChart');
+            const labels = document.getElementById('requestLabels');
+
+            if (!data.length) {
+                container.innerHTML = '<div style="padding: 20px; text-align: center; color: #a0aec0;">No data available</div>';
+                return;
+            }
+
+            const maxValue = Math.max(...data);
+            container.innerHTML = data.map((val, idx) => {
+                const height = maxValue > 0 ? (val / maxValue) * 100 : 5;
+                return `<div class="chart-bar" style="height: ${height}%; min-height: 20px;" title="${val} requests"></div>`;
+            }).join('');
+
+            labels.innerHTML = data.map((_, i) =>
+                `<div class="chart-label">${i * 4}h ago</div>`
+            ).join('');
+        }
+
+        // Render violation chart
+        function renderViolationChart(data) {
+            const container = document.getElementById('violationChart');
+            const labels = document.getElementById('violationLabels');
+
+            if (!data.length) {
+                container.innerHTML = '<div style="padding: 20px; text-align: center; color: #a0aec0;">No violations</div>';
+                return;
+            }
+
+            const maxValue = Math.max(...data);
+            container.innerHTML = data.map((val) => {
+                const height = maxValue > 0 ? (val / maxValue) * 100 : 5;
+                const isHigh = val > maxValue * 0.5;
+                return `<div class="chart-bar ${isHigh ? 'high' : ''}" style="height: ${height}%; min-height: 20px;" title="${val} violations"></div>`;
+            }).join('');
+
+            labels.innerHTML = data.map((_, i) =>
+                `<div class="chart-label">T-${i}h</div>`
+            ).join('');
+        }
+
+        // Render CPU trend
+        function renderCpuTrend(data) {
+            const container = document.getElementById('cpuChart');
+            const labels = document.getElementById('cpuLabels');
+
+            container.innerHTML = data.map((val) => {
+                const height = Math.min(val, 100);
+                return `<div class="chart-bar" style="height: ${height}%;"></div>`;
+            }).join('');
+
+            labels.innerHTML = data.map((_, i) =>
+                `<div class="chart-label">${i}h</div>`
+            ).join('');
+        }
+
+        // Render Memory trend
+        function renderMemoryTrend(data) {
+            const container = document.getElementById('memoryChart');
+            const labels = document.getElementById('memoryLabels');
+
+            container.innerHTML = data.map((val) => {
+                const height = Math.min(val, 100);
+                return `<div class="chart-bar" style="height: ${height}%;"></div>`;
+            }).join('');
+
+            labels.innerHTML = data.map((_, i) =>
+                `<div class="chart-label">${i}h</div>`
+            ).join('');
+        }
+
+        // Render config list
+        function renderConfigList(configs) {
+            const list = document.getElementById('configList');
+
+            if (!configs.length) {
+                list.innerHTML = '<li class="config-item"><span>No configurations yet</span></li>';
+                return;
+            }
+
+            list.innerHTML = configs.map(config => `
+                <li class="config-item">
+                    <span>
+                        <div class="config-item-name">${config.rule_name}</div>
+                        <div class="config-item-value">${config.scope}: ${config.limit_value} ${config.limit_type}</div>
+                    </span>
+                    <span class="status-badge status-healthy">✓ Active</span>
+                </li>
+            `).join('');
+        }
+
+        // Render violations list
+        function renderViolationsList(violations) {
+            const list = document.getElementById('violationsList');
+
+            if (!violations.length) {
+                list.innerHTML = '<div class="violation-item">No violations in the last hour</div>';
+                return;
+            }
+
+            list.innerHTML = violations.map(v => `
+                <div class="violation-item">
+                    <strong>${v.scope_value}</strong> - ${v.scope_value}
+                    <br>
+                    <small>Limit: ${v.exceeded_limit}</small>
+                    <div class="violation-time">${new Date(v.violation_time).toLocaleString()}</div>
+                </div>
+            `).join('');
+        }
+
+        // Update health badges
+        function updateHealthBadges(current) {
+            const cpu = current.cpu_percent || 0;
+            const memory = current.memory_percent || 0;
+
+            updateBadge('cpuBadge', cpu);
+            updateBadge('memoryBadge', memory);
+        }
+
+        // Update violation badge
+        function updateViolationBadge(count) {
+            const badge = document.getElementById('violationBadge');
+            if (count === 0) {
+                badge.className = 'status-badge status-healthy';
+                badge.textContent = '✓ None';
+            } else if (count < 10) {
+                badge.className = 'status-badge status-warning';
+                badge.textContent = '⚠ ' + count + ' violation(s)';
+            } else {
+                badge.className = 'status-badge status-critical';
+                badge.textContent = '✗ ' + count + ' violation(s)';
+            }
+        }
+
+        // Update badge color
+        function updateBadge(badgeId, value) {
+            const badge = document.getElementById(badgeId);
+            if (value < 70) {
+                badge.className = 'status-badge status-healthy';
+                badge.textContent = '✓ Normal';
+            } else if (value < 85) {
+                badge.className = 'status-badge status-warning';
+                badge.textContent = '⚠ High';
+            } else {
+                badge.className = 'status-badge status-critical';
+                badge.textContent = '✗ Critical';
+            }
+        }
+
+        // Update last update time
+        function updateLastUpdate() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent =
+                now.toLocaleTimeString();
+        }
+
+        // Format number with commas
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        // Download report
+        function downloadReport() {
+            const timestamp = new Date().toISOString().slice(0, 10);
+            const text = `Rate Limiting Report - ${timestamp}\n\n` +
+                `Total Requests: ${document.getElementById('totalRequests').textContent}\n` +
+                `Violations: ${document.getElementById('totalViolations').textContent}\n` +
+                `CPU: ${document.getElementById('cpuPercent').textContent}\n` +
+                `Memory: ${document.getElementById('memoryPercent').textContent}\n` +
+                `Throttling: ${document.getElementById('throttleStatus').textContent}\n`;
+
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `rate_limiting_report_${timestamp}.txt`;
+            a.click();
+        }
+
+        // Start on load
+        document.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+</body>
+</html>

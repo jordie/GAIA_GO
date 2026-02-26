@@ -43,7 +43,7 @@ GAP_MAX = 3
 CONFIRM_DELAY_MIN = 3.0  # Confirm delay 3-5 seconds (longer to give user time to type)
 CONFIRM_DELAY_MAX = 5.0
 CHECK_INTERVAL = 0.3  # Check interval (faster to catch prompts immediately)
-SESSION_COOLDOWN = 8  # Longer cooldown (8s) to prevent interfering with user input
+SESSION_COOLDOWN = 30  # 30s cooldown per session to prevent rapid re-confirmations
 
 # SAFETY: Only auto-confirm if session idle for this long (prevents interference with active typing)
 IDLE_THRESHOLD = 2  # Seconds - only confirm if no input for 2s (reduced for responsiveness)
@@ -727,8 +727,8 @@ def run_monitor_cycle(duration):
             # Skip recently handled prompts (same prompt in same session)
             if session in handled and prompt_key in handled[session]:
                 if (
-                    time.time() - handled[session][prompt_key] < 30
-                ):  # 30 second cooldown per prompt (reduced for faster re-confirmation)
+                    time.time() - handled[session][prompt_key] < 120
+                ):  # 120 second cooldown per prompt to prevent duplicate confirmations
                     continue
 
             # New prompt detected

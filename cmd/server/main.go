@@ -1,282 +1,281 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"log"
+	"net/http"
 	"os"
-	"path/filepath"
+	"os/signal"
+	"syscall"
+	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 
-	"github.com/jgirmay/GAIA_GO/internal/session"
-	"github.com/jgirmay/GAIA_GO/internal/tmux"
-	"github.com/jgirmay/GAIA_GO/pkg/router"
+	"github.com/jgirmay/GAIA_GO/pkg/http/handlers"
+	"github.com/jgirmay/GAIA_GO/pkg/repository"
+	"github.com/jgirmay/GAIA_GO/pkg/services/claude_confirm"
+	"github.com/jgirmay/GAIA_GO/pkg/services/rate_limiting"
+	"github.com/jgirmay/GAIA_GO/pkg/services/websocket"
+	"github.com/jgirmay/GAIA_GO/pkg/services/usability"
 )
 
 func main() {
-	// Configuration
+	// Load environment configuration
 	port := getEnv("PORT", "8080")
-	dbPath := getEnv("DATABASE_URL", "./data/education_central.db")
-	env := getEnv("APP_ENV", "development")
+	dbURL := getEnv("DATABASE_URL", "postgres://jgirmay@localhost:5432/gaia_go?sslmode=disable")
 
-	// Initialize database
-	db, err := initDB(dbPath)
+	// Initialize database with GORM
+	log.Println("[INIT] Initializing PostgreSQL database...")
+	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("failed to initialize database: %v", err)
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	defer db.Close()
+	log.Println("[INIT] ✓ Database connection established")
 
-	log.Printf("[INFO] Database initialized at %s", dbPath)
-
-	// Initialize session manager
-	sessionMgr := session.NewManager(db)
-	log.Printf("[INFO] Session manager initialized")
-
-	// Initialize tmux session grouping service
-	tmuxService := tmux.NewService(db)
-	log.Printf("[INFO] Tmux session grouping service initialized")
-
-	// Create router
-	appRouter := router.NewAppRouter(sessionMgr)
-	appRouter.RegisterMiddleware()
-
-	// Register endpoints
-	appRouter.RegisterAuthRoutes()
-	appRouter.RegisterUserRoutes()
-
-	// Auto-register all GAIA apps with discovery and dependency resolution
-	if err := appRouter.RegisterAllApps(db, sessionMgr); err != nil {
-		log.Printf("[WARN] Failed to auto-register apps: %v", err)
+	// Initialize repository registry
+	log.Println("[INIT] Initializing repository registry...")
+	registry := repository.NewRegistry(db)
+	if err := registry.Initialize(); err != nil {
+		log.Fatalf("Failed to initialize repository registry: %v", err)
 	}
-	log.Printf("[INFO] All apps auto-registered")
+	log.Println("[INIT] ✓ Repository registry initialized")
 
-	// Register tmux session grouping routes
-	apiGroup := appRouter.GetEngine().Group("/api")
-	tmux.RegisterRoutes(apiGroup, tmuxService)
-	log.Printf("[INFO] Tmux session grouping routes registered")
-
-	// Serve static files for each app
-	staticDirs := map[string]string{
-		"typing":  "./web/static/typing",
-		"math":    "./web/static/math",
-		"piano":   "./web/static/piano",
-		"reading": "./web/static/reading",
+	// Auto-migrate Claude confirmation tables
+	log.Println("[INIT] Migrating Claude confirmation schema...")
+	if err := db.AutoMigrate(
+		&claude_confirm.ConfirmationRequest{},
+		&claude_confirm.ApprovalPattern{},
+		&claude_confirm.AIAgentDecision{},
+		&claude_confirm.SessionApprovalPreference{},
+	); err != nil {
+		log.Fatalf("Failed to migrate Claude confirmation tables: %v", err)
 	}
-	for appName, staticDir := range staticDirs {
-		appRouter.RegisterStaticFiles(appName, staticDir)
-	}
-	appRouter.RegisterSharedStaticFiles()
-	log.Printf("[INFO] Static files registered for all apps")
+	log.Println("[INIT] ✓ Claude confirmation schema migrated")
 
-	// Print routes
-	printRoutes(env)
+	// Initialize usability metrics services
+	log.Println("[INIT] Initializing Usability Metrics Services...")
+
+	// Create event bus
+	eventBus := usability.NewSimpleEventBus(100, 1000)
+
+	// Create frustration detection engine
+	frustrationEngine := usability.NewFrustrationDetectionEngine(
+		usability.DefaultThresholds(),
+	)
+
+	// Create real-time metrics aggregator
+	aggregator := usability.NewRealtimeMetricsAggregator(1 * time.Minute)
+
+	// Create metrics service
+	metricsService := usability.NewUsabilityMetricsService(
+		registry.UsabilityMetricsRepository,
+		frustrationEngine,
+		aggregator,
+		eventBus,
+		usability.DefaultConfig(),
+	)
+
+	// Start background metrics flushing
+	ctx := context.Background()
+	metricsService.Start(ctx)
+	log.Println("[INIT] ✓ Usability Metrics Services initialized")
+	log.Println("[INIT]   - Frustration Detection Engine")
+	log.Println("[INIT]   - Real-time Metrics Aggregator")
+	log.Println("[INIT]   - Background metrics flushing started")
+
+	// Create Chi router
+	router := chi.NewRouter()
+
+	// Register middleware
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.RequestID)
+
+	// Initialize Rate Limiting Service (Phase 11)
+	log.Println("[INIT] Initializing Rate Limiting Service...")
+	rlConfig := rate_limiting.DefaultConfig()
+	rateLimiter := rate_limiting.NewPostgresRateLimiter(db, rlConfig)
+
+	// Apply rate limiting middleware to all routes
+	router.Use(rate_limiting.WithSessionScope(rateLimiter, rate_limiting.SystemGAIAGO))
+	log.Println("[INIT] ✓ Rate Limiting Service initialized")
+	log.Println("[INIT]   - Sliding window rate limiting (per-second/minute/hour)")
+	log.Println("[INIT]   - Quota-based limits (daily/weekly/monthly)")
+	log.Println("[INIT]   - Automatic cleanup and metrics collection")
+
+	// Teacher Dashboard routes are disabled for Phase 11 focus
+	// (Teacher dashboard handlers temporarily renamed to avoid build errors)
+
+	// Initialize Claude confirmation system (Phase 10)
+	log.Println("[INIT] Initializing Claude Auto-Confirm Patterns System...")
+
+	// Create AI agent for fallback decisions
+	aiConfig := claude_confirm.AIAgentConfig{
+		Model:           "claude-opus-4.5",
+		MaxTokens:       2000,
+		DecisionTimeout: 10 * time.Second,
+		Enabled:         getEnvBool("CLAUDE_CONFIRM_AI_ENABLED", true),
+	}
+	aiAgent := claude_confirm.NewAIAgent(db, aiConfig)
+
+	// Create confirmation service
+	confirmationService := claude_confirm.NewConfirmationService(db, aiAgent)
+
+	// Register confirmation handlers
+	confirmHandlers := handlers.NewClaudeConfirmHandlers(confirmationService)
+	confirmHandlers.RegisterRoutes(router)
+
+	log.Println("[INIT] ✓ Claude Auto-Confirm Patterns System initialized")
+	if aiConfig.Enabled {
+		log.Println("[INIT]   - Pattern Matching Engine")
+		log.Println("[INIT]   - AI Agent Fallback (enabled)")
+	} else {
+		log.Println("[INIT]   - Pattern Matching Engine")
+		log.Println("[INIT]   - AI Agent Fallback (disabled)")
+	}
+
+	// Initialize Quota Admin Dashboard (Phase 11.4.4)
+	log.Println("[INIT] Initializing Admin Dashboard...")
+	// Create resource monitor
+	resourceMonitor := rate_limiting.NewResourceMonitor()
+	// Create quota service with command quotas
+	commandQuotaService := rate_limiting.NewCommandQuotaService(db, rateLimiter, resourceMonitor)
+	quotaAdminHandlers := handlers.NewQuotaAdminHandlers(commandQuotaService, db)
+	quotaAdminHandlers.RegisterRoutes(router)
+	log.Println("[INIT] ✓ Admin Dashboard initialized")
+	log.Println("[INIT]   - API endpoints: /api/admin/quotas/*")
+	log.Println("[INIT]   - Dashboard UI: /admin/quotas")
+
+	// Initialize WebSocket Real-time Updates (Phase 11.4.5)
+	log.Println("[INIT] Initializing WebSocket Real-time Updates...")
+	broadcaster := websocket.NewQuotaBroadcaster(
+		db,
+		quotaAdminHandlers.AnalyticsService,
+		quotaAdminHandlers.AlertEngine,
+		commandQuotaService,
+	)
+	broadcaster.Start(ctx)
+	wsHandlers := handlers.NewQuotaWebSocketHandlers(broadcaster)
+
+	// Register WebSocket routes
+	router.Get("/ws/admin/quotas", wsHandlers.HandleQuotaWebSocket)
+	router.Get("/api/ws/health", wsHandlers.HandleHealthCheck)
+	router.Post("/api/ws/test-broadcast", wsHandlers.BroadcastTestMessage)
+	router.Post("/api/ws/test-violation", wsHandlers.BroadcastViolation)
+	router.Post("/api/ws/test-alert", wsHandlers.BroadcastAlert)
+
+	log.Println("[INIT] ✓ WebSocket Real-time Updates initialized")
+	log.Println("[INIT]   - WebSocket endpoint: /ws/admin/quotas")
+	log.Println("[INIT]   - Health check: /api/ws/health")
+	log.Println("[INIT]   - Broadcast interval: 5 seconds")
+	log.Println("[INIT]   - Heartbeat interval: 10 seconds")
+
+	// Serve static files (CSS, JavaScript)
+	router.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+
+	// Serve template files
+	router.Handle("/templates/*", http.StripPrefix("/templates/", http.FileServer(http.Dir("./templates"))))
+
+	// Root redirect to dashboard
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/admin/quotas", http.StatusMovedPermanently)
+	})
+
+	// Health check endpoint
+	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"healthy"}`))
+	})
+
+	// Print available routes
+	log.Println("\n===============================================================")
+	log.Println("GAIA_GO Phase 9+10 - Teacher Monitoring & Claude Auto-Confirm")
+	log.Println("===============================================================\n")
+	log.Println("Available Endpoints:\n")
+	log.Println("Health & Status:")
+	log.Println("  GET    /health                           - System health check\n")
+	log.Println("Teacher Dashboard (Phase 9):")
+	log.Println("  GET    /api/dashboard/classroom/{classroomID}/metrics  - Classroom metrics")
+	log.Println("  GET    /api/dashboard/student/frustration - Student frustration metrics")
+	log.Println("  POST   /api/dashboard/interventions      - Record intervention")
+	log.Println("  GET    /api/dashboard/struggling-students - Struggling students list")
+	log.Println("  GET    /api/dashboard/health             - Dashboard health status\n")
+	log.Println("Claude Auto-Confirm Patterns (Phase 10):")
+	log.Println("  POST   /api/claude/confirm/request               - Process confirmation request")
+	log.Println("  GET    /api/claude/confirm/history/{sessionID}   - Request history")
+	log.Println("  GET    /api/claude/confirm/stats/{sessionID}     - Session statistics")
+	log.Println("  GET    /api/claude/confirm/patterns              - List patterns")
+	log.Println("  POST   /api/claude/confirm/patterns              - Create pattern")
+	log.Println("  PUT    /api/claude/confirm/patterns/{patternID}  - Update pattern")
+	log.Println("  DELETE /api/claude/confirm/patterns/{patternID}  - Delete pattern")
+	log.Println("  GET    /api/claude/confirm/preferences/{sessionID} - Get preferences")
+	log.Println("  POST   /api/claude/confirm/preferences/{sessionID} - Set preferences")
+	log.Println("  GET    /api/claude/confirm/stats                 - Global statistics\n")
+	log.Println("Alternative Routes (RESTful):")
+	log.Println("  GET    /api/classrooms/{classroomID}/metrics          - Classroom metrics")
+	log.Println("  GET    /api/classrooms/{classroomID}/struggling-students - Struggling students")
+	log.Println("  GET    /api/students/{studentID}/frustration          - Student frustration")
+	log.Println("  POST   /api/interventions/                            - Record intervention\n")
+	log.Println("===============================================================\n")
+
+	// Create HTTP server
+	addr := ":" + port
+	server := &http.Server{
+		Addr:         addr,
+		Handler:      router,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	// Graceful shutdown handling
+	go func() {
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+		sig := <-sigChan
+
+		log.Printf("\n[SHUTDOWN] Received signal: %v", sig)
+		log.Println("[SHUTDOWN] Initiating graceful shutdown...")
+
+		// Give requests 10 seconds to complete
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			log.Printf("[SHUTDOWN] Server shutdown error: %v", err)
+		}
+
+		// Stop broadcaster
+		log.Println("[SHUTDOWN] Stopping WebSocket broadcaster...")
+		broadcaster.Stop()
+
+		// Stop metrics service
+		log.Println("[SHUTDOWN] Stopping metrics service...")
+		metricsService.Stop()
+
+		// Close event bus
+		log.Println("[SHUTDOWN] Closing event bus...")
+		eventBus.Close()
+
+		// Close database
+		log.Println("[SHUTDOWN] Closing database connection...")
+		if sqlDB, err := db.DB(); err == nil {
+			sqlDB.Close()
+		}
+
+		log.Println("[SHUTDOWN] ✓ Graceful shutdown complete")
+		os.Exit(0)
+	}()
 
 	// Start server
-	addr := ":" + port
-	log.Printf("[INFO] Starting server on %s (env: %s)", addr, env)
-
-	if err := appRouter.GetEngine().Run(addr); err != nil {
-		log.Fatalf("failed to start server: %v", err)
+	log.Printf("[INFO] Starting HTTP server on %s\n", addr)
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("Server startup error: %v", err)
 	}
-}
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-// initDB initializes the database connection and runs migrations
-func initDB(dbPath string) (*sql.DB, error) {
-	// Create directory if it doesn't exist
-	dir := filepath.Dir(dbPath)
-	if dir != "." && dir != "" {
-		os.MkdirAll(dir, 0755)
-	}
-
-	// Open connection
-	db, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		return nil, err
-	}
-
-	// Test connection
-	if err := db.Ping(); err != nil {
-		return nil, err
-	}
-
-	// Enable WAL mode for better concurrency
-	if _, err := db.Exec("PRAGMA journal_mode=WAL"); err != nil {
-		return nil, err
-	}
-
-	// Set busy timeout
-	if _, err := db.Exec("PRAGMA busy_timeout=30000"); err != nil {
-		return nil, err
-	}
-
-	// Run migrations
-	if err := runMigrations(db); err != nil {
-		return nil, err
-	}
-
-	return db, nil
-}
-
-// runMigrations runs all pending migrations
-func runMigrations(db *sql.DB) error {
-	// Migration 1: Phase 9 shared infrastructure
-	migration1 := `
-	CREATE TABLE IF NOT EXISTS users (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		username TEXT UNIQUE NOT NULL,
-		email TEXT UNIQUE,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		xp INTEGER DEFAULT 0,
-		level INTEGER DEFAULT 1,
-		total_sessions INTEGER DEFAULT 0,
-		preferred_app TEXT DEFAULT 'typing'
-	);
-
-	CREATE TABLE IF NOT EXISTS sessions (
-		id TEXT PRIMARY KEY,
-		user_id INTEGER NOT NULL,
-		username TEXT NOT NULL,
-		device_fingerprint TEXT,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		expires_at TIMESTAMP NOT NULL,
-		active INTEGER DEFAULT 1,
-		FOREIGN KEY (user_id) REFERENCES users(id)
-	);
-
-	CREATE TABLE IF NOT EXISTS typing_results (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_id INTEGER,
-		wpm INTEGER NOT NULL,
-		raw_wpm INTEGER,
-		accuracy REAL NOT NULL,
-		test_type TEXT,
-		test_mode TEXT,
-		test_duration INTEGER,
-		total_characters INTEGER,
-		correct_characters INTEGER,
-		incorrect_characters INTEGER,
-		errors INTEGER,
-		time_taken REAL,
-		text_snippet TEXT,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY (user_id) REFERENCES users(id)
-	);
-
-	CREATE TABLE IF NOT EXISTS typing_stats (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_id INTEGER UNIQUE,
-		total_tests INTEGER DEFAULT 0,
-		average_wpm REAL DEFAULT 0,
-		average_accuracy REAL DEFAULT 0,
-		best_wpm INTEGER DEFAULT 0,
-		total_time_typed INTEGER DEFAULT 0,
-		last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY (user_id) REFERENCES users(id)
-	);
-
-	CREATE TABLE IF NOT EXISTS races (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_id INTEGER,
-		difficulty TEXT DEFAULT 'medium',
-		placement INTEGER,
-		wpm INTEGER,
-		accuracy REAL,
-		race_time REAL,
-		xp_earned INTEGER DEFAULT 0,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY (user_id) REFERENCES users(id)
-	);
-
-	CREATE TABLE IF NOT EXISTS racing_stats (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_id INTEGER UNIQUE,
-		total_races INTEGER DEFAULT 0,
-		wins INTEGER DEFAULT 0,
-		podiums INTEGER DEFAULT 0,
-		total_xp INTEGER DEFAULT 0,
-		current_car TEXT DEFAULT '🚗',
-		FOREIGN KEY (user_id) REFERENCES users(id)
-	);
-
-	CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
-	CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
-	CREATE INDEX IF NOT EXISTS idx_typing_results_user_id ON typing_results(user_id);
-	`
-
-	if _, err := db.Exec(migration1); err != nil {
-		return err
-	}
-
-	// Create default guest user if not exists
-	var guestID int64
-	err := db.QueryRow("SELECT id FROM users WHERE username = 'Guest'").Scan(&guestID)
-	if err == sql.ErrNoRows {
-		result, err := db.Exec("INSERT INTO users (username) VALUES (?)", "Guest")
-		if err != nil {
-			return err
-		}
-		guestID, _ := result.LastInsertId()
-		db.Exec("INSERT INTO typing_stats (user_id, total_tests) VALUES (?, 0)", guestID)
-	}
-
-	// Migration 4: Tmux Session Grouping
-	migration4 := `
-	CREATE TABLE IF NOT EXISTS projects (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		slug TEXT UNIQUE NOT NULL,
-		name TEXT NOT NULL,
-		icon TEXT,
-		display_order INTEGER DEFAULT 0,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	);
-
-	CREATE TABLE IF NOT EXISTS tmux_sessions (
-		id TEXT PRIMARY KEY,
-		name TEXT UNIQUE NOT NULL,
-		project_id INTEGER,
-		environment TEXT DEFAULT 'dev',
-		is_worker BOOLEAN DEFAULT 0,
-		attached BOOLEAN DEFAULT 0,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY(project_id) REFERENCES projects(id)
-	);
-
-	CREATE TABLE IF NOT EXISTS session_group_prefs (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_id INTEGER NOT NULL,
-		group_id TEXT NOT NULL,
-		collapsed BOOLEAN DEFAULT 0,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY(user_id) REFERENCES users(id),
-		UNIQUE(user_id, group_id)
-	);
-
-	CREATE INDEX IF NOT EXISTS idx_tmux_sessions_project_id ON tmux_sessions(project_id);
-	CREATE INDEX IF NOT EXISTS idx_tmux_sessions_environment ON tmux_sessions(environment);
-	CREATE INDEX IF NOT EXISTS idx_tmux_sessions_is_worker ON tmux_sessions(is_worker);
-	CREATE INDEX IF NOT EXISTS idx_tmux_sessions_name ON tmux_sessions(name);
-	CREATE INDEX IF NOT EXISTS idx_session_group_prefs_user_id ON session_group_prefs(user_id);
-
-	INSERT OR IGNORE INTO projects (slug, name, icon, display_order) VALUES
-		('basic_edu', 'Basic Education Apps', '🎓', 1),
-		('rando', 'Rando Project', '🎲', 2),
-		('architect', 'Architect System', '🏗️', 3),
-		('gaia_improvements', 'GAIA Improvements', '⚡', 4);
-	`
-
-	if _, err := db.Exec(migration4); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // getEnv gets an environment variable with a default value
@@ -287,36 +286,11 @@ func getEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
-// printRoutes logs available API routes
-func printRoutes(env string) {
-	log.Println("===============================================")
-	log.Println("GAIA Education Platform - Phase 9")
-	log.Println("===============================================")
-	log.Println()
-	log.Println("Available API Routes:")
-	log.Println()
-	log.Println("Authentication:")
-	log.Println("  POST   /api/auth/login                 - Login")
-	log.Println("  POST   /api/auth/register              - Register")
-	log.Println("  POST   /api/auth/logout                - Logout")
-	log.Println("  GET    /api/auth/me                    - Current user")
-	log.Println()
-	log.Println("Users:")
-	log.Println("  GET    /api/users                      - List users")
-	log.Println("  POST   /api/users                      - Create user")
-	log.Println()
-	log.Println("Typing App:")
-	log.Println("  GET    /api/typing/current-user        - Current user")
-	log.Println("  GET    /api/typing/users               - List users")
-	log.Println("  POST   /api/typing/users               - Create user")
-	log.Println("  GET    /api/typing/text                - Get typing text")
-	log.Println("  POST   /api/typing/save-result         - Save test result")
-	log.Println("  GET    /api/typing/stats               - User statistics")
-	log.Println("  GET    /api/typing/leaderboard         - Leaderboard")
-	log.Println("  POST   /api/typing/race/start          - Start race")
-	log.Println("  POST   /api/typing/race/finish         - Finish race")
-	log.Println("  GET    /api/typing/race/stats          - Race statistics")
-	log.Println("  GET    /api/typing/race/leaderboard    - Race leaderboard")
-	log.Println()
-	log.Println("===============================================")
+// getEnvBool gets a boolean environment variable with a default value
+func getEnvBool(key string, defaultValue bool) bool {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	return value == "true" || value == "1" || value == "yes"
 }

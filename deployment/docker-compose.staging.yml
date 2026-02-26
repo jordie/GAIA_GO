@@ -1,0 +1,75 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: gaia_go_staging_db
+    environment:
+      POSTGRES_USER: gaia_user
+      POSTGRES_PASSWORD: gaia_staging_password
+      POSTGRES_DB: gaia_go_staging
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    networks:
+      - gaia_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gaia_user -d gaia_go_staging"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # GAIA_GO Application Server
+  gaia_go:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    container_name: gaia_go_staging_server
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://gaia_user:gaia_staging_password@postgres:5432/gaia_go_staging?sslmode=disable
+      PORT: 8080
+      CLAUDE_CONFIRM_AI_ENABLED: "true"
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      LOG_LEVEL: info
+      PROMETHEUS_ENABLED: "true"
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    networks:
+      - gaia_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Prometheus for metrics collection (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: gaia_go_prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9091:9090"
+    networks:
+      - gaia_network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    restart: unless-stopped
+
+networks:
+  gaia_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  prometheus_data:

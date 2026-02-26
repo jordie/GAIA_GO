@@ -1,0 +1,128 @@
+{
+  "id": "phase-8-8-3",
+  "name": "Phase 8.8.3 - Cross-App Broadcast Handlers",
+  "description": "Implement SyncBroadcaster for real-time cross-application data synchronization across 4 educational apps (typing, math, reading, piano)",
+  "status": "ready_to_queue",
+  "priority": 8,
+  "created_at": "2026-02-21T13:35:00Z",
+  "location": "GAIA_HOME/architect-go/pkg/dashboard/sync_broadcaster.go",
+  "language": "Go",
+  "estimated_lines": 350,
+  "dependencies": [
+    "Phase 8.8.1 (data structures - MUST be complete)",
+    "pkg/events (event bus)",
+    "pkg/realtime (WebSocket hub)"
+  ],
+  "blocking": [
+    "Phase 8.8.4 (leaderboard sync)",
+    "Phase 8.8.5 (dashboard integration)"
+  ],
+  "critical_issues": [
+    {
+      "id": "issue-1",
+      "title": "Cross-app metric normalization",
+      "description": "Each app returns metrics on different scales - must normalize to 0-100",
+      "severity": "critical"
+    },
+    {
+      "id": "issue-2",
+      "title": "Real-time WebSocket broadcasts",
+      "description": "Implement non-blocking broadcasts with goroutines to realtime hub",
+      "severity": "critical"
+    },
+    {
+      "id": "issue-3",
+      "title": "Channel naming convention",
+      "description": "Implement consistent channel naming: user:{id}:sync:all, sync:leaderboard, etc.",
+      "severity": "high"
+    },
+    {
+      "id": "issue-4",
+      "title": "Thread safety",
+      "description": "Use sync.RWMutex for all shared data structures",
+      "severity": "high"
+    },
+    {
+      "id": "issue-5",
+      "title": "Error handling",
+      "description": "Non-blocking broadcasts - errors logged, never panic",
+      "severity": "high"
+    }
+  ],
+  "deliverables": [
+    {
+      "name": "SyncBroadcaster struct",
+      "description": "Main struct with event bus and realtime hub integration",
+      "status": "pending"
+    },
+    {
+      "name": "BroadcastUserProgress()",
+      "description": "Sync user progress across all 4 apps, normalize metrics to 0-100",
+      "status": "pending"
+    },
+    {
+      "name": "BroadcastCrossAppLeaderboard()",
+      "description": "Unified rankings across typing, math, reading, piano",
+      "status": "pending"
+    },
+    {
+      "name": "PropagateAchievements()",
+      "description": "Share achievements/milestones across apps with event publishing",
+      "status": "pending"
+    },
+    {
+      "name": "BroadcastSessionActivity()",
+      "description": "Real-time activity from any app to all connected users",
+      "status": "pending"
+    },
+    {
+      "name": "HandleAppSpecificUpdates()",
+      "description": "App-to-app metric sync with fallback logic",
+      "status": "pending"
+    },
+    {
+      "name": "Unit tests",
+      "description": "Test broadcaster with mock event bus and realtime hub",
+      "status": "pending"
+    }
+  ],
+  "success_criteria": [
+    "SyncBroadcaster compiles without errors",
+    "All 5 public methods implemented (350+ LOC)",
+    "Metrics normalized correctly (WPM→0-100, Piano→0-100, etc.)",
+    "Non-blocking goroutine broadcasts (no deadlocks)",
+    "Thread-safe with sync.RWMutex",
+    "Consistent channel naming convention",
+    "Error logging without panics",
+    "Unit tests pass with >80% coverage",
+    "Integration with event bus (pkg/events)",
+    "Integration with realtime hub (pkg/realtime)"
+  ],
+  "implementation_notes": {
+    "required_knowledge": [
+      "Go concurrency (goroutines, channels)",
+      "Mutex usage and deadlock prevention",
+      "Event-driven architecture",
+      "WebSocket broadcasting patterns"
+    ],
+    "architectural_patterns": [
+      "Event bus pattern (pkg/events)",
+      "Thread-safe maps with RWMutex",
+      "Non-blocking goroutine pattern",
+      "Channel naming convention: category:subcategory:identifier"
+    ],
+    "normalization_algorithm": {
+      "typing_wpm": "divide by 2 (0-200 range → 0-100)",
+      "math_accuracy": "already 0-100%",
+      "reading_comprehension": "already 0-100%",
+      "piano_score": "divide by 10 (0-1000 range → 0-100)"
+    }
+  },
+  "context_file": "/tmp/phase_8_8_context.txt",
+  "team": {
+    "assignee": "available",
+    "reviewer": "architect_manager",
+    "estimated_effort": "6-8 hours"
+  },
+  "queue_command": "os: Implement Phase 8.8.3 - Cross-App Broadcast Handlers --priority 8"
+}

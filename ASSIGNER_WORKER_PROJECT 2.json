@@ -1,0 +1,215 @@
+{
+  "project_id": "assigner-worker-2026",
+  "title": "Assigner Worker Enhancement & GAIA Integration",
+  "status": "pending_approval",
+  "priority": 8,
+  "complexity": "high",
+  "category": "infrastructure",
+  "created_at": "2026-02-21T04:35:00Z",
+
+  "description": "Enhance assigner worker to be production-grade GAIA system component with distributed queue, session health monitoring, smart routing, and cross-machine support for Pink Laptop and Mac Mini.",
+
+  "goals": [
+    "Move assigner_worker from architect/ to GAIA_HOME/workers/",
+    "Implement distributed queue system across Pink Laptop and Mac Mini",
+    "Add session health scoring and automatic failure detection",
+    "Implement intelligent prompt routing with load balancing",
+    "Add comprehensive monitoring and alerting",
+    "Enable cross-machine session management",
+    "Prevent queue backlog and session overload",
+    "Support failover and graceful degradation"
+  ],
+
+  "current_issues": [
+    {
+      "id": 1,
+      "severity": "critical",
+      "title": "No distributed queue - isolated per machine",
+      "description": "Queue database is local-only (SQLite), causing Pink Laptop and Mac Mini to have separate queues with no cross-machine visibility"
+    },
+    {
+      "id": 2,
+      "severity": "critical",
+      "title": "Prompts sent to busy/stuck sessions",
+      "description": "Session status detection is reactive and slow (5-10s polling), can't prevent assigning to overloaded or frozen sessions"
+    },
+    {
+      "id": 3,
+      "severity": "high",
+      "title": "No session capacity management",
+      "description": "Sessions lack workload tracking - can't determine if session is at capacity before assigning new task"
+    },
+    {
+      "id": 4,
+      "severity": "high",
+      "title": "Basic queue management only",
+      "description": "Queue uses simple priority ordering, no depth monitoring, no back-pressure handling, no aging task escalation"
+    },
+    {
+      "id": 5,
+      "severity": "high",
+      "title": "Weak error resilience",
+      "description": "No circuit breaker for failing sessions, simple timeout without distinguishing stuck vs slow tasks"
+    },
+    {
+      "id": 6,
+      "severity": "medium",
+      "title": "Missing observability",
+      "description": "No real-time queue metrics dashboard, no alerting, no historical trend analysis"
+    },
+    {
+      "id": 7,
+      "severity": "medium",
+      "title": "Assigner not in GAIA_HOME",
+      "description": "Assigner worker tightly coupled to architect directory structure, not designed to run from GAIA_HOME"
+    }
+  ],
+
+  "proposed_solution": "See ASSIGNER_WORKER_ENHANCEMENT_PROPOSAL.md for detailed architecture",
+
+  "implementation_phases": [
+    {
+      "phase": 1,
+      "title": "Foundation",
+      "duration_days": 5,
+      "tasks": [
+        "Move assigner_worker.py to GAIA_HOME/workers/",
+        "Create GAIA_HOME/config/assigner.yaml configuration",
+        "Implement DistributedQueue with Redis/SQLite hybrid backend",
+        "Implement SessionRegistry for cross-machine tracking",
+        "Add GAIA integration (logging, config, locking)"
+      ]
+    },
+    {
+      "phase": 2,
+      "title": "Health & Monitoring",
+      "duration_days": 5,
+      "tasks": [
+        "Implement SessionHealthMonitor with score calculation",
+        "Add circuit breaker pattern for failure detection",
+        "Implement QueueMetricsCollector with Prometheus export",
+        "Create real-time monitoring dashboard",
+        "Add alerting for queue health"
+      ]
+    },
+    {
+      "phase": 3,
+      "title": "Smart Routing",
+      "duration_days": 5,
+      "tasks": [
+        "Implement QueueRouter with multi-factor session selection",
+        "Add cost-based routing logic",
+        "Implement load balancing strategies",
+        "Add anti-affinity rules for task distribution",
+        "Implement automatic session restart on failures"
+      ]
+    },
+    {
+      "phase": 4,
+      "title": "Resilience & Optimization",
+      "duration_days": 5,
+      "tasks": [
+        "Add back-pressure handling for queue overload",
+        "Implement queue priority escalation for aging tasks",
+        "Add graceful degradation strategies",
+        "Implement queue rebalancing algorithms",
+        "Add automatic provider fallback"
+      ]
+    },
+    {
+      "phase": 5,
+      "title": "Integration & Deployment",
+      "duration_days": 5,
+      "tasks": [
+        "Create WebSocket server for cross-machine queue access",
+        "Implement REST API for queue management",
+        "Integrate with GAIA dashboard",
+        "Create deployment scripts for both machines",
+        "Comprehensive testing and validation"
+      ]
+    }
+  ],
+
+  "success_criteria": {
+    "functional": [
+      "Queue operates across Pink Laptop and Mac Mini simultaneously",
+      "Prompts never sent to busy/stuck sessions",
+      "Session health automatically detected and updated every 5 seconds",
+      "Failed prompts automatically retry with fallback sessions",
+      "Queue depth stays below 50 with 5+ available sessions",
+      "Average prompt latency < 2 seconds (queue to assignment)"
+    ],
+    "operational": [
+      "Assigner worker runs in GAIA_HOME",
+      "Configuration managed in ~/.gaia/config.json",
+      "Real-time monitoring dashboard operational",
+      "Automatic alerting on issues",
+      "Cross-machine session visibility",
+      "Load balancing active"
+    ],
+    "performance": [
+      "Queue throughput: 100+ prompts/minute",
+      "Session discovery: < 100ms latency",
+      "Health score updates: < 500ms",
+      "Router decision: < 100ms"
+    ]
+  },
+
+  "resources_required": {
+    "languages": ["Python 3.8+"],
+    "external_dependencies": [
+      "Redis (optional, for distributed queue)",
+      "Prometheus (for metrics)",
+      "SQLite (for fallback queue)"
+    ],
+    "estimated_lines_of_code": 2500,
+    "estimated_files_created": 10,
+    "estimated_files_modified": 4
+  },
+
+  "risks": [
+    {
+      "risk": "Distributed queue consistency",
+      "severity": "high",
+      "mitigation": "Use ACID transactions, write-ahead logs, atomic operations"
+    },
+    {
+      "risk": "Session health false positives",
+      "severity": "medium",
+      "mitigation": "Multiple detection methods, configurable thresholds, manual override"
+    },
+    {
+      "risk": "Performance regression from smart routing",
+      "severity": "medium",
+      "mitigation": "Async scoring, caching, load testing"
+    }
+  ],
+
+  "dependencies": [
+    "Phase 3 (Perplexity Integration) - must be complete",
+    "GAIA framework running",
+    "Both machines (Pink Laptop, Mac Mini) online"
+  ],
+
+  "estimated_effort": {
+    "analysis": 8,
+    "design": 12,
+    "implementation": 30,
+    "testing": 10,
+    "documentation": 5,
+    "total_hours": 65
+  },
+
+  "owner": "architect_manager_session",
+  "reviewers": ["claude_code_high_level", "wrapper_claude"],
+  "assignees": ["dev_worker1", "dev_worker2"],
+
+  "proposal_document": "ASSIGNER_WORKER_ENHANCEMENT_PROPOSAL.md",
+  "related_documents": [
+    "GAIA.md",
+    "CLAUDE.md",
+    "workers/assigner_worker.py"
+  ],
+
+  "notes": "This is a critical infrastructure upgrade. Current assigner worker is causing issues with queue management and session overload. Enhancement is necessary for stable multi-machine operation."
+}

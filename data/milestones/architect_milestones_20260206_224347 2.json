@@ -1,0 +1,668 @@
+{
+  "project": "architect",
+  "generated_at": "2026-02-06T22:43:47.913567",
+  "total_tasks": 51,
+  "total_milestones": 7,
+  "milestones": [
+    {
+      "id": "architect_planning",
+      "name": "Architect - Planning & Setup",
+      "description": "Initial planning, documentation, and project setup",
+      "phase": "planning",
+      "start_date": "2026-02-06T22:43:47.913473",
+      "target_date": "2026-02-09T22:43:47.913473",
+      "tasks": [
+        {
+          "title": "Update documentation",
+          "description": "Update documentation",
+          "priority": 1,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "documentation",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/zesty-toasting-sunset.md",
+          "line_number": 396
+        }
+      ],
+      "total_hours": 1.0,
+      "status": "pending"
+    },
+    {
+      "id": "architect_dev_1",
+      "name": "Architect - Development Phase 1",
+      "description": "Feature implementation: 10 features",
+      "phase": "development",
+      "start_date": "2026-02-06T22:43:47.913491",
+      "target_date": "2026-02-13T22:43:47.913491",
+      "tasks": [
+        {
+          "title": "Create runbook for troubleshooting",
+          "description": "Create runbook for troubleshooting",
+          "priority": 1,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/zesty-toasting-sunset.md",
+          "line_number": 620
+        },
+        {
+          "title": "Create team training materials",
+          "description": "Create team training materials",
+          "priority": 1,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/zesty-toasting-sunset.md",
+          "line_number": 623
+        },
+        {
+          "title": "Update `LLMClient.__init__` to use failover client",
+          "description": "Update `LLMClient.__init__` to use failover client",
+          "priority": 1,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/zesty-toasting-sunset.md",
+          "line_number": 172
+        },
+        {
+          "title": "Add feature flag: `LLM_FAILOVER_ENABLED`",
+          "description": "Add feature flag: `LLM_FAILOVER_ENABLED`",
+          "priority": 1,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/zesty-toasting-sunset.md",
+          "line_number": 189
+        },
+        {
+          "title": "Add circuit breaker status checks when selecting sessions",
+          "description": "Add circuit breaker status checks when selecting sessions",
+          "priority": 1,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/zesty-toasting-sunset.md",
+          "line_number": 198
+        },
+        {
+          "title": "Add provider-specific routing rules",
+          "description": "Add provider-specific routing rules",
+          "priority": 1,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/zesty-toasting-sunset.md",
+          "line_number": 615
+        },
+        {
+          "title": "Update CLAUDE.md with failover section",
+          "description": "Update CLAUDE.md with failover section",
+          "priority": 1,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/zesty-toasting-sunset.md",
+          "line_number": 619
+        },
+        {
+          "title": "Add provider selection guide",
+          "description": "Add provider selection guide",
+          "priority": 1,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/zesty-toasting-sunset.md",
+          "line_number": 622
+        },
+        {
+          "title": "Create project structure",
+          "description": "Create project structure",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/memoized-wiggling-moth.md",
+          "line_number": 93
+        },
+        {
+          "title": "Implement Google Sheets service with:",
+          "description": "Implement Google Sheets service with:",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/memoized-wiggling-moth.md",
+          "line_number": 95
+        }
+      ],
+      "total_hours": 22.0,
+      "status": "pending"
+    },
+    {
+      "id": "architect_dev_2",
+      "name": "Architect - Development Phase 2",
+      "description": "Feature implementation: 10 features",
+      "phase": "development",
+      "start_date": "2026-02-13T22:43:47.913498",
+      "target_date": "2026-02-20T22:43:47.913498",
+      "tasks": [
+        {
+          "title": "Create SQLite database models",
+          "description": "Create SQLite database models",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/memoized-wiggling-moth.md",
+          "line_number": 99
+        },
+        {
+          "title": "Build sync mechanism (Sheets \u2194 Local DB)",
+          "description": "Build sync mechanism (Sheets \u2194 Local DB)",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/memoized-wiggling-moth.md",
+          "line_number": 100
+        },
+        {
+          "title": "Create new project: \"Property Management\"",
+          "description": "Create new project: \"Property Management\"",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/memoized-wiggling-moth.md",
+          "line_number": 144
+        },
+        {
+          "title": "Create Service Account:",
+          "description": "Create Service Account:",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/memoized-wiggling-moth.md",
+          "line_number": 148
+        },
+        {
+          "title": "Create project structure",
+          "description": "Create project structure",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/lucky-dreaming-gosling.md",
+          "line_number": 233
+        },
+        {
+          "title": "Implement db.py with connection management",
+          "description": "Implement db.py with connection management",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/lucky-dreaming-gosling.md",
+          "line_number": 234
+        },
+        {
+          "title": "Create app.py with auth and base routes",
+          "description": "Create app.py with auth and base routes",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/lucky-dreaming-gosling.md",
+          "line_number": 235
+        },
+        {
+          "title": "Build login.html and dashboard.html",
+          "description": "Build login.html and dashboard.html",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/lucky-dreaming-gosling.md",
+          "line_number": 236
+        },
+        {
+          "title": "Implement dataStore.js",
+          "description": "Implement dataStore.js",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/lucky-dreaming-gosling.md",
+          "line_number": 237
+        },
+        {
+          "title": "Create `crawler_config.py` with Chrome profile detection",
+          "description": "Create `crawler_config.py` with Chrome profile detection",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/warm-honking-scott.md",
+          "line_number": 143
+        }
+      ],
+      "total_hours": 40.0,
+      "status": "pending"
+    },
+    {
+      "id": "architect_dev_3",
+      "name": "Architect - Development Phase 3",
+      "description": "Feature implementation: 10 features",
+      "phase": "development",
+      "start_date": "2026-02-20T22:43:47.913504",
+      "target_date": "2026-02-27T22:43:47.913504",
+      "tasks": [
+        {
+          "title": "Create `crawler_service.py` with:",
+          "description": "Create `crawler_service.py` with:",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/warm-honking-scott.md",
+          "line_number": 144
+        },
+        {
+          "title": "Create Chrome startup script",
+          "description": "Create Chrome startup script",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/warm-honking-scott.md",
+          "line_number": 151
+        },
+        {
+          "title": "Update guides",
+          "description": "Update guides",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/memoized-wiggling-moth.md",
+          "line_number": 139
+        },
+        {
+          "title": "Add `session_pool` table (name, tmux_name, role, restart_count, health, etc.)",
+          "description": "Add `session_pool` table (name, tmux_name, role, restart_count, health, etc.)",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/functional-dazzling-wall.md",
+          "line_number": 16
+        },
+        {
+          "title": "Add `pool_events` table (session_name, event_type, details, timestamp)",
+          "description": "Add `pool_events` table (session_name, event_type, details, timestamp)",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/functional-dazzling-wall.md",
+          "line_number": 17
+        },
+        {
+          "title": "Add methods: `save_pool_member()`, `get_pool_members()`, `log_pool_event()`",
+          "description": "Add methods: `save_pool_member()`, `get_pool_members()`, `log_pool_event()`",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/functional-dazzling-wall.md",
+          "line_number": 18
+        },
+        {
+          "title": "Add `GET /api/comet/login-status` - all service statuses",
+          "description": "Add `GET /api/comet/login-status` - all service statuses",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/functional-dazzling-wall.md",
+          "line_number": 44
+        },
+        {
+          "title": "Add `POST /api/comet/login-check` - trigger immediate check",
+          "description": "Add `POST /api/comet/login-check` - trigger immediate check",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/functional-dazzling-wall.md",
+          "line_number": 45
+        },
+        {
+          "title": "Add `GET /api/comet/login-history` - recent check history",
+          "description": "Add `GET /api/comet/login-history` - recent check history",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/functional-dazzling-wall.md",
+          "line_number": 46
+        },
+        {
+          "title": "Adds elastic scaling for overflow workload",
+          "description": "Adds elastic scaling for overflow workload",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/encapsulated-wibbling-rocket.md",
+          "line_number": 13
+        }
+      ],
+      "total_hours": 16.0,
+      "status": "pending"
+    },
+    {
+      "id": "architect_dev_4",
+      "name": "Architect - Development Phase 4",
+      "description": "Feature implementation: 10 features",
+      "phase": "development",
+      "start_date": "2026-02-27T22:43:47.913508",
+      "target_date": "2026-03-06T22:43:47.913508",
+      "tasks": [
+        {
+          "title": "Add 15 tasks to queue",
+          "description": "Add 15 tasks to queue",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/encapsulated-wibbling-rocket.md",
+          "line_number": 513
+        },
+        {
+          "title": "Add CSS variables for terminal font configuration",
+          "description": "Add CSS variables for terminal font configuration",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/cozy-strolling-metcalfe.md",
+          "line_number": 19
+        },
+        {
+          "title": "Add `font-variant-numeric: tabular-nums slashed-zero` for proper number alignment",
+          "description": "Add `font-variant-numeric: tabular-nums slashed-zero` for proper number alignment",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/cozy-strolling-metcalfe.md",
+          "line_number": 21
+        },
+        {
+          "title": "Add scrollback selector dropdown (Current pane / 500 / 1000 / 3000 / Full history)",
+          "description": "Add scrollback selector dropdown (Current pane / 500 / 1000 / 3000 / Full history)",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/cozy-strolling-metcalfe.md",
+          "line_number": 54
+        },
+        {
+          "title": "Add responsive breakpoints:",
+          "description": "Add responsive breakpoints:",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/cozy-strolling-metcalfe.md",
+          "line_number": 67
+        },
+        {
+          "title": "Add `ResizeObserver` to track terminal container dimensions",
+          "description": "Add `ResizeObserver` to track terminal container dimensions",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/cozy-strolling-metcalfe.md",
+          "line_number": 72
+        },
+        {
+          "title": "Add `crawl_results` table to database schema",
+          "description": "Add `crawl_results` table to database schema",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/warm-honking-scott.md",
+          "line_number": 35
+        },
+        {
+          "title": "Add `GET /api/crawl/<task_id>/result` endpoint",
+          "description": "Add `GET /api/crawl/<task_id>/result` endpoint",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/warm-honking-scott.md",
+          "line_number": 36
+        },
+        {
+          "title": "Add `GET /api/crawl/history` endpoint",
+          "description": "Add `GET /api/crawl/history` endpoint",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/warm-honking-scott.md",
+          "line_number": 37
+        },
+        {
+          "title": "Add database schema to `app.py`",
+          "description": "Add database schema to `app.py`",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/warm-honking-scott.md",
+          "line_number": 149
+        }
+      ],
+      "total_hours": 10.0,
+      "status": "pending"
+    },
+    {
+      "id": "architect_dev_5",
+      "name": "Architect - Development Phase 5",
+      "description": "Feature implementation: 9 features",
+      "phase": "development",
+      "start_date": "2026-03-06T22:43:47.913512",
+      "target_date": "2026-03-13T22:43:47.913512",
+      "tasks": [
+        {
+          "title": "Add API endpoints for results",
+          "description": "Add API endpoints for results",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/warm-honking-scott.md",
+          "line_number": 150
+        },
+        {
+          "title": "TODO: Implement YAML loading",
+          "description": "Implement YAML loading",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect/distributed/cli.py",
+          "line_number": 105
+        },
+        {
+          "title": "TODO: Implement actual deployment",
+          "description": "Implement actual deployment",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect/distributed/cli.py",
+          "line_number": 319
+        },
+        {
+          "title": "TODO: Full automation implementation",
+          "description": "Full automation implementation",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect/scripts/test_iclasspro_login.py",
+          "line_number": 65
+        },
+        {
+          "title": "TODO: Get from project metadata in database",
+          "description": "Get from project metadata in database",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect/scripts/comet_sheets_sync.py",
+          "line_number": 107
+        },
+        {
+          "title": "TODO: Check if current working directory matches",
+          "description": "Check if current working directory matches",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect/workers/claude_auto_approver.py",
+          "line_number": 52
+        },
+        {
+          "title": "TODO: Implement proper daemonization",
+          "description": "Implement proper daemonization",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect/workers/claude_auto_approver.py",
+          "line_number": 286
+        },
+        {
+          "title": "TODO: Implement daemon mode",
+          "description": "Implement daemon mode",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect/workers/pr_automation_worker.py",
+          "line_number": 291
+        },
+        {
+          "title": "TODO: Implement reading pending files and updating sheets",
+          "description": "Implement reading pending files and updating sheets",
+          "priority": 3,
+          "complexity": "simple",
+          "estimated_hours": 1.0,
+          "category": "feature",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/Desktop/gitrepo/pyWork/architect/services/sheets_git_sync.py",
+          "line_number": 349
+        }
+      ],
+      "total_hours": 9.0,
+      "status": "pending"
+    },
+    {
+      "id": "architect_testing",
+      "name": "Architect - Testing",
+      "description": "Testing and QA: 1 test suites",
+      "phase": "testing",
+      "start_date": "2026-02-20T22:43:47.913517",
+      "target_date": "2026-02-25T22:43:47.913517",
+      "tasks": [
+        {
+          "title": "Create test lead and campaign",
+          "description": "Create test lead and campaign",
+          "priority": 3,
+          "complexity": "medium",
+          "estimated_hours": 4.0,
+          "category": "test",
+          "dependencies": [],
+          "source_file": "/Users/jgirmay/.claude/plans/lucky-dreaming-gosling.md",
+          "line_number": 286
+        }
+      ],
+      "total_hours": 4.0,
+      "status": "pending"
+    }
+  ],
+  "tasks_by_category": {
+    "by_category": {
+      "feature": 49,
+      "documentation": 1,
+      "test": 1
+    },
+    "by_priority": {
+      "priority_3": 42,
+      "priority_1": 9
+    },
+    "by_complexity": {
+      "medium": 17,
+      "simple": 34
+    }
+  }
+}

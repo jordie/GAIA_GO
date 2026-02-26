@@ -1,0 +1,138 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║         ARCHITECT NODE SETUP - QUICK REFERENCE                             ║
+║         Setup all tools on pink laptop (or any node)                       ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+QUICK START
+═══════════════════════════════════════════════════════════════════════════
+
+1. PREVIEW SETUP (dry run, no changes):
+   ./scripts/setup_node_complete.sh --dry-run --node-name pink-laptop
+
+2. RUN FULL SETUP:
+   ./scripts/setup_node_complete.sh \
+     --node-name pink-laptop \
+     --dashboard-url http://192.168.1.100:8080
+
+3. WITH ALL OPTIONAL COMPONENTS:
+   ./scripts/setup_node_complete.sh \
+     --node-name pink-laptop \
+     --dashboard-url http://192.168.1.100:8080 \
+     --with-webui \
+     --with-anythingllm \
+     --with-n8n
+
+4. CONFIGURE API KEYS:
+   Edit ~/.architect_node.env and set:
+   - GOOGLE_API_KEY=your_gemini_key
+   - ANTHROPIC_API_KEY=your_claude_key
+
+5. START ALL SERVICES:
+   ./scripts/start_all_services.sh
+
+═══════════════════════════════════════════════════════════════════════════
+
+INSTALLED COMPONENTS
+═══════════════════════════════════════════════════════════════════════════
+
+CORE (Always installed):
+  ✓ Ollama              Port 11434  - Local LLM runtime
+  ✓ Gemini CLI          -           - Google AI integration
+  ✓ Node Agent          Port 9000   - Metrics & monitoring
+  ✓ Claude Code         -           - Task execution
+
+OPTIONAL (Use --with-* flags):
+  ✓ OpenWebUI           Port 3000   - ChatGPT-like interface
+  ✓ AnythingLLM         Port 3001   - RAG & document chat
+  ✓ n8n                 Port 5678   - Workflow automation
+
+═══════════════════════════════════════════════════════════════════════════
+
+USEFUL COMMANDS AFTER SETUP
+═══════════════════════════════════════════════════════════════════════════
+
+CHECK OLLAMA:
+  curl http://localhost:11434/api/tags
+
+LIST INSTALLED MODELS:
+  ollama list
+
+PULL NEW MODELS:
+  ollama pull mistral
+  ollama pull codellama
+  ollama pull neural-chat
+
+VERIFY NODE REGISTRATION:
+  curl http://192.168.1.100:8080/api/nodes | jq
+
+VIEW NODE METRICS:
+  curl http://localhost:9000/health | jq
+
+ACCESS WEB INTERFACES:
+  Ollama Dashboard:     http://localhost:11434
+  OpenWebUI (if set):   http://localhost:3000
+  AnythingLLM (if set): http://localhost:3001
+  n8n (if set):         http://localhost:5678 (admin/architect)
+
+═══════════════════════════════════════════════════════════════════════════
+
+ENVIRONMENT VARIABLES
+═══════════════════════════════════════════════════════════════════════════
+
+File: ~/.architect_node.env (auto-created)
+
+Required to set manually:
+  GOOGLE_API_KEY        - For Gemini API
+  ANTHROPIC_API_KEY     - For Claude API
+  OPENAI_API_KEY        - For GPT models (optional)
+
+Auto-configured:
+  NODE_NAME             - "pink-laptop"
+  NODE_PORT             - 9000
+  DASHBOARD_URL         - http://192.168.1.100:8080
+  OLLAMA_ENDPOINT       - http://localhost:11434
+
+═══════════════════════════════════════════════════════════════════════════
+
+TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════════════
+
+Ollama not starting?
+  tail -f /tmp/ollama.log
+  ~/scripts/start_ollama.sh
+
+Node not registering?
+  curl http://192.168.1.100:8080/health
+  tail -f /tmp/node_agent.log
+
+API keys not working?
+  source ~/.architect_node.env
+  echo $GOOGLE_API_KEY
+
+Docker services failing?
+  docker ps
+  docker-compose -f docker-compose-webui.yml up
+
+═══════════════════════════════════════════════════════════════════════════
+
+STOPPING SERVICES
+═══════════════════════════════════════════════════════════════════════════
+
+Individual:
+  pkill -f "ollama serve"
+  python3 distributed/node_agent.py --stop
+
+Docker:
+  docker-compose down
+
+All at once:
+  ./scripts/stop_all_services.sh (once created)
+
+═══════════════════════════════════════════════════════════════════════════
+
+FULL DOCUMENTATION
+═══════════════════════════════════════════════════════════════════════════
+
+See: scripts/NODE_SETUP_GUIDE.md
+
+═══════════════════════════════════════════════════════════════════════════

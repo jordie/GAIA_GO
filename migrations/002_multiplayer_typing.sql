@@ -55,15 +55,15 @@ CREATE INDEX IF NOT EXISTS idx_race_participants_placement ON race_participants(
 -- EXTEND EXISTING RACING_STATS TABLE
 -- ============================================================================
 
-ALTER TABLE racing_stats ADD COLUMN multiplayer_races INTEGER DEFAULT 0;
-ALTER TABLE racing_stats ADD COLUMN multiplayer_wins INTEGER DEFAULT 0;
-ALTER TABLE racing_stats ADD COLUMN multiplayer_podiums INTEGER DEFAULT 0;
+ALTER TABLE racing_stats ADD COLUMN IF NOT EXISTS multiplayer_races INTEGER DEFAULT 0;
+ALTER TABLE racing_stats ADD COLUMN IF NOT EXISTS multiplayer_wins INTEGER DEFAULT 0;
+ALTER TABLE racing_stats ADD COLUMN IF NOT EXISTS multiplayer_podiums INTEGER DEFAULT 0;
 
 -- ============================================================================
 -- EXTEND EXISTING RACES TABLE
 -- ============================================================================
 
-ALTER TABLE races ADD COLUMN race_id TEXT;
-ALTER TABLE races ADD COLUMN race_type TEXT DEFAULT 'ai';
+ALTER TABLE races ADD COLUMN IF NOT EXISTS race_id TEXT;
+ALTER TABLE races ADD COLUMN IF NOT EXISTS race_type TEXT DEFAULT 'ai';
 
 CREATE INDEX IF NOT EXISTS idx_races_race_type ON races(race_type);

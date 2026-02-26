@@ -1,0 +1,144 @@
+# GAIA_GO Version and Release Management
+
+## Current Stable Release
+v0.1.0-phase9 (2026-02-25)
+
+## Version Scheme
+- Format: vMAJOR.MINOR.PATCH-phase#
+- Phases: phase1 through phase9 (with subversion numbers for patches)
+- Example: v0.1.0-phase9 = Phase 9, version 1, patch 0
+
+## Stable vs Development
+- Stable releases tagged as: v#.#.#-phase#
+- Development branch: feature/phase9-consolidation-* (active work)
+- Stable branch: stable-phase# (stable releases for production)
+
+## Current Components (Phase 9 - Stable)
+✓ Teacher Dashboard Handlers - HTTP route handlers for usability metrics
+✓ Frustration Detection Engine - Real-time frustration analysis
+✓ Real-time Metrics Aggregator - Time-windowed metric collection
+✓ Usability Metrics Service - Background metrics persistence
+✓ TeacherDashboardAlertRepository - Alert storage and retrieval
+✓ PostgreSQL Integration - GORM-based persistence
+✓ Graceful Shutdown - Signal handling and cleanup
+✓ Health Check Endpoints - System status monitoring
+
+## How to Use Stable Releases
+
+### Using the Latest Stable Release
+```bash
+git checkout stable-phase9
+./bin/server  # Run the pre-built binary
+```
+
+### Building from Stable Source
+```bash
+git checkout v0.1.0-phase9
+go build -o ./bin/server ./cmd/server
+```
+
+### Staying on Stable with Feature Branches
+```bash
+# Create feature from stable, not from development
+git checkout stable-phase9
+git checkout -b feature/your-feature
+```
+
+## Release Notes for v0.1.0-phase9
+
+### New Features
+- Teacher Dashboard with real-time usability monitoring
+- Frustration detection using multiple signals (errors, backspace, hesitation)
+- Per-classroom and per-student metrics aggregation
+- Health score calculation (0-100 scale)
+- Struggling students identification
+- Intervention recording and tracking
+- Event-driven metrics pipeline
+
+### Technical Improvements
+- Replaced in-memory metrics with persistent PostgreSQL storage
+- Implemented proper repository pattern for data access
+- Added Chi router for HTTP routing (replaced Gin)
+- Clean separation of concerns: handlers, services, repositories
+- Proper dependency injection and initialization
+- Graceful shutdown with resource cleanup
+
+### Bug Fixes
+- Fixed Raft package API incompatibilities
+- Resolved unused variable warnings
+- Removed deprecated configuration options
+
+### Breaking Changes
+None - this is the initial phase 9 release
+
+### Migration Guide
+No migration needed for new installations. Existing systems should:
+1. Backup PostgreSQL database
+2. Checkout stable-phase9 branch
+3. Build and test in staging first
+4. Deploy with gradual rollout
+
+### Known Limitations
+- SessionCoordinator and TaskQueue integration not yet complete
+- Distributed consensus (Raft) support incomplete
+- Session affinity scoring is placeholder implementation
+
+## Development Roadmap
+
+### Phase 9 (Current - Stable)
+- ✓ Teacher usability monitoring
+- ✓ Frustration detection
+- ✓ Real-time metrics aggregation
+
+### Phase 10 (In Progress)
+- [ ] Auto-confirm patterns with AI agent fallback
+- [ ] Support for rando inspector foundation
+- [ ] Basic_edu integration
+- [ ] Distributed session coordination
+- [ ] Task queue management
+
+### Future Phases
+- Session affinity and load balancing
+- Advanced ML-based frustration prediction
+- Cross-classroom analytics
+- Teacher intervention recommendations
+
+## Support and Issues
+
+For issues on the stable release:
+1. Use the bug report template
+2. Include version: `git describe --tags --always`
+3. Provide logs from: `$GAIA_GO_HOME/logs/`
+4. Do NOT report issues from development branches
+
+For new features or development questions:
+- Use feature branches from feature/phase9-consolidation-*
+- Follow the multi-session work SOP in CLAUDE.md
+- Discuss significant changes before implementation
+
+## Release Checklist
+
+Before releasing a new stable version:
+- [ ] All unit tests pass
+- [ ] Integration tests pass  
+- [ ] Load test with expected concurrent sessions
+- [ ] Documentation updated
+- [ ] CHANGELOG.md entry added
+- [ ] Version number incremented
+- [ ] Release tagged with git tag
+- [ ] stable-phase# branch created/updated
+- [ ] Release notes published
+
+To create a stable release:
+```bash
+# From feature/phase9-consolidation-* (after final merges)
+git tag -a v0.1.1-phase9 -m "Release v0.1.1-phase9 - [description]"
+git push origin v0.1.1-phase9
+
+# Create/update stable branch
+git branch -f stable-phase9
+git push -u origin stable-phase9
+
+# Announce the release
+```
+

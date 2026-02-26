@@ -80,27 +80,17 @@ func (g *Generator) GenerateFiles(ctx *GenerationContext, files []*TemplateFile)
 
 func (g *Generator) renderPath(pathTemplate string, variables map[string]interface{}) string {
 	path := pathTemplate
+	path = filepath.Clean(path)
 
 	// Simple variable substitution in paths
-	for k, v := range variables {
-		placeholder := fmt.Sprintf("{{.%s}}", k)
-		simpleSubstitution := fmt.Sprintf("${%s}", k)
-		path = filepath.Clean(path)
+	for oldKey := range variables {
+		oldPlaceholder := fmt.Sprintf("{{.%s}}", oldKey)
+		oldSubst := fmt.Sprintf("${%s}", oldKey)
 
-		// Try both placeholder formats
-		if len(path) > 0 {
-			// This is a simple implementation - more complex rendering could be done with text/template
-			for oldKey, val := range variables {
-				oldPlaceholder := fmt.Sprintf("{{.%s}}", oldKey)
-				oldSubst := fmt.Sprintf("${%s}", oldKey)
-
-				// Would need to use text/template for proper rendering
-				// For now, just use simple replacements for path components
-				_ = oldPlaceholder
-				_ = oldSubst
-				_ = val
-			}
-		}
+		// Would need to use text/template for proper rendering
+		// For now, just use simple replacements for path components
+		_ = oldPlaceholder
+		_ = oldSubst
 	}
 
 	return path

@@ -56,18 +56,26 @@ def app():
 
     import app as flask_app
 
-    # Verify database was initialized with all tables
+    # Verify database was initialized with critical tables
     with sqlite3.connect(db_path) as conn:
-        # Verify deployment tables exist
         tables = conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
         table_names = [t[0] for t in tables]
 
-        # If deployment tables don't exist, reinitialize
-        if "deployments" not in table_names or "deployment_gates" not in table_names:
+        # List of critical tables that must exist
+        required_tables = [
+            "projects", "features", "bugs", "errors", "secrets",
+            "users", "nodes", "task_queue", "milestones"
+        ]
+
+        missing_tables = [t for t in required_tables if t not in table_names]
+
+        # If any critical tables are missing, reinitialize
+        if missing_tables:
             flask_app.init_database()
 
     flask_app.app.config["TESTING"] = True
     flask_app.app.config["WTF_CSRF_ENABLED"] = False
+    flask_app.app.config["CSRF_ENABLED"] = False
 
     yield flask_app.app
 
@@ -409,7 +417,7 @@ def performance_test_data():
 # =========================================================================
 
 
-def pytest_configure_markers(config):
+def pytest_configure(config):
     """Add additional markers for comprehensive test organization."""
     # Additional markers for test categorization
     markers = [
@@ -432,7 +440,7 @@ def pytest_runtest_makereport(item, call):
     setattr(item, f"rep_{rep.when}", rep)
 
 
-def pytest_collection_modifyitems_extended(config, items):
+def pytest_collection_modifyitems(config, items):
     """Add markers and modify test collection (extended)."""
     # Auto-mark slow tests
     for item in items:

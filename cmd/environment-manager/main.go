@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -250,8 +249,7 @@ func handleSelfImprove(rootDir, envDir string) {
 }
 
 func printUsage() {
-	fmt.Println(`
-GAIA_GO Environment Manager
+	fmt.Println(`GAIA_GO Environment Manager
 
 Advanced multi-environment orchestration with Go-native functionality.
 

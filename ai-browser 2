@@ -1,0 +1,348 @@
+#!/usr/bin/env python3
+"""
+AI-Powered Browser Agent
+Uses Ollama to intelligently navigate websites, find login forms, and extract information.
+"""
+
+import sys
+import time
+import json
+import base64
+import requests
+from pathlib import Path
+
+
+class OllamaWebAgent:
+    """Web agent that uses Ollama to make navigation decisions."""
+
+    def __init__(self, vision_model="llava:latest", text_model="llama3:latest", ollama_url="http://localhost:11434"):
+        self.vision_model = vision_model
+        self.text_model = text_model
+        self.ollama_url = ollama_url
+        self.driver = None
+        self.max_steps = 15
+        self.history = []
+
+    def ask_ollama(self, prompt, image_path=None):
+        """Ask Ollama a question, optionally with an image."""
+        try:
+            if image_path and Path(image_path).exists():
+                # Vision model - send screenshot
+                with open(image_path, 'rb') as f:
+                    image_data = base64.b64encode(f.read()).decode('utf-8')
+
+                print(f"  Using vision model: {self.vision_model}")
+                response = requests.post(
+                    f"{self.ollama_url}/api/generate",
+                    json={
+                        "model": self.vision_model,
+                        "prompt": prompt,
+                        "images": [image_data],
+                        "stream": False
+                    },
+                    timeout=120
+                )
+            else:
+                # Text-only
+                print(f"  Using text model: {self.text_model}")
+                response = requests.post(
+                    f"{self.ollama_url}/api/generate",
+                    json={
+                        "model": self.text_model,
+                        "prompt": prompt,
+                        "stream": False
+                    },
+                    timeout=60
+                )
+
+            if response.status_code == 200:
+                return response.json()['response']
+            else:
+                print(f"❌ Ollama error: {response.status_code}")
+                return None
+
+        except Exception as e:
+            print(f"❌ Error calling Ollama: {e}")
+            return None
+
+    def start_browser(self):
+        """Start browser."""
+        from selenium import webdriver
+        from selenium.webdriver.chrome.service import Service
+        from selenium.webdriver.chrome.options import Options
+        from webdriver_manager.chrome import ChromeDriverManager
+
+        options = Options()
+        options.add_argument('--start-maximized')
+        options.add_argument('--disable-blink-features=AutomationControlled')
+
+        print("🚀 Starting browser...")
+        service = Service(ChromeDriverManager().install())
+        self.driver = webdriver.Chrome(service=service, options=options)
+        self.driver.implicitly_wait(5)
+        print("✅ Browser ready")
+
+    def take_screenshot(self, name="screenshot"):
+        """Take screenshot and return path."""
+        path = f"/tmp/ai_browser_{name}_{int(time.time())}.png"
+        self.driver.save_screenshot(path)
+        return path
+
+    def get_page_info(self):
+        """Get current page information."""
+        from selenium.webdriver.common.by import By
+
+        return {
+            'url': self.driver.current_url,
+            'title': self.driver.title,
+            'text': self.driver.find_element(By.TAG_NAME, 'body').text[:3000],  # First 3000 chars
+        }
+
+    def navigate_with_ai(self, goal, start_url, username=None, password=None):
+        """
+        Navigate website using AI to achieve a goal.
+
+        Args:
+            goal: What to accomplish (e.g., "find the monthly price for group swim lessons")
+            start_url: Where to start
+            username: Login username (if needed)
+            password: Login password (if needed)
+        """
+        from selenium.webdriver.common.by import By
+        from selenium.common.exceptions import NoSuchElementException
+
+        print(f"\n🎯 Goal: {goal}")
+        print(f"🌐 Starting at: {start_url}")
+        print("="*70)
+
+        self.driver.get(start_url)
+        time.sleep(3)
+
+        for step in range(self.max_steps):
+            print(f"\n📍 Step {step + 1}/{self.max_steps}")
+            print("-"*70)
+
+            # Get current page info
+            page_info = self.get_page_info()
+            print(f"📄 Current page: {page_info['title']}")
+            print(f"🔗 URL: {page_info['url']}")
+
+            # Take screenshot
+            screenshot_path = self.take_screenshot(f"step_{step}")
+            print(f"📸 Screenshot: {screenshot_path}")
+
+            # Decide if we've achieved the goal
+            check_prompt = f"""You are analyzing a webpage to help achieve this goal: "{goal}"
+
+Current page title: {page_info['title']}
+Current URL: {page_info['url']}
+
+Page content (first 500 chars):
+{page_info['text'][:500]}
+
+Question: Have we achieved the goal? If yes, extract and return the answer. If no, say "NOT_COMPLETE".
+
+Format your response as:
+COMPLETE: [answer here]
+or
+NOT_COMPLETE
+"""
+
+            print("🤔 Asking Ollama: Have we achieved the goal?")
+            check_response = self.ask_ollama(check_prompt, screenshot_path)
+            print(f"💭 Ollama says: {check_response[:200]}...")
+
+            if check_response and "COMPLETE:" in check_response:
+                answer = check_response.split("COMPLETE:")[1].strip()
+                print(f"\n✅ SUCCESS! Found answer: {answer}")
+                return {
+                    'success': True,
+                    'answer': answer,
+                    'steps': step + 1,
+                    'final_url': page_info['url'],
+                    'screenshot': screenshot_path
+                }
+
+            # Ask AI what to do next
+            action_prompt = f"""You are navigating a website to achieve this goal: "{goal}"
+
+Current page title: {page_info['title']}
+Current URL: {page_info['url']}
+
+Page content:
+{page_info['text'][:1500]}
+
+What should I do next? Choose ONE action:
+
+1. CLICK_LINK: [exact link text to click]
+2. FILL_FORM: [if you see a login form, say "FILL_FORM email={username} password=****"]
+3. SUBMIT: [if form is filled and ready to submit]
+4. SCROLL_DOWN: [if you need to see more content]
+5. NOT_POSSIBLE: [if the goal cannot be achieved]
+
+Respond with ONLY the action in the format shown above. Be specific about link text.
+"""
+
+            print("🤔 Asking Ollama: What action should I take?")
+            action_response = self.ask_ollama(action_prompt, screenshot_path)
+            print(f"💭 Ollama suggests: {action_response}")
+
+            if not action_response:
+                print("❌ No response from Ollama")
+                continue
+
+            # Parse and execute action
+            action_response = action_response.strip()
+
+            if action_response.startswith("CLICK_LINK:"):
+                link_text = action_response.split("CLICK_LINK:")[1].strip()
+                print(f"🖱️  Attempting to click: {link_text}")
+
+                try:
+                    # Try partial match
+                    element = self.driver.find_element(By.PARTIAL_LINK_TEXT, link_text)
+                    element.click()
+                    print("✅ Clicked!")
+                    time.sleep(3)
+                except NoSuchElementException:
+                    print(f"⚠️  Link not found: {link_text}")
+                    # Ask Ollama for alternative
+                    alt_prompt = f"The link '{link_text}' was not found. Looking at the screenshot, suggest an alternative link text or action."
+                    alt_response = self.ask_ollama(alt_prompt, screenshot_path)
+                    print(f"💭 Alternative suggestion: {alt_response}")
+
+            elif action_response.startswith("FILL_FORM"):
+                print("📝 Attempting to fill form...")
+
+                if username and password:
+                    try:
+                        # Find email/username field
+                        for selector in ['input[type="email"]', 'input[name="email"]', 'input[name="username"]']:
+                            try:
+                                email_field = self.driver.find_element(By.CSS_SELECTOR, selector)
+                                email_field.clear()
+                                email_field.send_keys(username)
+                                print(f"✅ Filled username")
+                                break
+                            except:
+                                continue
+
+                        # Find password field
+                        pass_field = self.driver.find_element(By.CSS_SELECTOR, 'input[type="password"]')
+                        pass_field.clear()
+                        pass_field.send_keys(password)
+                        print(f"✅ Filled password")
+
+                    except Exception as e:
+                        print(f"⚠️  Could not fill form: {e}")
+                else:
+                    print("⚠️  No credentials provided")
+
+            elif action_response.startswith("SUBMIT"):
+                print("🚀 Attempting to submit form...")
+                try:
+                    submit_btn = self.driver.find_element(By.CSS_SELECTOR, 'button[type="submit"], input[type="submit"]')
+                    submit_btn.click()
+                    print("✅ Submitted!")
+                    time.sleep(5)
+                except Exception as e:
+                    print(f"⚠️  Could not submit: {e}")
+
+            elif action_response.startswith("SCROLL_DOWN"):
+                print("📜 Scrolling down...")
+                self.driver.execute_script("window.scrollBy(0, 800)")
+                time.sleep(2)
+
+            elif action_response.startswith("NOT_POSSIBLE"):
+                print("❌ Goal cannot be achieved")
+                return {
+                    'success': False,
+                    'error': 'Goal not achievable according to AI',
+                    'steps': step + 1
+                }
+
+            self.history.append({
+                'step': step + 1,
+                'action': action_response,
+                'url': page_info['url'],
+                'screenshot': screenshot_path
+            })
+
+        print("\n⚠️  Reached maximum steps without achieving goal")
+        return {
+            'success': False,
+            'error': 'Max steps reached',
+            'steps': self.max_steps,
+            'history': self.history
+        }
+
+    def close(self):
+        """Close browser."""
+        if self.driver:
+            self.driver.quit()
+            print("✅ Browser closed")
+
+
+def main():
+    if len(sys.argv) < 3:
+        print("Usage:")
+        print('  ai-browser "question" <url> [username] [password]')
+        print('')
+        print('Example:')
+        print('  ai-browser "What is the monthly price for group swim lessons?" https://aquatechswim.com user@email.com password')
+        sys.exit(1)
+
+    question = sys.argv[1]
+    url = sys.argv[2]
+    username = sys.argv[3] if len(sys.argv) > 3 else None
+    password = sys.argv[4] if len(sys.argv) > 4 else None
+
+    agent = OllamaWebAgent()
+
+    try:
+        # Check if Ollama is running
+        print("🔍 Checking Ollama connection...")
+        response = requests.get("http://localhost:11434/api/tags", timeout=5)
+        if response.status_code == 200:
+            print("✅ Ollama is running")
+        else:
+            print("❌ Ollama not responding. Start it with: ollama serve")
+            sys.exit(1)
+
+        agent.start_browser()
+
+        result = agent.navigate_with_ai(
+            goal=question,
+            start_url=url,
+            username=username,
+            password=password
+        )
+
+        # Save results
+        output_file = '/tmp/ai_browser_result.json'
+        with open(output_file, 'w') as f:
+            json.dump(result, f, indent=2)
+
+        print("\n" + "="*70)
+        print("📊 FINAL RESULT")
+        print("="*70)
+        print(json.dumps(result, indent=2))
+        print(f"\n📄 Saved to: {output_file}")
+
+        # Keep browser open for inspection
+        input("\n⏸  Press Enter to close browser...")
+
+    except KeyboardInterrupt:
+        print("\n\n👋 Interrupted by user")
+
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+
+    finally:
+        agent.close()
+
+
+if __name__ == '__main__':
+    main()
