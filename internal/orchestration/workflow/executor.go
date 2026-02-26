@@ -7,11 +7,15 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
+
+	"github.com/jgirmay/GAIA_GO/pkg/services/rate_limiting"
 )
 
 // Executor handles execution of individual workflow tasks
 type Executor struct {
-	workDir string
+	workDir       string
+	quotaService  *rate_limiting.CommandQuotaService
 }
 
 // NewExecutor creates a new task executor
@@ -21,22 +25,88 @@ func NewExecutor(workDir string) *Executor {
 	}
 }
 
+// NewExecutorWithQuotas creates a new task executor with quota service
+func NewExecutorWithQuotas(workDir string, quotaService *rate_limiting.CommandQuotaService) *Executor {
+	return &Executor{
+		workDir:      workDir,
+		quotaService: quotaService,
+	}
+}
+
+// SetQuotaService sets the quota service for enforcing command limits
+func (e *Executor) SetQuotaService(quotaService *rate_limiting.CommandQuotaService) {
+	e.quotaService = quotaService
+}
+
 // Execute runs a single task and returns its output
 func (e *Executor) Execute(ctx context.Context, workflow *Workflow, task *Task) (string, error) {
+	// Check command quota if quota service is available
+	if e.quotaService != nil {
+		userID := int64(1) // Default user ID, can be passed via context
+		if uid, ok := ctx.Value("user_id").(int64); ok {
+			userID = uid
+		}
+
+		sessionID, ok := ctx.Value("session_id").(string)
+		var sessionIDPtr *string
+		if ok {
+			sessionIDPtr = &sessionID
+		}
+
+		quotaReq := rate_limiting.CommandQuotaRequest{
+			UserID:      userID,
+			SessionID:   sessionIDPtr,
+			CommandType: task.Type,
+			CommandSize: len(task.Command),
+		}
+
+		decision, err := e.quotaService.CheckCommandQuota(ctx, quotaReq)
+		if err != nil {
+			// Log error but don't fail execution (quota service is optional)
+			fmt.Printf("Warning: quota check failed: %v\n", err)
+		} else if !decision.Allowed {
+			return "", fmt.Errorf("command quota exceeded: %s (reset at %s)",
+				decision.WarningMessage, decision.ResetTime.Format("15:04 MST"))
+		} else if decision.ThrottleFactor < 1.0 {
+			// Apply throttle factor to context
+			ctx = context.WithValue(ctx, "throttle_factor", decision.ThrottleFactor)
+		}
+	}
+
+	// Execute task based on type
+	start := time.Now()
+	var output string
+	var err error
+
 	switch task.Type {
 	case TaskTypeShell:
-		return e.executeShell(ctx, task)
+		output, err = e.executeShell(ctx, task)
 	case TaskTypeCode:
-		return e.executeCode(ctx, workflow, task)
+		output, err = e.executeCode(ctx, workflow, task)
 	case TaskTypeTest:
-		return e.executeTest(ctx, task)
+		output, err = e.executeTest(ctx, task)
 	case TaskTypeReview:
-		return e.executeReview(ctx, workflow, task)
+		output, err = e.executeReview(ctx, workflow, task)
 	case TaskTypeRefactor:
-		return e.executeRefactor(ctx, workflow, task)
+		output, err = e.executeRefactor(ctx, workflow, task)
 	default:
 		return "", fmt.Errorf("unsupported task type: %s", task.Type)
 	}
+
+	// Record execution if quota service is available
+	if e.quotaService != nil && err == nil {
+		duration := time.Since(start)
+		userID := int64(1)
+		if uid, ok := ctx.Value("user_id").(int64); ok {
+			userID = uid
+		}
+
+		if recordErr := e.quotaService.RecordCommandExecution(ctx, userID, task.Type, duration, 0, 0); recordErr != nil {
+			fmt.Printf("Warning: failed to record command execution: %v\n", recordErr)
+		}
+	}
+
+	return output, err
 }
 
 // executeShell runs a shell command task
@@ -44,6 +114,24 @@ func (e *Executor) executeShell(ctx context.Context, task *Task) (string, error)
 	workDir := task.WorkDir
 	if workDir == "" {
 		workDir = e.workDir
+	}
+
+	// Check for throttle factor in context
+	var throttleFactor float64 = 1.0
+	if tf, ok := ctx.Value("throttle_factor").(float64); ok {
+		throttleFactor = tf
+	}
+
+	// Apply throttle delay if system is throttled
+	if throttleFactor < 1.0 && throttleFactor > 0 {
+		// Calculate delay: if throttle is 0.5, we insert 50% delay
+		delay := time.Duration(float64(time.Second) * (1.0 - throttleFactor))
+		select {
+		case <-time.After(delay):
+			// Delay complete
+		case <-ctx.Done():
+			return "", ctx.Err()
+		}
 	}
 
 	// Create command
