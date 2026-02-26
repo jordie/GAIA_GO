@@ -174,17 +174,23 @@ func (cs *ConfirmationService) GetSessionStats(ctx context.Context, sessionID st
 	}
 
 	totalTime := 0
+	approvedCount := 0
 
 	for _, c := range confirmations {
-		switch c.ApprovedBy {
-		case "pattern":
-			stats.ApprovedByPattern++
-		case "ai_agent":
-			stats.ApprovedByAI++
-		case "user":
-			stats.ApprovedByUser++
+		// Count approvals by source
+		if c.Decision == DecisionApprove {
+			approvedCount++
+			switch c.ApprovedBy {
+			case "pattern":
+				stats.ApprovedByPattern++
+			case "ai_agent":
+				stats.ApprovedByAI++
+			case "user":
+				stats.ApprovedByUser++
+			}
 		}
 
+		// Count denials (regardless of source)
 		if c.Decision == DecisionDeny {
 			stats.Denied++
 		}
