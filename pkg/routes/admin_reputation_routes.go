@@ -1,7 +1,9 @@
 package routes
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -14,6 +16,9 @@ import (
 
 // AdminReputationRoutes registers reputation management endpoints
 func AdminReputationRoutes(router chi.Router, db *gorm.DB, rm *rate_limiting.ReputationManager) {
+	// Serve admin dashboard HTML
+	router.Get("/admin/reputation", serveReputationDashboard())
+
 	router.Route("/api/admin/reputation", func(r chi.Router) {
 		// List all users with their reputation
 		r.Get("/users", listUsers(rm))
@@ -387,24 +392,40 @@ func triggerDecay(rm *rate_limiting.ReputationManager) http.HandlerFunc {
 	}
 }
 
+// serveReputationDashboard serves the admin reputation dashboard
+func serveReputationDashboard() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		// Serve from templates/admin_reputation.html
+		// This would typically be embedded or served from static files
+		// For now, return a simple HTML stub with instructions
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Reputation Dashboard</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+	<div id="app"></div>
+	<p>Dashboard loading... Please check that templates/admin_reputation.html is properly served.</p>
+	<p><a href="/api/admin/reputation/stats">View API Stats</a></p>
+</body>
+</html>
+		`))
+	}
+}
+
 // Helper functions for JSON encoding/decoding
 func encodeJSON(w http.ResponseWriter, v interface{}) {
-	if data, err := marshalJSON(v); err == nil {
+	if data, err := json.Marshal(v); err == nil {
 		w.Write(data)
 	}
 }
 
 func decodeJSON(r *http.Request, v interface{}) error {
-	return unmarshalJSON(r.Body, v)
-}
-
-// Placeholder functions (implement based on your JSON library)
-func marshalJSON(v interface{}) ([]byte, error) {
-	// TODO: Implement based on your JSON library (encoding/json, etc)
-	return nil, nil
-}
-
-func unmarshalJSON(r interface{}, v interface{}) error {
-	// TODO: Implement based on your JSON library (encoding/json, etc)
-	return nil
+	defer r.Body.Close()
+	return json.NewDecoder(r.Body).Decode(v)
 }
