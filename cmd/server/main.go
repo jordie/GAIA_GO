@@ -23,7 +23,7 @@ import (
 func main() {
 	// Load environment configuration
 	port := getEnv("PORT", "8080")
-	dbURL := getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/gaia_go")
+	dbURL := getEnv("DATABASE_URL", "postgres://jgirmay@localhost:5432/gaia_go?sslmode=disable")
 
 	// Initialize database with GORM
 	log.Println("[INIT] Initializing PostgreSQL database...")
