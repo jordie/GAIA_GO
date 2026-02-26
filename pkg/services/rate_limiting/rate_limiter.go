@@ -302,9 +302,22 @@ func (l *PostgresRateLimiter) recordViolation(ctx context.Context, req LimitChec
 
 // recordMetric records rate limit metrics
 func (l *PostgresRateLimiter) recordMetric(ctx context.Context, req LimitCheckRequest, decision Decision) error {
-	// Skip metrics recording to avoid schema errors during testing
-	// Will be properly implemented in Phase 11.4
-	return nil
+	metric := Metric{
+		SystemID:          req.SystemID,
+		Scope:             req.Scope,
+		ScopeValue:        req.ScopeValue,
+		Timestamp:         time.Now(),
+		RequestsProcessed: 1,
+	}
+
+	if decision.Allowed {
+		metric.RequestsAllowed = 1
+	} else {
+		metric.RequestsBlocked = 1
+	}
+
+	// Insert metric - async/batched in Phase 11.4
+	return l.db.WithContext(ctx).Table("rate_limit_metrics").Create(&metric).Error
 }
 
 // startCleanupJob starts the background cleanup job
