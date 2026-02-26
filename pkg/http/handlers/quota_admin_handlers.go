@@ -14,23 +14,34 @@ import (
 
 // QuotaAdminHandlers handles admin quota management requests
 type QuotaAdminHandlers struct {
-	quotaService   *rate_limiting.CommandQuotaService
+	quotaService     *rate_limiting.CommandQuotaService
 	analyticsService *rate_limiting.QuotaAnalytics
-	db             *gorm.DB
+	alertEngine      *rate_limiting.AlertEngine
+	db               *gorm.DB
 }
 
 // NewQuotaAdminHandlers creates new quota admin handlers
 func NewQuotaAdminHandlers(quotaService *rate_limiting.CommandQuotaService, db *gorm.DB) *QuotaAdminHandlers {
 	return &QuotaAdminHandlers{
-		quotaService:   quotaService,
+		quotaService:     quotaService,
 		analyticsService: rate_limiting.NewQuotaAnalytics(db),
-		db:             db,
+		alertEngine:      rate_limiting.NewAlertEngine(db, rate_limiting.NewQuotaAnalytics(db)),
+		db:               db,
 	}
 }
 
 // SetAnalyticsService sets the analytics service
 func (qah *QuotaAdminHandlers) SetAnalyticsService(analytics *rate_limiting.QuotaAnalytics) {
 	qah.analyticsService = analytics
+	if qah.alertEngine != nil {
+		// Update analytics in alert engine
+		qah.alertEngine = rate_limiting.NewAlertEngine(qah.db, analytics)
+	}
+}
+
+// SetAlertEngine sets the alert engine
+func (qah *QuotaAdminHandlers) SetAlertEngine(alertEngine *rate_limiting.AlertEngine) {
+	qah.alertEngine = alertEngine
 }
 
 // RegisterRoutes registers quota admin routes
@@ -644,26 +655,146 @@ func (qah *QuotaAdminHandlers) GetUserTrends(w http.ResponseWriter, r *http.Requ
 	writeJSON(w, http.StatusOK, trends)
 }
 
-// Alert endpoints (placeholders for Phase 11.4.3)
+// Alert endpoints
 
+// GetAlerts returns recent alerts
+// GET /api/admin/quotas/alerts
 func (qah *QuotaAdminHandlers) GetAlerts(w http.ResponseWriter, r *http.Request) {
-	alerts := []interface{}{}
-	writeJSON(w, http.StatusOK, map[string]interface{}{
+	ctx := r.Context()
+
+	limit := 100
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 500 {
+			limit = parsed
+		}
+	}
+
+	alertType := r.URL.Query().Get("type")
+
+	if qah.alertEngine == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "alert service unavailable"})
+		return
+	}
+
+	alerts, err := qah.alertEngine.GetAlerts(ctx, limit, alertType)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get alerts"})
+		return
+	}
+
+	response := map[string]interface{}{
 		"alerts": alerts,
-		"note":   "Alert system coming in Phase 11.4.3",
-	})
+		"count":  len(alerts),
+	}
+
+	writeJSON(w, http.StatusOK, response)
 }
 
+// CreateAlert creates a new alert rule
+// POST /api/admin/quotas/alerts
 func (qah *QuotaAdminHandlers) CreateAlert(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusNotImplemented, map[string]string{"error": "coming soon"})
+	ctx := r.Context()
+
+	var rule rate_limiting.AlertRule
+	if err := decodeJSON(r, &rule); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request"})
+		return
+	}
+
+	if qah.alertEngine == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "alert service unavailable"})
+		return
+	}
+
+	id, err := qah.alertEngine.CreateAlertRule(ctx, rule)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to create alert rule"})
+		return
+	}
+
+	response := map[string]interface{}{
+		"rule_id": id,
+		"created": true,
+		"message": "Alert rule created successfully",
+	}
+
+	writeJSON(w, http.StatusCreated, response)
 }
 
+// UpdateAlert updates an alert rule
+// PUT /api/admin/quotas/alerts/{alertID}
 func (qah *QuotaAdminHandlers) UpdateAlert(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusNotImplemented, map[string]string{"error": "coming soon"})
+	ctx := r.Context()
+	alertIDStr := chi.URLParam(r, "alertID")
+	alertID, err := strconv.ParseInt(alertIDStr, 10, 64)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid alert ID"})
+		return
+	}
+
+	var updates map[string]interface{}
+	if err := decodeJSON(r, &updates); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request"})
+		return
+	}
+
+	if qah.alertEngine == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "alert service unavailable"})
+		return
+	}
+
+	// Convert map to AlertRule for update
+	var rule rate_limiting.AlertRule
+	rule.ID = alertID
+	// Apply updates from map to rule struct
+	if name, ok := updates["name"].(string); ok {
+		rule.Name = name
+	}
+	if desc, ok := updates["description"].(string); ok {
+		rule.Description = desc
+	}
+	if threshold, ok := updates["threshold"].(float64); ok {
+		rule.Threshold = threshold
+	}
+	if enabled, ok := updates["enabled"].(bool); ok {
+		rule.Enabled = enabled
+	}
+
+	if err := qah.alertEngine.UpdateAlertRule(ctx, alertID, rule); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to update alert rule"})
+		return
+	}
+
+	response := map[string]interface{}{
+		"alert_id": alertID,
+		"updated":  true,
+	}
+
+	writeJSON(w, http.StatusOK, response)
 }
 
+// DeleteAlert deletes an alert rule
+// DELETE /api/admin/quotas/alerts/{alertID}
 func (qah *QuotaAdminHandlers) DeleteAlert(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusNotImplemented, map[string]string{"error": "coming soon"})
+	ctx := r.Context()
+	alertIDStr := chi.URLParam(r, "alertID")
+	alertID, err := strconv.ParseInt(alertIDStr, 10, 64)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid alert ID"})
+		return
+	}
+
+	if qah.alertEngine == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "alert service unavailable"})
+		return
+	}
+
+	if err := qah.alertEngine.DeleteAlertRule(ctx, alertID); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete alert rule"})
+		return
+	}
+
+	writeJSON(w, http.StatusNoContent, nil)
 }
 
 // Helper functions
