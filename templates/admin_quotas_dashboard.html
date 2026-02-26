@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Quota Management Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/static/css/admin_quotas.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', sans-serif;
+            background-color: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: #1a202c;
+        }
+
+        header p {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-top: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .tab-button {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #718096;
+            font-size: 14px;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tab-button:hover {
+            color: #2d3748;
+        }
+
+        .tab-button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+
+        .stat-unit {
+            font-size: 12px;
+            color: #a0aec0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+        }
+
+        .section {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: #667eea;
+            border-radius: 2px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        thead {
+            background: #f7fafc;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .badge-warning {
+            background: #feebc8;
+            color: #7c2d12;
+        }
+
+        .badge-danger {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .badge-info {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #718096;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 16px;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e2e8f0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border-left: 4px solid #38a169;
+        }
+
+        .alert-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border-left: 4px solid #f56565;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .search-box input {
+            flex: 1;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                overflow-x: auto;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+
+            .section {
+                padding: 16px;
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>📊 Quota Management Dashboard</h1>
+            <p>Monitor, manage, and analyze command execution quotas across all users</p>
+
+            <div class="tabs">
+                <button class="tab-button active" onclick="switchTab('overview')">Overview</button>
+                <button class="tab-button" onclick="switchTab('users')">Users</button>
+                <button class="tab-button" onclick="switchTab('analytics')">Analytics</button>
+                <button class="tab-button" onclick="switchTab('violations')">Violations</button>
+                <button class="tab-button" onclick="switchTab('alerts')">Alerts</button>
+                <button class="tab-button" onclick="switchTab('health')">System Health</button>
+            </div>
+        </header>
+
+        <!-- Tab 1: Overview -->
+        <div id="overview" class="tab-content active">
+            <!-- System Stats -->
+            <div class="grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Users</div>
+                    <div class="stat-value" id="total-users">-</div>
+                    <div class="stat-unit">Active users registered</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Commands Today</div>
+                    <div class="stat-value" id="commands-today">-</div>
+                    <div class="stat-unit">Executions in last 24h</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">System Load</div>
+                    <div class="stat-value" id="system-load">-</div>
+                    <div class="stat-unit">CPU utilization</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Throttle Status</div>
+                    <div class="stat-value" id="throttle-factor">-</div>
+                    <div class="stat-unit">Average throttle factor</div>
+                </div>
+            </div>
+
+            <!-- Quota Status -->
+            <div class="section">
+                <div class="section-title">Quota Status by Command Type</div>
+                <div class="grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Shell Commands</div>
+                        <div class="stat-value" id="shell-usage">-</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="shell-progress" style="width: 0%"></div>
+                        </div>
+                        <div class="stat-unit" id="shell-detail">Loading...</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Code Execution</div>
+                        <div class="stat-value" id="code-usage">-</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="code-progress" style="width: 0%"></div>
+                        </div>
+                        <div class="stat-unit" id="code-detail">Loading...</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Test Execution</div>
+                        <div class="stat-value" id="test-usage">-</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="test-progress" style="width: 0%"></div>
+                        </div>
+                        <div class="stat-unit" id="test-detail">Loading...</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Review Tasks</div>
+                        <div class="stat-value" id="review-usage">-</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="review-progress" style="width: 0%"></div>
+                        </div>
+                        <div class="stat-unit" id="review-detail">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- High Utilization Users -->
+            <div class="section">
+                <div class="section-title">High Utilization Users (>80%)</div>
+                <table id="high-util-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Daily Usage</th>
+                            <th>Weekly Usage</th>
+                            <th>Monthly Usage</th>
+                            <th>Risk Level</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="high-util-tbody">
+                        <tr><td colspan="6" class="loading"><div class="spinner"></div> Loading data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab 2: Users -->
+        <div id="users" class="tab-content">
+            <div class="section">
+                <div class="section-title">User Quota Management</div>
+
+                <div class="search-box">
+                    <input type="text" id="user-search" placeholder="Search users..." onkeyup="filterUsers()">
+                    <button class="btn-primary" onclick="openUserModal()">+ Add User Limits</button>
+                </div>
+
+                <table id="users-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Tier</th>
+                            <th>Daily Shell</th>
+                            <th>Daily Code</th>
+                            <th>Daily Test</th>
+                            <th>Overall Usage</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-tbody">
+                        <tr><td colspan="7" class="loading"><div class="spinner"></div> Loading users...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab 3: Analytics -->
+        <div id="analytics" class="tab-content">
+            <div class="section">
+                <div class="section-title">Command Distribution</div>
+                <div class="chart-container">
+                    <canvas id="command-dist-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Commands Over Time</div>
+                <div class="chart-container">
+                    <canvas id="command-timeline-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">User Utilization (Top 10)</div>
+                <div class="chart-container">
+                    <canvas id="user-util-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Violations -->
+        <div id="violations" class="tab-content">
+            <div class="section">
+                <div class="section-title">Recent Quota Violations</div>
+
+                <table id="violations-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Command Type</th>
+                            <th>Period</th>
+                            <th>Limit</th>
+                            <th>Attempted</th>
+                            <th>Timestamp</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="violations-tbody">
+                        <tr><td colspan="7" class="loading"><div class="spinner"></div> Loading violations...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Violation Trends</div>
+                <div class="chart-container">
+                    <canvas id="violation-trend-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 5: Alerts -->
+        <div id="alerts" class="tab-content">
+            <div class="section">
+                <div class="section-title">Alert Rules</div>
+                <button class="btn-primary" onclick="openAlertModal()">+ Create Alert</button>
+
+                <table id="alerts-table" style="margin-top: 16px;">
+                    <thead>
+                        <tr>
+                            <th>Alert Name</th>
+                            <th>Type</th>
+                            <th>Threshold</th>
+                            <th>Period</th>
+                            <th>Status</th>
+                            <th>Notifications</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alerts-tbody">
+                        <tr><td colspan="7" class="loading"><div class="spinner"></div> Loading alerts...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Recent Alert Triggers</div>
+                <table id="alert-history-table">
+                    <thead>
+                        <tr>
+                            <th>Alert</th>
+                            <th>User</th>
+                            <th>Message</th>
+                            <th>Triggered</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alert-history-tbody">
+                        <tr><td colspan="5" class="loading"><div class="spinner"></div> Loading triggers...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab 6: System Health -->
+        <div id="health" class="tab-content">
+            <div class="grid">
+                <div class="stat-card">
+                    <div class="stat-label">CPU Usage</div>
+                    <div class="stat-value" id="health-cpu">-</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="health-cpu-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Memory Usage</div>
+                    <div class="stat-value" id="health-mem">-</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="health-mem-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Database Conn</div>
+                    <div class="stat-value" id="health-db">-</div>
+                    <div class="stat-unit">Active connections</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Quota Check Latency</div>
+                    <div class="stat-value" id="health-latency">-</div>
+                    <div class="stat-unit">p99 latency (ms)</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">System Performance</div>
+                <div class="chart-container">
+                    <canvas id="health-perf-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Throttle Events</div>
+                <div class="chart-container">
+                    <canvas id="throttle-events-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Edit Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Edit User Quotas</span>
+                <button class="modal-close" onclick="closeUserModal()">✕</button>
+            </div>
+            <form id="userForm" onsubmit="saveUserQuotas(event)">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="modalUsername" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Tier</label>
+                    <select id="modalTier">
+                        <option value="free">Free</option>
+                        <option value="premium">Premium</option>
+                        <option value="enterprise">Enterprise</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Daily Shell Limit</label>
+                    <input type="number" id="modalShellDaily" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Daily Code Limit</label>
+                    <input type="number" id="modalCodeDaily" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Daily Test Limit</label>
+                    <input type="number" id="modalTestDaily" min="0">
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button type="submit" class="btn-primary">Save</button>
+                    <button type="button" class="btn-secondary" onclick="closeUserModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div id="alertModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Create Alert Rule</span>
+                <button class="modal-close" onclick="closeAlertModal()">✕</button>
+            </div>
+            <form id="alertForm" onsubmit="saveAlert(event)">
+                <div class="form-group">
+                    <label>Alert Name</label>
+                    <input type="text" id="modalAlertName" placeholder="e.g. High Daily Usage" required>
+                </div>
+                <div class="form-group">
+                    <label>Alert Type</label>
+                    <select id="modalAlertType" required>
+                        <option value="high_utilization">High Utilization</option>
+                        <option value="quota_violation">Quota Violation</option>
+                        <option value="approaching_limit">Approaching Limit</option>
+                        <option value="sustained_throttling">Sustained Throttling</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Threshold (%)</label>
+                    <input type="number" id="modalAlertThreshold" min="0" max="100" required>
+                </div>
+                <div class="form-group">
+                    <label>Notify Users</label>
+                    <input type="checkbox" id="modalAlertUsers">
+                </div>
+                <div class="form-group">
+                    <label>Notify Admins</label>
+                    <input type="checkbox" id="modalAlertAdmins" checked>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button type="submit" class="btn-primary">Create</button>
+                    <button type="button" class="btn-secondary" onclick="closeAlertModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/admin_quotas.js"></script>
+</body>
+</html>

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -46,6 +47,9 @@ func (qah *QuotaAdminHandlers) SetAlertEngine(alertEngine *rate_limiting.AlertEn
 
 // RegisterRoutes registers quota admin routes
 func (qah *QuotaAdminHandlers) RegisterRoutes(router chi.Router) {
+	// Serve admin dashboard
+	router.Get("/admin/quotas", qah.ServeAdminDashboard)
+
 	router.Route("/api/admin/quotas", func(r chi.Router) {
 		// Status endpoints
 		r.Get("/status", qah.GetSystemStatus)
@@ -795,6 +799,21 @@ func (qah *QuotaAdminHandlers) DeleteAlert(w http.ResponseWriter, r *http.Reques
 	}
 
 	writeJSON(w, http.StatusNoContent, nil)
+}
+
+// ServeAdminDashboard serves the admin quotas dashboard HTML
+// GET /admin/quotas
+func (qah *QuotaAdminHandlers) ServeAdminDashboard(w http.ResponseWriter, r *http.Request) {
+	// Read the dashboard template
+	dashboardHTML, err := ioutil.ReadFile("./templates/admin_quotas_dashboard.html")
+	if err != nil {
+		http.Error(w, "Dashboard template not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write(dashboardHTML)
 }
 
 // Helper functions

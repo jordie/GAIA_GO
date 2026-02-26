@@ -136,6 +136,29 @@ func main() {
 		log.Println("[INIT]   - AI Agent Fallback (disabled)")
 	}
 
+	// Initialize Quota Admin Dashboard (Phase 11.4.4)
+	log.Println("[INIT] Initializing Admin Dashboard...")
+	// Create resource monitor
+	resourceMonitor := rate_limiting.NewResourceMonitor()
+	// Create quota service with command quotas
+	commandQuotaService := rate_limiting.NewCommandQuotaService(db, rateLimiter, resourceMonitor)
+	quotaAdminHandlers := handlers.NewQuotaAdminHandlers(commandQuotaService, db)
+	quotaAdminHandlers.RegisterRoutes(router)
+	log.Println("[INIT] ✓ Admin Dashboard initialized")
+	log.Println("[INIT]   - API endpoints: /api/admin/quotas/*")
+	log.Println("[INIT]   - Dashboard UI: /admin/quotas")
+
+	// Serve static files (CSS, JavaScript)
+	router.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+
+	// Serve template files
+	router.Handle("/templates/*", http.StripPrefix("/templates/", http.FileServer(http.Dir("./templates"))))
+
+	// Root redirect to dashboard
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/admin/quotas", http.StatusMovedPermanently)
+	})
+
 	// Health check endpoint
 	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
