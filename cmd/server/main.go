@@ -16,6 +16,7 @@ import (
 
 	"github.com/jgirmay/GAIA_GO/pkg/http/handlers"
 	"github.com/jgirmay/GAIA_GO/pkg/repository"
+	"github.com/jgirmay/GAIA_GO/pkg/services/claude_confirm"
 	"github.com/jgirmay/GAIA_GO/pkg/services/usability"
 )
 
@@ -39,6 +40,18 @@ func main() {
 		log.Fatalf("Failed to initialize repository registry: %v", err)
 	}
 	log.Println("[INIT] ✓ Repository registry initialized")
+
+	// Auto-migrate Claude confirmation tables
+	log.Println("[INIT] Migrating Claude confirmation schema...")
+	if err := db.AutoMigrate(
+		&claude_confirm.ConfirmationRequest{},
+		&claude_confirm.ApprovalPattern{},
+		&claude_confirm.AIAgentDecision{},
+		&claude_confirm.SessionApprovalPreference{},
+	); err != nil {
+		log.Fatalf("Failed to migrate Claude confirmation tables: %v", err)
+	}
+	log.Println("[INIT] ✓ Claude confirmation schema migrated")
 
 	// Initialize usability metrics services
 	log.Println("[INIT] Initializing Usability Metrics Services...")
@@ -90,6 +103,34 @@ func main() {
 	)
 	log.Println("[INIT] ✓ Teacher Dashboard routes registered")
 
+	// Initialize Claude confirmation system (Phase 10)
+	log.Println("[INIT] Initializing Claude Auto-Confirm Patterns System...")
+
+	// Create AI agent for fallback decisions
+	aiConfig := claude_confirm.AIAgentConfig{
+		Model:           "claude-opus-4.5",
+		MaxTokens:       2000,
+		DecisionTimeout: 10 * time.Second,
+		Enabled:         getEnvBool("CLAUDE_CONFIRM_AI_ENABLED", true),
+	}
+	aiAgent := claude_confirm.NewAIAgent(db, aiConfig)
+
+	// Create confirmation service
+	confirmationService := claude_confirm.NewConfirmationService(db, aiAgent)
+
+	// Register confirmation handlers
+	confirmHandlers := handlers.NewClaudeConfirmHandlers(confirmationService)
+	confirmHandlers.RegisterRoutes(router)
+
+	log.Println("[INIT] ✓ Claude Auto-Confirm Patterns System initialized")
+	if aiConfig.Enabled {
+		log.Println("[INIT]   - Pattern Matching Engine")
+		log.Println("[INIT]   - AI Agent Fallback (enabled)")
+	} else {
+		log.Println("[INIT]   - Pattern Matching Engine")
+		log.Println("[INIT]   - AI Agent Fallback (disabled)")
+	}
+
 	// Health check endpoint
 	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -99,17 +140,28 @@ func main() {
 
 	// Print available routes
 	log.Println("\n===============================================================")
-	log.Println("GAIA_GO Phase 9 - Teacher Usability Monitoring")
+	log.Println("GAIA_GO Phase 9+10 - Teacher Monitoring & Claude Auto-Confirm")
 	log.Println("===============================================================\n")
 	log.Println("Available Endpoints:\n")
 	log.Println("Health & Status:")
 	log.Println("  GET    /health                           - System health check\n")
-	log.Println("Teacher Dashboard:")
+	log.Println("Teacher Dashboard (Phase 9):")
 	log.Println("  GET    /api/dashboard/classroom/{classroomID}/metrics  - Classroom metrics")
 	log.Println("  GET    /api/dashboard/student/frustration - Student frustration metrics")
 	log.Println("  POST   /api/dashboard/interventions      - Record intervention")
 	log.Println("  GET    /api/dashboard/struggling-students - Struggling students list")
 	log.Println("  GET    /api/dashboard/health             - Dashboard health status\n")
+	log.Println("Claude Auto-Confirm Patterns (Phase 10):")
+	log.Println("  POST   /api/claude/confirm/request               - Process confirmation request")
+	log.Println("  GET    /api/claude/confirm/history/{sessionID}   - Request history")
+	log.Println("  GET    /api/claude/confirm/stats/{sessionID}     - Session statistics")
+	log.Println("  GET    /api/claude/confirm/patterns              - List patterns")
+	log.Println("  POST   /api/claude/confirm/patterns              - Create pattern")
+	log.Println("  PUT    /api/claude/confirm/patterns/{patternID}  - Update pattern")
+	log.Println("  DELETE /api/claude/confirm/patterns/{patternID}  - Delete pattern")
+	log.Println("  GET    /api/claude/confirm/preferences/{sessionID} - Get preferences")
+	log.Println("  POST   /api/claude/confirm/preferences/{sessionID} - Set preferences")
+	log.Println("  GET    /api/claude/confirm/stats                 - Global statistics\n")
 	log.Println("Alternative Routes (RESTful):")
 	log.Println("  GET    /api/classrooms/{classroomID}/metrics          - Classroom metrics")
 	log.Println("  GET    /api/classrooms/{classroomID}/struggling-students - Struggling students")
@@ -175,4 +227,13 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+// getEnvBool gets a boolean environment variable with a default value
+func getEnvBool(key string, defaultValue bool) bool {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	return value == "true" || value == "1" || value == "yes"
 }

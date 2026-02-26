@@ -49,8 +49,8 @@ func (h *ClaudeConfirmHandlers) RegisterRoutes(router *chi.Mux) {
 func (h *ClaudeConfirmHandlers) ProcessConfirmation(w http.ResponseWriter, r *http.Request) {
 	var req claude_confirm.ConfirmationRequest
 
-	if err := readJSON(r, &req); err != nil {
-		sendError(w, http.StatusBadRequest, "Invalid request format", err)
+	if err := readJSONBody(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid request format", "invalid_format")
 		return
 	}
 

@@ -1,0 +1,297 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database with TimescaleDB
+  postgres:
+    image: timescale/timescaledb:latest-pg14
+    container_name: gaia_postgres
+    environment:
+      POSTGRES_DB: gaia_go
+      POSTGRES_USER: gaia_user
+      POSTGRES_PASSWORD: gaia_secure_password_change_in_prod
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gaia_user -d gaia_go"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gaia_network
+    restart: unless-stopped
+
+  # Redis for caching (optional but recommended)
+  redis:
+    image: redis:7-alpine
+    container_name: gaia_redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gaia_network
+    restart: unless-stopped
+
+  # GAIA_GO Node 1 (Raft Leader Candidate)
+  gaia_node_1:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: gaia_node_1
+    environment:
+      NODE_ID: node-1
+      CLUSTER_ENABLED: "true"
+      CLUSTER_NODE_ID: node-1
+      CLUSTER_BIND_ADDR: 0.0.0.0:8300
+      CLUSTER_ADVERTISE_ADDR: gaia_node_1:8300
+      CLUSTER_DISCOVERY_NODES: "gaia_node_1:8300,gaia_node_2:8300,gaia_node_3:8300"
+
+      # Database
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: gaia_user
+      DB_PASSWORD: gaia_secure_password_change_in_prod
+      DB_NAME: gaia_go
+
+      # Redis
+      REDIS_ADDR: redis:6379
+
+      # Raft
+      RAFT_HEARTBEAT_TIMEOUT: "150ms"
+      RAFT_ELECTION_TIMEOUT: "300ms"
+      RAFT_SNAPSHOT_INTERVAL: "120s"
+
+      # Session Coordination
+      SESSION_LEASE_TIMEOUT: "30s"
+      SESSION_HEARTBEAT_INTERVAL: "10s"
+
+      # Usability Metrics
+      USABILITY_METRICS_ENABLED: "true"
+      FRUSTRATION_DETECTION_ENABLED: "true"
+      TEACHER_DASHBOARD_ENABLED: "true"
+
+      # Logging
+      LOG_LEVEL: info
+
+    ports:
+      - "8080:8080"  # API
+      - "8300:8300"  # Raft
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - gaia_network
+    restart: unless-stopped
+    volumes:
+      - gaia_node_1_data:/app/data
+
+  # GAIA_GO Node 2
+  gaia_node_2:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: gaia_node_2
+    environment:
+      NODE_ID: node-2
+      CLUSTER_ENABLED: "true"
+      CLUSTER_NODE_ID: node-2
+      CLUSTER_BIND_ADDR: 0.0.0.0:8300
+      CLUSTER_ADVERTISE_ADDR: gaia_node_2:8300
+      CLUSTER_DISCOVERY_NODES: "gaia_node_1:8300,gaia_node_2:8300,gaia_node_3:8300"
+
+      # Database
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: gaia_user
+      DB_PASSWORD: gaia_secure_password_change_in_prod
+      DB_NAME: gaia_go
+
+      # Redis
+      REDIS_ADDR: redis:6379
+
+      # Raft
+      RAFT_HEARTBEAT_TIMEOUT: "150ms"
+      RAFT_ELECTION_TIMEOUT: "300ms"
+      RAFT_SNAPSHOT_INTERVAL: "120s"
+
+      # Session Coordination
+      SESSION_LEASE_TIMEOUT: "30s"
+      SESSION_HEARTBEAT_INTERVAL: "10s"
+
+      # Usability Metrics
+      USABILITY_METRICS_ENABLED: "true"
+      FRUSTRATION_DETECTION_ENABLED: "true"
+      TEACHER_DASHBOARD_ENABLED: "true"
+
+      # Logging
+      LOG_LEVEL: info
+
+    ports:
+      - "8081:8080"  # API
+      - "8301:8300"  # Raft
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - gaia_network
+    restart: unless-stopped
+    volumes:
+      - gaia_node_2_data:/app/data
+
+  # GAIA_GO Node 3
+  gaia_node_3:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: gaia_node_3
+    environment:
+      NODE_ID: node-3
+      CLUSTER_ENABLED: "true"
+      CLUSTER_NODE_ID: node-3
+      CLUSTER_BIND_ADDR: 0.0.0.0:8300
+      CLUSTER_ADVERTISE_ADDR: gaia_node_3:8300
+      CLUSTER_DISCOVERY_NODES: "gaia_node_1:8300,gaia_node_2:8300,gaia_node_3:8300"
+
+      # Database
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: gaia_user
+      DB_PASSWORD: gaia_secure_password_change_in_prod
+      DB_NAME: gaia_go
+
+      # Redis
+      REDIS_ADDR: redis:6379
+
+      # Raft
+      RAFT_HEARTBEAT_TIMEOUT: "150ms"
+      RAFT_ELECTION_TIMEOUT: "300ms"
+      RAFT_SNAPSHOT_INTERVAL: "120s"
+
+      # Session Coordination
+      SESSION_LEASE_TIMEOUT: "30s"
+      SESSION_HEARTBEAT_INTERVAL: "10s"
+
+      # Usability Metrics
+      USABILITY_METRICS_ENABLED: "true"
+      FRUSTRATION_DETECTION_ENABLED: "true"
+      TEACHER_DASHBOARD_ENABLED: "true"
+
+      # Logging
+      LOG_LEVEL: info
+
+    ports:
+      - "8082:8080"  # API
+      - "8302:8300"  # Raft
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - gaia_network
+    restart: unless-stopped
+    volumes:
+      - gaia_node_3_data:/app/data
+
+  # Load Balancer (nginx)
+  nginx:
+    image: nginx:alpine
+    container_name: gaia_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - gaia_node_1
+      - gaia_node_2
+      - gaia_node_3
+    networks:
+      - gaia_network
+    restart: unless-stopped
+
+  # Prometheus for monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: gaia_prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - gaia_network
+    restart: unless-stopped
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: gaia_grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SERVER_ROOT_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - gaia_network
+    restart: unless-stopped
+
+networks:
+  gaia_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  gaia_node_1_data:
+    driver: local
+  gaia_node_2_data:
+    driver: local
+  gaia_node_3_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
