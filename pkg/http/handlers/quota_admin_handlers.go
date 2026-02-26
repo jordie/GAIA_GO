@@ -16,8 +16,8 @@ import (
 // QuotaAdminHandlers handles admin quota management requests
 type QuotaAdminHandlers struct {
 	quotaService     *rate_limiting.CommandQuotaService
-	analyticsService *rate_limiting.QuotaAnalytics
-	alertEngine      *rate_limiting.AlertEngine
+	AnalyticsService *rate_limiting.QuotaAnalytics
+	AlertEngine      *rate_limiting.AlertEngine
 	db               *gorm.DB
 }
 
@@ -25,24 +25,19 @@ type QuotaAdminHandlers struct {
 func NewQuotaAdminHandlers(quotaService *rate_limiting.CommandQuotaService, db *gorm.DB) *QuotaAdminHandlers {
 	return &QuotaAdminHandlers{
 		quotaService:     quotaService,
-		analyticsService: rate_limiting.NewQuotaAnalytics(db),
-		alertEngine:      rate_limiting.NewAlertEngine(db, rate_limiting.NewQuotaAnalytics(db)),
+		AnalyticsService: rate_limiting.NewQuotaAnalytics(db),
+		AlertEngine:      rate_limiting.NewAlertEngine(db, rate_limiting.NewQuotaAnalytics(db)),
 		db:               db,
 	}
 }
 
 // SetAnalyticsService sets the analytics service
 func (qah *QuotaAdminHandlers) SetAnalyticsService(analytics *rate_limiting.QuotaAnalytics) {
-	qah.analyticsService = analytics
-	if qah.alertEngine != nil {
+	qah.AnalyticsService = analytics
+	if qah.AlertEngine != nil {
 		// Update analytics in alert engine
-		qah.alertEngine = rate_limiting.NewAlertEngine(qah.db, analytics)
+		qah.AlertEngine = rate_limiting.NewAlertEngine(qah.db, analytics)
 	}
-}
-
-// SetAlertEngine sets the alert engine
-func (qah *QuotaAdminHandlers) SetAlertEngine(alertEngine *rate_limiting.AlertEngine) {
-	qah.alertEngine = alertEngine
 }
 
 // RegisterRoutes registers quota admin routes
@@ -488,12 +483,12 @@ func (qah *QuotaAdminHandlers) GetViolations(w http.ResponseWriter, r *http.Requ
 func (qah *QuotaAdminHandlers) GetSystemAnalytics(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	if qah.analyticsService == nil {
+	if qah.AnalyticsService == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "analytics unavailable"})
 		return
 	}
 
-	stats, err := qah.analyticsService.GetSystemStats(ctx)
+	stats, err := qah.AnalyticsService.GetSystemStats(ctx)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get stats"})
 		return
@@ -513,12 +508,12 @@ func (qah *QuotaAdminHandlers) GetUserAnalytics(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	if qah.analyticsService == nil {
+	if qah.AnalyticsService == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "analytics unavailable"})
 		return
 	}
 
-	stats, err := qah.analyticsService.GetUserStats(ctx, userID)
+	stats, err := qah.AnalyticsService.GetUserStats(ctx, userID)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get stats"})
 		return
@@ -533,12 +528,12 @@ func (qah *QuotaAdminHandlers) GetCommandTypeAnalytics(w http.ResponseWriter, r 
 	ctx := r.Context()
 	cmdType := chi.URLParam(r, "cmdType")
 
-	if qah.analyticsService == nil {
+	if qah.AnalyticsService == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "analytics unavailable"})
 		return
 	}
 
-	stats, err := qah.analyticsService.GetCommandTypeStats(ctx, cmdType)
+	stats, err := qah.AnalyticsService.GetCommandTypeStats(ctx, cmdType)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get stats"})
 		return
@@ -559,12 +554,12 @@ func (qah *QuotaAdminHandlers) GetViolationTrends(w http.ResponseWriter, r *http
 		}
 	}
 
-	if qah.analyticsService == nil {
+	if qah.AnalyticsService == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "analytics unavailable"})
 		return
 	}
 
-	trends, err := qah.analyticsService.GetQuotaViolationTrends(ctx, days)
+	trends, err := qah.AnalyticsService.GetQuotaViolationTrends(ctx, days)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get trends"})
 		return
@@ -584,12 +579,12 @@ func (qah *QuotaAdminHandlers) GetViolationTrends(w http.ResponseWriter, r *http
 func (qah *QuotaAdminHandlers) GetHighUtilizationUsers(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	if qah.analyticsService == nil {
+	if qah.AnalyticsService == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "analytics unavailable"})
 		return
 	}
 
-	users, err := qah.analyticsService.GetHighUtilizationUsers(ctx)
+	users, err := qah.AnalyticsService.GetHighUtilizationUsers(ctx)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get users"})
 		return
@@ -608,12 +603,12 @@ func (qah *QuotaAdminHandlers) GetHighUtilizationUsers(w http.ResponseWriter, r 
 func (qah *QuotaAdminHandlers) GetPredictedViolations(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	if qah.analyticsService == nil {
+	if qah.AnalyticsService == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "analytics unavailable"})
 		return
 	}
 
-	predictions, err := qah.analyticsService.GetPredictedViolations(ctx)
+	predictions, err := qah.AnalyticsService.GetPredictedViolations(ctx)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get predictions"})
 		return
@@ -645,12 +640,12 @@ func (qah *QuotaAdminHandlers) GetUserTrends(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	if qah.analyticsService == nil {
+	if qah.AnalyticsService == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "analytics unavailable"})
 		return
 	}
 
-	trends, err := qah.analyticsService.GetUserTrends(ctx, userID, days)
+	trends, err := qah.AnalyticsService.GetUserTrends(ctx, userID, days)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get trends"})
 		return
@@ -675,12 +670,12 @@ func (qah *QuotaAdminHandlers) GetAlerts(w http.ResponseWriter, r *http.Request)
 
 	alertType := r.URL.Query().Get("type")
 
-	if qah.alertEngine == nil {
+	if qah.AlertEngine == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "alert service unavailable"})
 		return
 	}
 
-	alerts, err := qah.alertEngine.GetAlerts(ctx, limit, alertType)
+	alerts, err := qah.AlertEngine.GetAlerts(ctx, limit, alertType)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get alerts"})
 		return
@@ -705,12 +700,12 @@ func (qah *QuotaAdminHandlers) CreateAlert(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if qah.alertEngine == nil {
+	if qah.AlertEngine == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "alert service unavailable"})
 		return
 	}
 
-	id, err := qah.alertEngine.CreateAlertRule(ctx, rule)
+	id, err := qah.AlertEngine.CreateAlertRule(ctx, rule)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to create alert rule"})
 		return
@@ -742,7 +737,7 @@ func (qah *QuotaAdminHandlers) UpdateAlert(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if qah.alertEngine == nil {
+	if qah.AlertEngine == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "alert service unavailable"})
 		return
 	}
@@ -764,7 +759,7 @@ func (qah *QuotaAdminHandlers) UpdateAlert(w http.ResponseWriter, r *http.Reques
 		rule.Enabled = enabled
 	}
 
-	if err := qah.alertEngine.UpdateAlertRule(ctx, alertID, rule); err != nil {
+	if err := qah.AlertEngine.UpdateAlertRule(ctx, alertID, rule); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to update alert rule"})
 		return
 	}
@@ -788,12 +783,12 @@ func (qah *QuotaAdminHandlers) DeleteAlert(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if qah.alertEngine == nil {
+	if qah.AlertEngine == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "alert service unavailable"})
 		return
 	}
 
-	if err := qah.alertEngine.DeleteAlertRule(ctx, alertID); err != nil {
+	if err := qah.AlertEngine.DeleteAlertRule(ctx, alertID); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete alert rule"})
 		return
 	}

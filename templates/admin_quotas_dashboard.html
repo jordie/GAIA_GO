@@ -424,8 +424,18 @@
     <div class="container">
         <!-- Header -->
         <header>
-            <h1>📊 Quota Management Dashboard</h1>
-            <p>Monitor, manage, and analyze command execution quotas across all users</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div>
+                    <h1>📊 Quota Management Dashboard</h1>
+                    <p>Monitor, manage, and analyze command execution quotas across all users</p>
+                </div>
+                <div style="text-align: right;">
+                    <div id="ws-status" style="font-size: 12px; font-weight: 600; margin-bottom: 8px;">
+                        <span style="color: #a0aec0;">● Connecting...</span>
+                    </div>
+                    <button class="btn-secondary" onclick="connectWebSocket()" style="font-size: 11px; padding: 6px 10px;">Reconnect</button>
+                </div>
+            </div>
 
             <div class="tabs">
                 <button class="tab-button active" onclick="switchTab('overview')">Overview</button>

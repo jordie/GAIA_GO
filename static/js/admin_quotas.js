@@ -1,18 +1,162 @@
 // Admin Quotas Dashboard - JavaScript
 
 const API_BASE = '/api/admin/quotas';
+const WS_BASE = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const WS_URL = WS_BASE + '//' + window.location.host + '/ws/admin/quotas';
 const REFRESH_INTERVAL = 30000; // 30 seconds
 
 let charts = {};
 let refreshTimers = [];
+let ws = null;
+let wsReconnectAttempts = 0;
+let wsReconnectMaxAttempts = 10;
+let wsReconnectDelay = 1000; // Start with 1 second
 
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', () => {
     loadDashboardData();
+    connectWebSocket();
 
     // Set up auto-refresh
     setInterval(loadDashboardData, REFRESH_INTERVAL);
 });
+
+// WebSocket connection management
+function connectWebSocket() {
+    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+        return; // Already connected or connecting
+    }
+
+    try {
+        ws = new WebSocket(WS_URL);
+
+        ws.onopen = () => {
+            console.log('[WS] Connected to real-time updates');
+            wsReconnectAttempts = 0;
+            updateConnectionStatus(true);
+            showAlert('Connected to real-time updates', 'success');
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+                handleWebSocketMessage(msg);
+            } catch (error) {
+                console.error('[WS] Error parsing message:', error);
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('[WS] WebSocket error:', error);
+            updateConnectionStatus(false);
+            showAlert('WebSocket error - attempting reconnection', 'error');
+        };
+
+        ws.onclose = () => {
+            console.log('[WS] Disconnected from real-time updates');
+            updateConnectionStatus(false);
+            attemptReconnect();
+        };
+    } catch (error) {
+        console.error('[WS] Failed to create WebSocket:', error);
+        attemptReconnect();
+    }
+}
+
+function attemptReconnect() {
+    if (wsReconnectAttempts < wsReconnectMaxAttempts) {
+        wsReconnectAttempts++;
+        const delay = Math.min(wsReconnectDelay * Math.pow(2, wsReconnectAttempts - 1), 30000);
+        console.log(`[WS] Reconnecting in ${delay}ms (attempt ${wsReconnectAttempts}/${wsReconnectMaxAttempts})`);
+
+        setTimeout(() => {
+            connectWebSocket();
+        }, delay);
+    } else {
+        console.error('[WS] Max reconnection attempts reached');
+        showAlert('Failed to connect to real-time updates', 'error');
+    }
+}
+
+function updateConnectionStatus(connected) {
+    // Update connection status indicator
+    const statusEl = document.getElementById('ws-status');
+    if (statusEl) {
+        if (connected) {
+            statusEl.innerHTML = '<span style="color: #48bb78;">● Connected</span>';
+        } else {
+            statusEl.innerHTML = '<span style="color: #f56565;">● Disconnected</span>';
+        }
+    }
+}
+
+function handleWebSocketMessage(msg) {
+    const { type, timestamp, data } = msg;
+
+    switch (type) {
+        case 'stats':
+            handleStatsMessage(data);
+            break;
+        case 'violation':
+            handleViolationMessage(data);
+            break;
+        case 'alert':
+            handleAlertMessage(data);
+            break;
+        case 'ping':
+            handleHeartbeat();
+            break;
+        default:
+            console.warn('[WS] Unknown message type:', type);
+    }
+}
+
+function handleStatsMessage(data) {
+    // Update system stats in real-time
+    if (data.total_users !== undefined) setText('total-users', data.total_users);
+    if (data.commands_today !== undefined) setText('commands-today', formatNumber(data.commands_today));
+    if (data.system_load) {
+        setText('system-load', (data.system_load.cpu_percent || 0).toFixed(1) + '%');
+        updateHealthBar('cpu', data.system_load.cpu_percent || 0);
+        updateHealthBar('mem', data.system_load.memory_percent || 0);
+    }
+    if (data.average_throttle_factor !== undefined) {
+        setText('throttle-factor', data.average_throttle_factor.toFixed(2) + 'x');
+    }
+}
+
+function handleViolationMessage(data) {
+    // Show violation alert and add to violations table
+    const message = `${data.username} violated ${data.command_type} quota (${data.attempted}/${data.limit})`;
+    showAlert(message, 'warning');
+
+    // Refresh violations table
+    if (document.getElementById('violations').classList.contains('active')) {
+        loadViolations();
+    }
+
+    console.log('[WS] Quota violation:', data);
+}
+
+function handleAlertMessage(data) {
+    // Show alert and update alerts table
+    const severity = data.severity || 'high';
+    const alertType = severity === 'critical' ? 'error' : severity === 'high' ? 'warning' : 'info';
+
+    showAlert(data.message || 'New alert triggered', alertType);
+
+    // Refresh alerts
+    if (document.getElementById('alerts').classList.contains('active')) {
+        loadDashboardData();
+    }
+
+    console.log('[WS] Alert triggered:', data);
+}
+
+function handleHeartbeat() {
+    // Heartbeat received, connection is alive
+    console.debug('[WS] Heartbeat received');
+}
 
 // Tab switching
 function switchTab(tabName) {

@@ -18,6 +18,7 @@ import (
 	"github.com/jgirmay/GAIA_GO/pkg/repository"
 	"github.com/jgirmay/GAIA_GO/pkg/services/claude_confirm"
 	"github.com/jgirmay/GAIA_GO/pkg/services/rate_limiting"
+	"github.com/jgirmay/GAIA_GO/pkg/services/websocket"
 	"github.com/jgirmay/GAIA_GO/pkg/services/usability"
 )
 
@@ -148,6 +149,30 @@ func main() {
 	log.Println("[INIT]   - API endpoints: /api/admin/quotas/*")
 	log.Println("[INIT]   - Dashboard UI: /admin/quotas")
 
+	// Initialize WebSocket Real-time Updates (Phase 11.4.5)
+	log.Println("[INIT] Initializing WebSocket Real-time Updates...")
+	broadcaster := websocket.NewQuotaBroadcaster(
+		db,
+		quotaAdminHandlers.AnalyticsService,
+		quotaAdminHandlers.AlertEngine,
+		commandQuotaService,
+	)
+	broadcaster.Start(ctx)
+	wsHandlers := handlers.NewQuotaWebSocketHandlers(broadcaster)
+
+	// Register WebSocket routes
+	router.Get("/ws/admin/quotas", wsHandlers.HandleQuotaWebSocket)
+	router.Get("/api/ws/health", wsHandlers.HandleHealthCheck)
+	router.Post("/api/ws/test-broadcast", wsHandlers.BroadcastTestMessage)
+	router.Post("/api/ws/test-violation", wsHandlers.BroadcastViolation)
+	router.Post("/api/ws/test-alert", wsHandlers.BroadcastAlert)
+
+	log.Println("[INIT] ✓ WebSocket Real-time Updates initialized")
+	log.Println("[INIT]   - WebSocket endpoint: /ws/admin/quotas")
+	log.Println("[INIT]   - Health check: /api/ws/health")
+	log.Println("[INIT]   - Broadcast interval: 5 seconds")
+	log.Println("[INIT]   - Heartbeat interval: 10 seconds")
+
 	// Serve static files (CSS, JavaScript)
 	router.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 
@@ -223,6 +248,10 @@ func main() {
 		if err := server.Shutdown(shutdownCtx); err != nil {
 			log.Printf("[SHUTDOWN] Server shutdown error: %v", err)
 		}
+
+		// Stop broadcaster
+		log.Println("[SHUTDOWN] Stopping WebSocket broadcaster...")
+		broadcaster.Stop()
 
 		// Stop metrics service
 		log.Println("[SHUTDOWN] Stopping metrics service...")
