@@ -14,16 +14,23 @@ import (
 
 // QuotaAdminHandlers handles admin quota management requests
 type QuotaAdminHandlers struct {
-	quotaService *rate_limiting.CommandQuotaService
-	db           *gorm.DB
+	quotaService   *rate_limiting.CommandQuotaService
+	analyticsService *rate_limiting.QuotaAnalytics
+	db             *gorm.DB
 }
 
 // NewQuotaAdminHandlers creates new quota admin handlers
 func NewQuotaAdminHandlers(quotaService *rate_limiting.CommandQuotaService, db *gorm.DB) *QuotaAdminHandlers {
 	return &QuotaAdminHandlers{
-		quotaService: quotaService,
-		db:           db,
+		quotaService:   quotaService,
+		analyticsService: rate_limiting.NewQuotaAnalytics(db),
+		db:             db,
 	}
+}
+
+// SetAnalyticsService sets the analytics service
+func (qah *QuotaAdminHandlers) SetAnalyticsService(analytics *rate_limiting.QuotaAnalytics) {
+	qah.analyticsService = analytics
 }
 
 // RegisterRoutes registers quota admin routes
@@ -47,6 +54,15 @@ func (qah *QuotaAdminHandlers) RegisterRoutes(router chi.Router) {
 		// Execution history
 		r.Get("/executions", qah.GetExecutions)
 		r.Get("/executions/stats", qah.GetExecutionStats)
+
+		// Analytics endpoints
+		r.Get("/analytics/system", qah.GetSystemAnalytics)
+		r.Get("/analytics/users/{userID}", qah.GetUserAnalytics)
+		r.Get("/analytics/command-types/{cmdType}", qah.GetCommandTypeAnalytics)
+		r.Get("/analytics/violations/trends", qah.GetViolationTrends)
+		r.Get("/analytics/high-utilization", qah.GetHighUtilizationUsers)
+		r.Get("/analytics/predictions", qah.GetPredictedViolations)
+		r.Get("/analytics/users/{userID}/trends", qah.GetUserTrends)
 
 		// Alerts
 		r.Get("/alerts", qah.GetAlerts)
@@ -448,6 +464,184 @@ func (qah *QuotaAdminHandlers) GetViolations(w http.ResponseWriter, r *http.Requ
 	}
 
 	writeJSON(w, http.StatusOK, response)
+}
+
+// Analytics endpoints
+
+// GetSystemAnalytics returns system-wide analytics
+// GET /api/admin/quotas/analytics/system
+func (qah *QuotaAdminHandlers) GetSystemAnalytics(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	if qah.analyticsService == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "analytics unavailable"})
+		return
+	}
+
+	stats, err := qah.analyticsService.GetSystemStats(ctx)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get stats"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, stats)
+}
+
+// GetUserAnalytics returns analytics for a specific user
+// GET /api/admin/quotas/analytics/users/{userID}
+func (qah *QuotaAdminHandlers) GetUserAnalytics(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userIDStr := chi.URLParam(r, "userID")
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid user ID"})
+		return
+	}
+
+	if qah.analyticsService == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "analytics unavailable"})
+		return
+	}
+
+	stats, err := qah.analyticsService.GetUserStats(ctx, userID)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get stats"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, stats)
+}
+
+// GetCommandTypeAnalytics returns analytics for a command type
+// GET /api/admin/quotas/analytics/command-types/{cmdType}
+func (qah *QuotaAdminHandlers) GetCommandTypeAnalytics(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	cmdType := chi.URLParam(r, "cmdType")
+
+	if qah.analyticsService == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "analytics unavailable"})
+		return
+	}
+
+	stats, err := qah.analyticsService.GetCommandTypeStats(ctx, cmdType)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get stats"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, stats)
+}
+
+// GetViolationTrends returns violation trends
+// GET /api/admin/quotas/analytics/violations/trends
+func (qah *QuotaAdminHandlers) GetViolationTrends(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	days := 7
+	if d := r.URL.Query().Get("days"); d != "" {
+		if parsed, err := strconv.Atoi(d); err == nil && parsed > 0 && parsed <= 365 {
+			days = parsed
+		}
+	}
+
+	if qah.analyticsService == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "analytics unavailable"})
+		return
+	}
+
+	trends, err := qah.analyticsService.GetQuotaViolationTrends(ctx, days)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get trends"})
+		return
+	}
+
+	response := map[string]interface{}{
+		"trends": trends,
+		"days":   days,
+		"count":  len(trends),
+	}
+
+	writeJSON(w, http.StatusOK, response)
+}
+
+// GetHighUtilizationUsers returns users with high quota utilization
+// GET /api/admin/quotas/analytics/high-utilization
+func (qah *QuotaAdminHandlers) GetHighUtilizationUsers(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	if qah.analyticsService == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "analytics unavailable"})
+		return
+	}
+
+	users, err := qah.analyticsService.GetHighUtilizationUsers(ctx)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get users"})
+		return
+	}
+
+	response := map[string]interface{}{
+		"users": users,
+		"count": len(users),
+	}
+
+	writeJSON(w, http.StatusOK, response)
+}
+
+// GetPredictedViolations returns predicted quota violations
+// GET /api/admin/quotas/analytics/predictions
+func (qah *QuotaAdminHandlers) GetPredictedViolations(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	if qah.analyticsService == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "analytics unavailable"})
+		return
+	}
+
+	predictions, err := qah.analyticsService.GetPredictedViolations(ctx)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get predictions"})
+		return
+	}
+
+	response := map[string]interface{}{
+		"predictions": predictions,
+		"count":       len(predictions),
+	}
+
+	writeJSON(w, http.StatusOK, response)
+}
+
+// GetUserTrends returns trend data for a user
+// GET /api/admin/quotas/analytics/users/{userID}/trends
+func (qah *QuotaAdminHandlers) GetUserTrends(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userIDStr := chi.URLParam(r, "userID")
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid user ID"})
+		return
+	}
+
+	days := 7
+	if d := r.URL.Query().Get("days"); d != "" {
+		if parsed, err := strconv.Atoi(d); err == nil && parsed > 0 && parsed <= 365 {
+			days = parsed
+		}
+	}
+
+	if qah.analyticsService == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "analytics unavailable"})
+		return
+	}
+
+	trends, err := qah.analyticsService.GetUserTrends(ctx, userID, days)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get trends"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, trends)
 }
 
 // Alert endpoints (placeholders for Phase 11.4.3)
