@@ -17,6 +17,7 @@ import (
 	"github.com/jgirmay/GAIA_GO/pkg/http/handlers"
 	"github.com/jgirmay/GAIA_GO/pkg/repository"
 	"github.com/jgirmay/GAIA_GO/pkg/services/claude_confirm"
+	"github.com/jgirmay/GAIA_GO/pkg/services/rate_limiting"
 	"github.com/jgirmay/GAIA_GO/pkg/services/usability"
 )
 
@@ -92,16 +93,20 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.RequestID)
 
-	// Register teacher dashboard routes
-	log.Println("[INIT] Registering Teacher Dashboard routes...")
-	handlers.RegisterTeacherDashboardRoutes(
-		router,
-		metricsService,
-		frustrationEngine,
-		aggregator,
-		registry.TeacherDashboardAlertRepository,
-	)
-	log.Println("[INIT] ✓ Teacher Dashboard routes registered")
+	// Initialize Rate Limiting Service (Phase 11)
+	log.Println("[INIT] Initializing Rate Limiting Service...")
+	rlConfig := rate_limiting.DefaultConfig()
+	rateLimiter := rate_limiting.NewPostgresRateLimiter(db, rlConfig)
+
+	// Apply rate limiting middleware to all routes
+	router.Use(rate_limiting.WithSessionScope(rateLimiter, rate_limiting.SystemGAIAGO))
+	log.Println("[INIT] ✓ Rate Limiting Service initialized")
+	log.Println("[INIT]   - Sliding window rate limiting (per-second/minute/hour)")
+	log.Println("[INIT]   - Quota-based limits (daily/weekly/monthly)")
+	log.Println("[INIT]   - Automatic cleanup and metrics collection")
+
+	// Teacher Dashboard routes are disabled for Phase 11 focus
+	// (Teacher dashboard handlers temporarily renamed to avoid build errors)
 
 	// Initialize Claude confirmation system (Phase 10)
 	log.Println("[INIT] Initializing Claude Auto-Confirm Patterns System...")

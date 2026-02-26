@@ -5,7 +5,6 @@ package fixtures
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"sync"

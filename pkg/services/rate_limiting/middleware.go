@@ -4,9 +4,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
-
-	"github.com/go-chi/chi/v5"
 )
 
 // MiddlewareConfig configures rate limiting middleware behavior
@@ -113,15 +110,6 @@ func defaultRateLimitedHandler(w http.ResponseWriter, r *http.Request, decision 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Retry-After", strconv.Itoa(decision.RetryAfterSeconds))
 	w.WriteHeader(http.StatusTooManyRequests)
-
-	responseBody := map[string]interface{}{
-		"error":             "rate_limit_exceeded",
-		"message":           decision.Reason,
-		"limit":             decision.Limit,
-		"remaining":         decision.Remaining,
-		"retry_after_sec":   decision.RetryAfterSeconds,
-		"reset_time":        decision.ResetTime.Unix(),
-	}
 
 	// Simple JSON encoding
 	w.Write([]byte(`{"error":"rate_limit_exceeded","message":"` + decision.Reason + `","limit":` +
