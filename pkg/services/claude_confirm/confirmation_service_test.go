@@ -136,7 +136,7 @@ func TestConfirmationServiceWithPattern(t *testing.T) {
 	service := NewConfirmationService(db, aiAgent)
 
 	// Create a pattern
-	pattern := createTestPattern(db, "Approve Reads", DecisionApprove)
+	_ = createTestPattern(db, "Approve Reads", DecisionApprove)
 
 	// Process request that matches pattern
 	req := &ConfirmationRequest{
@@ -266,7 +266,7 @@ func TestPatternCRUD(t *testing.T) {
 	service := NewConfirmationService(db, NewAIAgent(db, aiConfig))
 
 	// Create
-	pattern := &ApprovalPattern{
+	testPattern := &ApprovalPattern{
 		Name:           "Test Pattern",
 		Description:    "Test",
 		PermissionType: PermissionRead,
@@ -276,17 +276,17 @@ func TestPatternCRUD(t *testing.T) {
 		Enabled:        true,
 	}
 
-	err := service.CreatePattern(context.Background(), pattern)
+	err := service.CreatePattern(context.Background(), testPattern)
 	if err != nil {
 		t.Fatalf("failed to create pattern: %v", err)
 	}
 
-	if pattern.ID == uuid.Nil {
+	if testPattern.ID == uuid.Nil {
 		t.Error("expected pattern ID to be set")
 	}
 
 	// Read
-	retrieved, err := service.GetPattern(context.Background(), pattern.ID.String())
+	retrieved, err := service.GetPattern(context.Background(), testPattern.ID.String())
 	if err != nil {
 		t.Fatalf("failed to get pattern: %v", err)
 	}
@@ -296,7 +296,7 @@ func TestPatternCRUD(t *testing.T) {
 	}
 
 	// Update
-	err = service.UpdatePattern(context.Background(), pattern.ID.String(), map[string]interface{}{
+	err = service.UpdatePattern(context.Background(), testPattern.ID.String(), map[string]interface{}{
 		"enabled": false,
 	})
 	if err != nil {
@@ -304,19 +304,19 @@ func TestPatternCRUD(t *testing.T) {
 	}
 
 	// Verify update
-	updated, _ := service.GetPattern(context.Background(), pattern.ID.String())
+	updated, _ := service.GetPattern(context.Background(), testPattern.ID.String())
 	if updated.Enabled {
 		t.Error("expected pattern to be disabled")
 	}
 
 	// Delete
-	err = service.DeletePattern(context.Background(), pattern.ID.String())
+	err = service.DeletePattern(context.Background(), testPattern.ID.String())
 	if err != nil {
 		t.Fatalf("failed to delete pattern: %v", err)
 	}
 
 	// Verify deletion
-	deleted, _ := service.GetPattern(context.Background(), pattern.ID.String())
+	deleted, _ := service.GetPattern(context.Background(), testPattern.ID.String())
 	if deleted != nil {
 		t.Error("expected pattern to be deleted")
 	}

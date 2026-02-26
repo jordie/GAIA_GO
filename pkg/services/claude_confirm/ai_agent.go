@@ -2,7 +2,6 @@ package claude_confirm
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -69,8 +68,8 @@ func (aa *AIAgent) MakeDecision(ctx context.Context, req *ConfirmationRequest, m
 
 	startTime := time.Now()
 
-	// Build the prompt for Claude
-	prompt := aa.buildPrompt(req, matchedPatterns)
+	// Build the prompt for Claude (would be used when calling actual API)
+	_ = aa.buildPrompt(req, matchedPatterns)
 
 	// Call Claude API (in real implementation)
 	// response, usage, err := aa.callClaudeAPI(ctx, prompt)

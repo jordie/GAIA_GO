@@ -266,7 +266,7 @@ func (cs *ConfirmationService) GetGlobalStats(ctx context.Context) (map[string]i
 	var patterns []ApprovalPattern
 	cs.db.Find(&patterns)
 
-	bestPatterns := cs.patternMatcher.GetTopPatterns(ctx, 5)
+	bestPatterns, _ := cs.patternMatcher.GetTopPatterns(ctx, 5)
 
 	aiStats, _ := cs.aiAgent.GetAgentStats(ctx)
 
