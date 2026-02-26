@@ -3,6 +3,7 @@ package rate_limiting
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 
@@ -42,8 +43,9 @@ type RateLimiter interface {
 
 // PostgresRateLimiter implements RateLimiter with PostgreSQL backend
 type PostgresRateLimiter struct {
-	db     *gorm.DB
-	config Config
+	db         *gorm.DB
+	config     Config
+	reputation *ReputationManager // Phase 2: Reputation system
 
 	// Rule cache
 	ruleCache map[string][]*Rule
@@ -54,9 +56,10 @@ type PostgresRateLimiter struct {
 // NewPostgresRateLimiter creates a new PostgreSQL-backed rate limiter
 func NewPostgresRateLimiter(db *gorm.DB, config Config) *PostgresRateLimiter {
 	limiter := &PostgresRateLimiter{
-		db:        db,
-		config:    config,
-		ruleCache: make(map[string][]*Rule),
+		db:         db,
+		config:     config,
+		ruleCache:  make(map[string][]*Rule),
+		reputation: NewReputationManager(db), // Phase 2: Initialize reputation manager
 	}
 
 	// Start background cleanup job
@@ -101,6 +104,26 @@ func (l *PostgresRateLimiter) CheckLimit(ctx context.Context, req LimitCheckRequ
 			continue
 		}
 
+		// Phase 2: Adjust limit based on reputation
+		adjustedLimit := rule.LimitValue
+		if req.Scope == "user" && req.ScopeValue != "" {
+			if userID, err := parseUserID(req.ScopeValue); err == nil {
+				adjustedLimit = l.reputation.GetAdaptiveLimit(userID, rule.LimitValue)
+				// Create modified rule with adjusted limit for checking
+				rule = &Rule{
+					ID:           rule.ID,
+					SystemID:     rule.SystemID,
+					Scope:        rule.Scope,
+					ScopeValue:   rule.ScopeValue,
+					ResourceType: rule.ResourceType,
+					LimitType:    rule.LimitType,
+					LimitValue:   adjustedLimit,
+					Enabled:      rule.Enabled,
+					Priority:     rule.Priority,
+				}
+			}
+		}
+
 		// Check the limit
 		allowed, remaining, resetTime := l.checkRule(ctx, rule, req.ScopeValue, now)
 
@@ -124,6 +147,11 @@ func (l *PostgresRateLimiter) CheckLimit(ctx context.Context, req LimitCheckRequ
 		// Update remaining
 		decision.Remaining = remaining
 		decision.ResetTime = resetTime
+	}
+
+	// Phase 2: Record clean request (good behavior)
+	if decision.Allowed {
+		_ = l.recordCleanRequest(ctx, req)
 	}
 
 	// Record metrics
@@ -297,7 +325,26 @@ func (l *PostgresRateLimiter) recordViolation(ctx context.Context, req LimitChec
 		violation.UserAgent = ua
 	}
 
-	return l.db.WithContext(ctx).Table("rate_limit_violations").Create(&violation).Error
+	// Record violation in rate limit tracking
+	err := l.db.WithContext(ctx).Table("rate_limit_violations").Create(&violation).Error
+
+	// Phase 2: Record violation in reputation system
+	if err == nil && req.Scope == "user" && req.ScopeValue != "" {
+		if userID, parseErr := parseUserID(req.ScopeValue); parseErr == nil {
+			// Determine severity based on resource type
+			severity := 2 // Default
+			if req.ResourceType == "login" {
+				severity = 3 // Higher severity for login attempts
+			} else if req.ResourceType == "api_call" {
+				severity = 1 // Lower severity for API calls
+			}
+
+			description := fmt.Sprintf("Rate limit violation: %s on %s", rule.LimitType, req.ResourcePath)
+			_ = l.reputation.RecordViolation(userID, severity, description)
+		}
+	}
+
+	return err
 }
 
 // recordMetric records rate limit metrics
@@ -389,4 +436,31 @@ func (l *PostgresRateLimiter) CleanupOldViolations(ctx context.Context, before t
 func (l *PostgresRateLimiter) CleanupOldMetrics(ctx context.Context, before time.Time) (int64, error) {
 	result := l.db.WithContext(ctx).Table("rate_limit_metrics").Where("timestamp < ?", before).Delete(nil)
 	return result.RowsAffected, result.Error
+}
+
+// Helper functions
+
+// parseUserID converts a scope value (string) to a user ID (integer)
+func parseUserID(scopeValue string) (int, error) {
+	userID, err := strconv.Atoi(scopeValue)
+	if err != nil {
+		return 0, fmt.Errorf("invalid user ID format: %w", err)
+	}
+	return userID, nil
+}
+
+// recordCleanRequest tracks allowed requests in the reputation system
+// This builds positive reputation for good behavior
+func (l *PostgresRateLimiter) recordCleanRequest(ctx context.Context, req LimitCheckRequest) error {
+	if req.Scope != "user" || req.ScopeValue == "" {
+		return nil
+	}
+
+	userID, err := parseUserID(req.ScopeValue)
+	if err != nil {
+		return nil // Skip if not a valid user ID
+	}
+
+	// Record clean request in reputation system
+	return l.reputation.RecordCleanRequest(userID)
 }
