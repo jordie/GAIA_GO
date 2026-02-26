@@ -656,11 +656,36 @@ def send_confirm(session, operation_type=None):
         else:
             key = "1"  # Just yes for other operations
 
-        # Send key first, then Enter separately for reliability
-        subprocess.run(["tmux", "send-keys", "-t", session, key], timeout=5)
-        time.sleep(0.1)  # Small delay between key and Enter
-        subprocess.run(["tmux", "send-keys", "-t", session, "Enter"], timeout=5)
-        return True
+        # Send key + Enter atomically for reliability (fixes submission failures)
+        # Use C-m (carriage return) instead of Enter for cross-platform compatibility
+        try:
+            # Get prompt state before sending (for verification)
+            before_output = get_output(session)
+            before_hash = hash(before_output) if before_output else None
+
+            # Send key and C-m (carriage return) atomically
+            subprocess.run(
+                ["tmux", "send-keys", "-t", session, key, "C-m"],
+                timeout=5
+            )
+
+            # Verify the prompt changed (proves the command was actually submitted)
+            max_retries = 5
+            for attempt in range(max_retries):
+                time.sleep(0.2)
+                after_output = get_output(session)
+                after_hash = hash(after_output) if after_output else None
+
+                if after_hash != before_hash:
+                    log(f"   ✓ Confirmed {operation_type} in {session} (verified)")
+                    return True
+
+            # If we get here, prompt didn't change (command may not have been submitted)
+            log(f"   ⚠️  WARNING: Prompt unchanged after sending {key} to {session} - may not have submitted")
+            return False
+        except Exception as e:
+            log(f"Error sending to {session}: {e}")
+            return False
     except Exception as e:
         log(f"Error sending to {session}: {e}")
         return False
@@ -722,7 +747,11 @@ def run_monitor_cycle(duration):
                     del pending[session]
                 continue
 
-            prompt_key = f"{prompt['operation']}:{prompt['command'][:40]}"
+            # Generate stable prompt key using hash (not truncated text which can vary)
+            # This prevents duplicates when text wrapping changes the visible output
+            import hashlib
+            command_hash = hashlib.md5(prompt['command'].encode()).hexdigest()[:8]
+            prompt_key = f"{prompt['operation']}:{command_hash}"
 
             # Skip recently handled prompts (same prompt in same session)
             if session in handled and prompt_key in handled[session]:
@@ -804,6 +833,10 @@ def run_monitor_cycle(duration):
                         del pending[session]
                         continue
 
+                    # Set preemptive cooldown BEFORE confirming (prevents duplicates if check-send gap)
+                    # This is critical: set it immediately before attempting to send
+                    session_cooldowns[session] = time.time() + SESSION_COOLDOWN
+
                     # All safety checks passed - confirm!
                     if send_confirm(session, stored_prompt["operation"]):
                         confirmations += 1
@@ -830,9 +863,10 @@ def run_monitor_cycle(duration):
                             time.time() - (confirm_time - CONFIRM_DELAY_MIN),
                             response_key,
                         )
-
-                        # Add session cooldown to prevent rapid re-confirmations
-                        session_cooldowns[session] = time.time() + SESSION_COOLDOWN
+                    else:
+                        # Confirmation failed - clear the preemptive cooldown so we can retry next cycle
+                        log(f"   ⚠️  Confirmation failed - cooldown will be cleared for next attempt")
+                        del session_cooldowns[session]
 
                     if session not in handled:
                         handled[session] = {}
