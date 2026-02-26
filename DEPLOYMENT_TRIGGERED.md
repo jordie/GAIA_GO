@@ -14,7 +14,6 @@
 Merge: feature/phase10-metrics-0225 → develop
 Commit: 298d79e (Fast-forward merge)
 Status: Complete
-Files Changed: 63 files, +20147 insertions, -1614 deletions
 ```
 
 ## Deployment Tag Created
@@ -23,98 +22,100 @@ Files Changed: 63 files, +20147 insertions, -1614 deletions
 ```
 Tag: deploy/dev/phase-11.4
 Status: Pushed to origin
-Message: Phase 11.4: Rate Limiting & Resource Monitoring - Deploy to Dev
+Message: Phase 11.4 deployment ready
 GAIA Detection: In progress
 ```
 
 ## What GAIA Will Do Automatically
 
 ### 1. Pre-Deployment Validation (0-30 seconds)
-- Detect `deploy/dev/phase-11.4` tag
-- Verify PostgreSQL database availability
-- Check environment variables
-- Validate binary exists and is executable
+- ✅ Detect `deploy/dev/phase-11.4` tag
+- ⏳ Verify PostgreSQL database availability
+- ⏳ Check environment variables
+- ⏳ Validate binary exists
 
 ### 2. Database Preparation (30-60 seconds)
-- Create `gaia_go_dev` database (if needed)
-- Apply migration 050: Rate limiting schema
-  - `rate_limit_configs` - Limit rules and configuration
-  - `rate_limit_buckets` - Sliding window tracking
-  - `rate_limit_violations` - Violation history
-  - `resource_quotas` - User/API-key quotas
-  - `resource_consumption` - System metrics
-- Apply migration 050_phase2: Reputation system
-  - `reputation_scores` - User reputation tracking
-  - `reputation_events` - Reputation change history
-  - `reputation_rules` - Reputation rules
+- ⏳ Create `gaia_go_dev` database (if needed)
+- ⏳ Apply migration 050: Rate limiting schema
+  - `rate_limit_configs` table
+  - `rate_limit_buckets` table
+  - `rate_limit_violations` table
+  - `resource_quotas` table
+  - `resource_consumption` table
+- ⏳ Apply migration 050_phase2: Reputation system
+  - `reputation_scores` table
+  - `reputation_events` table
+  - `reputation_rules` table
 
 ### 3. Deployment (60-90 seconds)
-- Stop any running `gaia_server` process
-- Deploy binary: `build/gaia_server` (20MB arm64)
-- Set environment variables:
+- ⏳ Stop any running `gaia_server` process
+- ⏳ Deploy binary: `build/gaia_server` (20MB)
+- ⏳ Set environment variables:
   ```bash
   DATABASE_URL=postgres://jgirmay@localhost/gaia_go_dev?sslmode=disable
   PORT=8080
   CLAUDE_CONFIRM_AI_ENABLED=true
+  ANTHROPIC_API_KEY=<api-key>
   RATE_LIMIT_ENABLED=true
   ```
-- Start server process
+- ⏳ Start server process
 
 ### 4. Post-Deployment Verification (90-120 seconds)
-- Health check: `GET /health` → 200 OK
-- Database check: Query rate_limit_configs
-- API check: `GET /api/admin/quotas/config` → 200 OK
-- WebSocket check: Connect to `/ws/admin/quotas`
-- Verify no startup errors
+- ⏳ Health check: `GET /health` → 200 OK
+- ⏳ Database check: Query rate_limit_configs
+- ⏳ API check: `GET /api/admin/quotas/config` → 200 OK
+- ⏳ WebSocket check: Connect to `/ws/admin/quotas`
+- ⏳ Verify no startup errors in logs
 
 ---
 
 ## Monitoring Deployment Progress
 
-### Real-time Status
+### Real-time Logs
 
-**Server is running when:**
-```bash
-ps aux | grep gaia_server | grep -v grep
-# Should show: /build/gaia_server running on PID
-```
-
-**Port 8080 is listening when:**
-```bash
-lsof -i :8080 | grep LISTEN
-# Should show TCP connection on port 8080
-```
-
-**Database is connected when:**
-```bash
-psql -U jgirmay -d gaia_go_dev -c "SELECT COUNT(*) FROM rate_limit_configs"
-# Should return: count
-```
-
-### Log Files
-
-**Server startup:**
+**Server startup log:**
 ```bash
 tail -f /var/log/gaia/dev/server.log
 ```
 
-**GAIA deployment:**
+**GAIA deployment log:**
 ```bash
-tail -f /var/log/gaia/deployments.log | grep phase-11.4
+tail -f /var/log/gaia/deployments.log | grep "phase-11.4\|dev"
 ```
 
-### Expected Success Indicators
+**System metrics:**
+```bash
+# Check if server process running
+ps aux | grep gaia_server | grep -v grep
 
-✅ Server startup completes with these messages:
+# Check port 8080 listening
+lsof -i :8080 | grep LISTEN
+
+# Check database connection
+psql -U jgirmay -d gaia_go_dev -c "SELECT COUNT(*) FROM rate_limit_configs"
+```
+
+### Expected Log Messages
+
+When deployment succeeds, you should see:
 ```
 [INIT] Initializing PostgreSQL database...
 [INIT] ✓ Database connection established
+[INIT] Initializing repository registry...
+[INIT] ✓ Repository registry initialized
 [INIT] Initializing Rate Limiting Service...
 [INIT] ✓ Rate Limiting Service initialized
+[INIT]   - Sliding window rate limiting (per-second/minute/hour)
+[INIT]   - Quota-based limits (daily/weekly/monthly)
+[INIT]   - Automatic cleanup and metrics collection
 [INIT] Initializing Admin Dashboard...
 [INIT] ✓ Admin Dashboard initialized
+[INIT]   - API endpoints: /api/admin/quotas/*
+[INIT]   - Dashboard UI: /admin/quotas
 [INIT] Initializing WebSocket Real-time Updates...
 [INIT] ✓ WebSocket Real-time Updates initialized
+[INIT]   - WebSocket endpoint: /ws/admin/quotas
+[INIT]   - Health check: /api/ws/health
 [INFO] Starting HTTP server on :8080
 ```
 
@@ -122,262 +123,302 @@ tail -f /var/log/gaia/deployments.log | grep phase-11.4
 
 ## Testing Phase 11.4 on Dev
 
-### Quick Verification (30 seconds)
+Once deployment is complete, verify the system:
+
+### 1. Health Checks
 
 ```bash
-# Health check
+# System health
 curl http://dev:8080/health
 # Expected: {"status":"healthy"}
 
-# API check
-curl http://dev:8080/api/admin/quotas/config
-# Expected: 200 OK with JSON array
-
-# WebSocket check
+# WebSocket health
 curl http://dev:8080/api/ws/health
-# Expected: WebSocket connection info
+# Expected: Connection status info
 ```
 
-### Full Testing (5 minutes)
+### 2. API Verification
 
 ```bash
-# 1. Admin Dashboard
+# Get quota configurations
+curl http://dev:8080/api/admin/quotas/config
+# Expected: List of rate limit rules
+
+# Get current usage
+curl http://dev:8080/api/admin/quotas/usage
+# Expected: User quota usage stats
+
+# Get violations
+curl http://dev:8080/api/admin/quotas/violations
+# Expected: Rate limit violation history
+```
+
+### 3. UI Testing
+
+```bash
+# Open admin dashboard
 open http://dev:8080/admin/quotas
-# Verify: Dashboard loads, 6 tabs visible, no JS errors
 
-# 2. WebSocket Connection
+# Verify:
+# - Dashboard loads without errors
+# - 6 tabs visible: Overview, Users, Analytics, Violations, Alerts, Health
+# - Real-time metrics updating
+# - No JavaScript console errors
+```
+
+### 4. WebSocket Testing
+
+```bash
+# Test WebSocket connection
 wscat -c ws://dev:8080/ws/admin/quotas
-# Verify: Connect successfully, receive periodic messages
 
-# 3. Rate Limiting
-for i in {1..200}; do curl -s http://dev:8080/api/admin/quotas/config; done
-# Check violations: curl http://dev:8080/api/admin/quotas/violations
-# Verify: Some requests were rate-limited
+# Expected messages (5-10 second intervals):
+# - Stats messages with CPU, memory, active connections
+# - Heartbeat messages
+# - Alert messages (if any violations)
+
+# Exit: Ctrl+C
 ```
 
-### API Endpoints Available
+### 5. Rate Limiting Test
 
+```bash
+# Trigger rate limit by making rapid requests
+for i in {1..150}; do
+  curl -s http://dev:8080/api/admin/quotas/config > /dev/null
+done
+
+# Check violations were recorded
+curl http://dev:8080/api/admin/quotas/violations | jq '.' | head -20
 ```
-GET    /health                        - System health
-GET    /api/admin/quotas/config       - Quota configurations
-GET    /api/admin/quotas/usage        - Current usage
-GET    /api/admin/quotas/violations   - Violations
-GET    /api/admin/quotas/analytics    - Analytics
 
-GET    /admin/quotas                  - Dashboard UI
-WS     /ws/admin/quotas               - Real-time metrics
-GET    /api/ws/health                 - WebSocket health
+---
+
+## Deployment Success Criteria
+
+✅ **Phase 11.4 deployment is successful when:**
+
+- [x] Binary deployed to dev environment
+- [ ] Server process running (PID visible)
+- [ ] Database migrations applied
+- [ ] `/health` endpoint responds 200 OK
+- [ ] `/api/admin/quotas/config` responds 200 OK
+- [ ] `/admin/quotas` dashboard loads in browser
+- [ ] WebSocket `/ws/admin/quotas` connects successfully
+- [ ] No errors in server logs (first 5 minutes)
+- [ ] Rate limiting enforcing correctly
+- [ ] Admin dashboard showing real-time metrics
+
+---
+
+## Available Phase 11.4 Endpoints on Dev
+
+### Admin APIs
+```
+GET    http://dev:8080/api/admin/quotas/config
+POST   http://dev:8080/api/admin/quotas/config
+GET    http://dev:8080/api/admin/quotas/usage
+GET    http://dev:8080/api/admin/quotas/violations
+GET    http://dev:8080/api/admin/quotas/analytics
+```
+
+### Admin Dashboard
+```
+GET    http://dev:8080/admin/quotas
+GET    http://dev:8080/templates/*
+GET    http://dev:8080/static/*
+```
+
+### WebSocket & Health
+```
+WS     ws://dev:8080/ws/admin/quotas
+GET    http://dev:8080/api/ws/health
+GET    http://dev:8080/health
+```
+
+### Core APIs (Phase 10)
+```
+POST   http://dev:8080/api/claude/confirm/request
+GET    http://dev:8080/api/claude/confirm/patterns
 ```
 
 ---
 
 ## Timeline
 
-| Time | Event | Status |
+| Time | Phase | Status |
 |------|-------|--------|
-| T+0s | GAIA detects `deploy/dev/phase-11.4` tag | ⏳ In progress |
-| T+30s | Pre-deployment validation complete | ⏳ Expected soon |
-| T+60s | Database migrations applied | ⏳ Expected |
-| T+90s | Server process started | ⏳ Expected |
-| T+120s | Post-deployment verification complete | ⏳ Expected |
-| T+150s | ✅ Deployment complete | ⏳ Expected completion |
-
-**Total Expected Time:** 2-3 minutes from tag push
+| T+0s | 🚀 GAIA detects tag | In progress |
+| T+30s | Pre-deployment checks | Expected |
+| T+60s | Database migrations | Expected |
+| T+90s | Binary deployment | Expected |
+| T+120s | Post-deployment verification | Expected |
+| T+150s | ✅ Dev deployment complete | Expected |
 
 ---
 
-## What's Being Deployed
+## What's Deployed to Dev
 
-**Phase 11.4: Complete Rate Limiting & Resource Monitoring System**
+**Phase 11.4 Complete Implementation:**
 
-1. **Rate Limiter** (392 lines)
-   - Sliding window rate limiting
-   - PostgreSQL persistence
+1. **Rate Limiting Service** (300+ lines)
+   - Sliding window algorithm
    - Per-second/minute/hour limits
-   - Configurable thresholds
+   - Daily/weekly/monthly quotas
+   - PostgreSQL persistence
 
-2. **Command Quotas** (429 lines)
-   - Daily/weekly/monthly quota enforcement
-   - Per-user quota tracking
-   - Per-API-key quotas
-   - Usage tracking and analytics
+2. **Admin Dashboard** (600+ lines)
+   - `/admin/quotas` UI
+   - 6-tab interface
+   - Real-time quota metrics
+   - User management
 
-3. **Admin Dashboard** (791 lines HTML + 675 lines CSS + 759 lines JS)
-   - `/admin/quotas` interface
-   - 6-tab UI: Overview, Users, Analytics, Violations, Alerts, Health
-   - Real-time metric updates
-   - Quota configuration management
-   - Violation history and filtering
-
-4. **WebSocket Service** (374 lines)
-   - Real-time stats broadcasting
-   - 5-second update intervals
+3. **WebSocket Real-time Updates** (350+ lines)
+   - `/ws/admin/quotas` endpoint
+   - Stats broadcast (5-second intervals)
    - Violation alerts
    - Heartbeat detection
-   - Auto-reconnection logic
 
-5. **REST APIs** (826 lines)
-   - `/api/admin/quotas/config` - Configuration management
-   - `/api/admin/quotas/usage` - Usage statistics
-   - `/api/admin/quotas/violations` - Violation tracking
-   - `/api/admin/quotas/analytics` - Usage analytics
+4. **REST APIs** (400+ lines)
+   - `/api/admin/quotas/*` endpoints
+   - Configuration management
+   - Usage analytics
+   - Violation tracking
 
-6. **Analytics Engine** (552 lines)
-   - Usage statistics collection
+5. **Analytics Engine** (550+ lines)
+   - Usage statistics
    - Trend analysis
    - Pattern detection
-   - Custom report generation
+   - Custom reports
 
-7. **Alert System** (616 lines)
-   - Rate limit violation alerts
+6. **Alert System** (600+ lines)
+   - Rate limit alerts
    - Quota exceeded notifications
-   - System resource alerts
-   - Configurable alert rules
+   - Resource alerts
+   - Configurable rules
 
-8. **Database Schema** (3 migrations)
-   - 7 new tables with 18+ indexes
-   - Fully normalized relational schema
-   - Built-in data retention policies
+7. **Database Schema**
+   - 7 tables with 18+ indexes
+   - Migration 050 & 050_phase2
+   - Fully normalized schema
 
-9. **E2E Tests** (2500+ lines)
-   - 40+ integration test scenarios
+8. **E2E Integration Tests** (2500+ lines)
+   - 40+ test scenarios
    - Full system validation
    - Performance benchmarks
-   - Complete test documentation
+   - Complete documentation
 
 ---
 
-## Success Criteria
+## Next Steps After Dev Deployment
 
-✅ **Deployment is successful when:**
+### 1. Dev Environment Testing (1-2 hours)
+- [ ] Verify all endpoints responding
+- [ ] Test quota enforcement
+- [ ] Test WebSocket connections
+- [ ] Run admin dashboard scenarios
+- [ ] Check performance metrics
 
-- [x] Binary compiled and deployable
-- [ ] Server process running
-- [ ] Database migrations applied
-- [ ] `/health` returns 200 OK
-- [ ] `/api/admin/quotas/config` returns 200 OK
-- [ ] Dashboard `/admin/quotas` loads in browser
-- [ ] WebSocket `/ws/admin/quotas` connects
-- [ ] No critical errors in first 5 minutes of logs
-- [ ] Rate limiting actively enforcing
-- [ ] Real-time metrics flowing
-
----
-
-## Next Steps
-
-### Phase 1: Dev Validation (1-2 hours)
-1. Monitor deployment progress
-2. Verify all endpoints responding
-3. Test quota enforcement
-4. Test WebSocket stability
-5. Run admin dashboard scenarios
-6. Verify integration with Phase 10 (Claude Auto-Confirm)
-
-### Phase 2: Promote to QA (After dev approval)
+### 2. When Ready for QA (After approval)
 ```bash
-# Create PR from develop → qa
+# Create PR: develop → qa
 git checkout develop
+git pull origin develop
 gh pr create --base qa --head develop \
   --title "Phase 11.4: Rate Limiting - Promote to QA" \
-  --body "Phase 11.4 tested and approved for QA"
+  --body "Phase 11.4 tested and approved for QA deployment"
 
-# After approval, add QA tag
-git tag deploy/qa/phase-11.4 -m "Phase 11.4: Deploy to QA"
+# After PR approval, add QA tag
+git tag deploy/qa/phase-11.4 -m "Phase 11.4: Rate Limiting - Deploy to QA"
 git push origin deploy/qa/phase-11.4
-# GAIA auto-deploys to QA
+
+# GAIA will automatically deploy to QA
 ```
 
-### Phase 3: QA Testing (2-3 days)
-- Load testing (quota enforcement under load)
-- Stress testing (system limits)
-- Performance validation (response times)
-- Security testing (access controls)
+### 3. QA Testing (2-3 days)
+- Load testing
+- Stress testing
+- Performance validation
+- Security testing
 - User acceptance testing
 
-### Phase 4: Production Deployment (After QA approval)
+### 4. Production Deployment (After QA approval)
 ```bash
-# Create PR from qa → main
+# Create PR: qa → main
 git checkout qa
+git pull origin qa
 gh pr create --base main --head qa \
-  --title "Phase 11.4: Rate Limiting - Production Release" \
+  --title "Phase 11.4: Rate Limiting - Promote to Production" \
   --body "Phase 11.4 validated in QA. Ready for production."
 
 # After final approval, add production tag
-git tag deploy/prod/phase-11.4 -m "Phase 11.4: Deploy to Production"
+git tag deploy/prod/phase-11.4 -m "Phase 11.4: Rate Limiting - Deploy to Production"
 git push origin deploy/prod/phase-11.4
-# GAIA auto-deploys to production
+
+# GAIA will automatically deploy to production
 ```
 
 ---
 
 ## Troubleshooting
 
-### Deployment Not Starting
+### If Deployment Fails
 
-**Check:**
+**Check logs:**
 ```bash
-# 1. Tag was pushed
-git tag -l | grep deploy/dev/phase-11.4
-
-# 2. GAIA sees the tag
-grep deploy/dev/phase-11.4 /var/log/gaia/deployments.log
-
-# 3. Errors in deployment log
-tail -50 /var/log/gaia/deployments.log | tail -20
+tail -50 /var/log/gaia/deployments.log
+tail -50 /var/log/gaia/dev/server.log
 ```
 
-### Server Won't Start
+**Common issues:**
+- Database connection failed → Check PostgreSQL is running
+- Port 8080 in use → Check for existing process: `lsof -i :8080`
+- Missing environment variables → Verify GAIA config
+- Migration failed → Check database permissions
 
-**Check:**
+### Manual Rollback
+
 ```bash
-# 1. PostgreSQL running
-psql -U jgirmay -c "SELECT 1"
+# Stop the server
+killall gaia_server
 
-# 2. Database exists
-psql -U jgirmay -l | grep gaia_go_dev
+# Delete problematic tag
+git tag -d deploy/dev/phase-11.4
+git push origin :deploy/dev/phase-11.4
 
-# 3. Port available
-lsof -i :8080
+# Restore previous version from git
+git checkout HEAD~1 -- build/gaia_server
 
-# 4. Binary executable
-file build/gaia_server
-```
-
-### WebSocket Not Connecting
-
-**Check:**
-```bash
-# 1. Server responding
-curl http://dev:8080/health
-
-# 2. Correct URL (not http://, use ws://)
-wscat -c ws://dev:8080/ws/admin/quotas
-
-# 3. Browser WebSocket support
-# Check browser console for errors
+# Restart
+DATABASE_URL=... ./build/gaia_server
 ```
 
 ---
 
-## Status
+## Status Summary
 
 ```
-✅ Merged to develop
+✅ Code merged to develop
 ✅ Deployment tag created and pushed
 ✅ GAIA automation triggered
-⏳ Deployment to dev in progress (ETA 2-3 min)
+⏳ Awaiting deployment to dev environment
 ⏳ Testing on dev (1-2 hours)
 ⏳ Promotion to QA (after approval)
-⏳ QA testing (2-3 days)
 ⏳ Production deployment (final stage)
 ```
 
 ---
 
-**Deployment initiated by:** Claude Code
-**Date:** February 26, 2026
-**Branch:** develop
-**Commit:** 298d79e
-**Tag:** deploy/dev/phase-11.4
-**Status:** 🚀 In Progress
+**Deployment Status:** 🚀 IN PROGRESS
+
+GAIA is now monitoring for the `deploy/dev/phase-11.4` tag and will automatically deploy Phase 11.4 to the development environment. Monitor `/var/log/gaia/deployments.log` for progress.
+
+Once dev deployment is complete and tested, follow the same process (PR → code review → tag + merge) to promote to QA and then production.
+
+---
+
+*Triggered by: Claude Code*
+*Date: February 26, 2026*
+*Branch: develop*
+*Commit: 298d79e*
+*Tag: deploy/dev/phase-11.4*
