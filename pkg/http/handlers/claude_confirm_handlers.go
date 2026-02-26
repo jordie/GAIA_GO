@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -49,39 +50,39 @@ func (h *ClaudeConfirmHandlers) RegisterRoutes(router *chi.Mux) {
 func (h *ClaudeConfirmHandlers) ProcessConfirmation(w http.ResponseWriter, r *http.Request) {
 	var req claude_confirm.ConfirmationRequest
 
-	if err := readJSONBody(r, &req); err != nil {
-		writeError(w, http.StatusBadRequest, "Invalid request format", "invalid_format")
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.writeError(w, http.StatusBadRequest, "Invalid request format")
 		return
 	}
 
 	// Validate required fields
 	if req.SessionID == "" || req.PermissionType == "" || req.ResourceType == "" {
-		sendError(w, http.StatusBadRequest, "Missing required fields", nil)
+		h.writeError(w, http.StatusBadRequest, "Missing required fields")
 		return
 	}
 
 	// Process the confirmation
 	decision, reason, err := h.confirmationService.ProcessConfirmation(r.Context(), &req)
 	if err != nil {
-		sendError(w, http.StatusInternalServerError, "Failed to process confirmation", err)
+		h.writeError(w, http.StatusInternalServerError, "Failed to process confirmation")
 		return
 	}
 
 	response := map[string]interface{}{
-		"decision": decision,
-		"reason":   reason,
+		"decision":   decision,
+		"reason":     reason,
 		"request_id": req.ID,
-		"timestamp": req.Timestamp,
+		"timestamp":  req.Timestamp,
 	}
 
-	sendJSON(w, http.StatusOK, response)
+	h.writeJSON(w, http.StatusOK, response)
 }
 
 // GetConfirmationHistory retrieves confirmation history for a session
 func (h *ClaudeConfirmHandlers) GetConfirmationHistory(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionID")
 	if sessionID == "" {
-		sendError(w, http.StatusBadRequest, "Missing sessionID", nil)
+		h.writeError(w, http.StatusBadRequest, "Missing sessionID")
 		return
 	}
 
@@ -94,11 +95,11 @@ func (h *ClaudeConfirmHandlers) GetConfirmationHistory(w http.ResponseWriter, r 
 
 	history, err := h.confirmationService.GetConfirmationHistory(r.Context(), sessionID, limit)
 	if err != nil {
-		sendError(w, http.StatusInternalServerError, "Failed to get history", err)
+		h.writeError(w, http.StatusInternalServerError, "Failed to get history")
 		return
 	}
 
-	sendJSON(w, http.StatusOK, map[string]interface{}{
+	h.writeJSON(w, http.StatusOK, map[string]interface{}{
 		"session_id": sessionID,
 		"count":      len(history),
 		"history":    history,
@@ -109,17 +110,17 @@ func (h *ClaudeConfirmHandlers) GetConfirmationHistory(w http.ResponseWriter, r 
 func (h *ClaudeConfirmHandlers) GetSessionStats(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionID")
 	if sessionID == "" {
-		sendError(w, http.StatusBadRequest, "Missing sessionID", nil)
+		h.writeError(w, http.StatusBadRequest, "Missing sessionID")
 		return
 	}
 
 	stats, err := h.confirmationService.GetSessionStats(r.Context(), sessionID)
 	if err != nil {
-		sendError(w, http.StatusInternalServerError, "Failed to get stats", err)
+		h.writeError(w, http.StatusInternalServerError, "Failed to get stats")
 		return
 	}
 
-	sendJSON(w, http.StatusOK, map[string]interface{}{
+	h.writeJSON(w, http.StatusOK, map[string]interface{}{
 		"session_id":             sessionID,
 		"total_requests":         stats.TotalRequests,
 		"approved_by_pattern":    stats.ApprovedByPattern,
@@ -148,11 +149,11 @@ func (h *ClaudeConfirmHandlers) ListPatterns(w http.ResponseWriter, r *http.Requ
 
 	patterns, err := h.confirmationService.ListPatterns(r.Context(), enabled, limit)
 	if err != nil {
-		sendError(w, http.StatusInternalServerError, "Failed to list patterns", err)
+		h.writeError(w, http.StatusInternalServerError, "Failed to list patterns")
 		return
 	}
 
-	sendJSON(w, http.StatusOK, map[string]interface{}{
+	h.writeJSON(w, http.StatusOK, map[string]interface{}{
 		"count":    len(patterns),
 		"patterns": patterns,
 	})
@@ -162,23 +163,23 @@ func (h *ClaudeConfirmHandlers) ListPatterns(w http.ResponseWriter, r *http.Requ
 func (h *ClaudeConfirmHandlers) CreatePattern(w http.ResponseWriter, r *http.Request) {
 	var pattern claude_confirm.ApprovalPattern
 
-	if err := readJSON(r, &pattern); err != nil {
-		sendError(w, http.StatusBadRequest, "Invalid pattern format", err)
+	if err := json.NewDecoder(r.Body).Decode(&pattern); err != nil {
+		h.writeError(w, http.StatusBadRequest, "Invalid pattern format")
 		return
 	}
 
 	// Validate required fields
 	if pattern.Name == "" || pattern.PermissionType == "" || pattern.ResourceType == "" {
-		sendError(w, http.StatusBadRequest, "Missing required pattern fields", nil)
+		h.writeError(w, http.StatusBadRequest, "Missing required pattern fields")
 		return
 	}
 
 	if err := h.confirmationService.CreatePattern(r.Context(), &pattern); err != nil {
-		sendError(w, http.StatusInternalServerError, "Failed to create pattern", err)
+		h.writeError(w, http.StatusInternalServerError, "Failed to create pattern")
 		return
 	}
 
-	sendJSON(w, http.StatusCreated, map[string]interface{}{
+	h.writeJSON(w, http.StatusCreated, map[string]interface{}{
 		"pattern_id": pattern.ID,
 		"message":    "Pattern created successfully",
 	})
@@ -188,44 +189,44 @@ func (h *ClaudeConfirmHandlers) CreatePattern(w http.ResponseWriter, r *http.Req
 func (h *ClaudeConfirmHandlers) GetPattern(w http.ResponseWriter, r *http.Request) {
 	patternID := chi.URLParam(r, "patternID")
 	if patternID == "" {
-		sendError(w, http.StatusBadRequest, "Missing patternID", nil)
+		h.writeError(w, http.StatusBadRequest, "Missing patternID")
 		return
 	}
 
 	pattern, err := h.confirmationService.GetPattern(r.Context(), patternID)
 	if err != nil {
-		sendError(w, http.StatusInternalServerError, "Failed to get pattern", err)
+		h.writeError(w, http.StatusInternalServerError, "Failed to get pattern")
 		return
 	}
 
 	if pattern == nil {
-		sendError(w, http.StatusNotFound, "Pattern not found", nil)
+		h.writeError(w, http.StatusNotFound, "Pattern not found")
 		return
 	}
 
-	sendJSON(w, http.StatusOK, pattern)
+	h.writeJSON(w, http.StatusOK, pattern)
 }
 
 // UpdatePattern updates an existing pattern
 func (h *ClaudeConfirmHandlers) UpdatePattern(w http.ResponseWriter, r *http.Request) {
 	patternID := chi.URLParam(r, "patternID")
 	if patternID == "" {
-		sendError(w, http.StatusBadRequest, "Missing patternID", nil)
+		h.writeError(w, http.StatusBadRequest, "Missing patternID")
 		return
 	}
 
 	var updates map[string]interface{}
-	if err := readJSON(r, &updates); err != nil {
-		sendError(w, http.StatusBadRequest, "Invalid update format", err)
+	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
+		h.writeError(w, http.StatusBadRequest, "Invalid update format")
 		return
 	}
 
 	if err := h.confirmationService.UpdatePattern(r.Context(), patternID, updates); err != nil {
-		sendError(w, http.StatusInternalServerError, "Failed to update pattern", err)
+		h.writeError(w, http.StatusInternalServerError, "Failed to update pattern")
 		return
 	}
 
-	sendJSON(w, http.StatusOK, map[string]interface{}{
+	h.writeJSON(w, http.StatusOK, map[string]interface{}{
 		"message": "Pattern updated successfully",
 	})
 }
@@ -234,16 +235,16 @@ func (h *ClaudeConfirmHandlers) UpdatePattern(w http.ResponseWriter, r *http.Req
 func (h *ClaudeConfirmHandlers) DeletePattern(w http.ResponseWriter, r *http.Request) {
 	patternID := chi.URLParam(r, "patternID")
 	if patternID == "" {
-		sendError(w, http.StatusBadRequest, "Missing patternID", nil)
+		h.writeError(w, http.StatusBadRequest, "Missing patternID")
 		return
 	}
 
 	if err := h.confirmationService.DeletePattern(r.Context(), patternID); err != nil {
-		sendError(w, http.StatusInternalServerError, "Failed to delete pattern", err)
+		h.writeError(w, http.StatusInternalServerError, "Failed to delete pattern")
 		return
 	}
 
-	sendJSON(w, http.StatusOK, map[string]interface{}{
+	h.writeJSON(w, http.StatusOK, map[string]interface{}{
 		"message": "Pattern deleted successfully",
 	})
 }
@@ -252,52 +253,52 @@ func (h *ClaudeConfirmHandlers) DeletePattern(w http.ResponseWriter, r *http.Req
 func (h *ClaudeConfirmHandlers) GetSessionPreference(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionID")
 	if sessionID == "" {
-		sendError(w, http.StatusBadRequest, "Missing sessionID", nil)
+		h.writeError(w, http.StatusBadRequest, "Missing sessionID")
 		return
 	}
 
 	pref, err := h.confirmationService.GetSessionPreference(r.Context(), sessionID)
 	if err != nil {
-		sendError(w, http.StatusInternalServerError, "Failed to get preference", err)
+		h.writeError(w, http.StatusInternalServerError, "Failed to get preference")
 		return
 	}
 
 	if pref == nil {
 		// Return default preferences
-		sendJSON(w, http.StatusOK, map[string]interface{}{
-			"session_id":       sessionID,
-			"allow_all":        false,
-			"use_ai_fallback":  true,
-			"pattern_ids":      []string{},
+		h.writeJSON(w, http.StatusOK, map[string]interface{}{
+			"session_id":      sessionID,
+			"allow_all":       false,
+			"use_ai_fallback": true,
+			"pattern_ids":     []string{},
 		})
 		return
 	}
 
-	sendJSON(w, http.StatusOK, pref)
+	h.writeJSON(w, http.StatusOK, pref)
 }
 
 // SetSessionPreference sets approval preferences for a session
 func (h *ClaudeConfirmHandlers) SetSessionPreference(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionID")
 	if sessionID == "" {
-		sendError(w, http.StatusBadRequest, "Missing sessionID", nil)
+		h.writeError(w, http.StatusBadRequest, "Missing sessionID")
 		return
 	}
 
 	var pref claude_confirm.SessionApprovalPreference
-	if err := readJSON(r, &pref); err != nil {
-		sendError(w, http.StatusBadRequest, "Invalid preference format", err)
+	if err := json.NewDecoder(r.Body).Decode(&pref); err != nil {
+		h.writeError(w, http.StatusBadRequest, "Invalid preference format")
 		return
 	}
 
 	pref.SessionID = sessionID
 
 	if err := h.confirmationService.SetSessionPreference(r.Context(), &pref); err != nil {
-		sendError(w, http.StatusInternalServerError, "Failed to set preference", err)
+		h.writeError(w, http.StatusInternalServerError, "Failed to set preference")
 		return
 	}
 
-	sendJSON(w, http.StatusOK, map[string]interface{}{
+	h.writeJSON(w, http.StatusOK, map[string]interface{}{
 		"message": "Preference updated successfully",
 	})
 }
@@ -306,27 +307,42 @@ func (h *ClaudeConfirmHandlers) SetSessionPreference(w http.ResponseWriter, r *h
 func (h *ClaudeConfirmHandlers) GetGlobalStats(w http.ResponseWriter, r *http.Request) {
 	stats, err := h.confirmationService.GetGlobalStats(r.Context())
 	if err != nil {
-		sendError(w, http.StatusInternalServerError, "Failed to get stats", err)
+		h.writeError(w, http.StatusInternalServerError, "Failed to get stats")
 		return
 	}
 
-	sendJSON(w, http.StatusOK, stats)
+	h.writeJSON(w, http.StatusOK, stats)
 }
 
 // GetPatternStats returns statistics for a specific pattern
 func (h *ClaudeConfirmHandlers) GetPatternStats(w http.ResponseWriter, r *http.Request) {
 	patternID := chi.URLParam(r, "patternID")
 	if patternID == "" {
-		sendError(w, http.StatusBadRequest, "Missing patternID", nil)
+		h.writeError(w, http.StatusBadRequest, "Missing patternID")
 		return
 	}
 
 	pm := claude_confirm.NewPatternMatcher(nil) // Would need db from context
 	stats, err := pm.GetPatternStats(r.Context(), patternID)
 	if err != nil {
-		sendError(w, http.StatusInternalServerError, "Failed to get pattern stats", err)
+		h.writeError(w, http.StatusInternalServerError, "Failed to get pattern stats")
 		return
 	}
 
-	sendJSON(w, http.StatusOK, stats)
+	h.writeJSON(w, http.StatusOK, stats)
+}
+
+// Helper functions
+func (h *ClaudeConfirmHandlers) writeJSON(w http.ResponseWriter, statusCode int, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(data)
+}
+
+func (h *ClaudeConfirmHandlers) writeError(w http.ResponseWriter, statusCode int, message string) {
+	response := map[string]interface{}{
+		"error":   message,
+		"message": message,
+	}
+	h.writeJSON(w, statusCode, response)
 }
