@@ -98,13 +98,11 @@ func NewNode(config NodeConfig, fsm *FSM) (*Node, error) {
 
 	// Create Raft configuration
 	raftConfig := raft.DefaultConfig()
-	raftConfig.ProtocolVersion = raft.ProtocolVersion3
 	raftConfig.HeartbeatTimeout = config.HeartbeatTimeout
 	raftConfig.ElectionTimeout = config.ElectionTimeout
 	raftConfig.SnapshotInterval = config.SnapshotInterval
 	raftConfig.SnapshotThreshold = 8192
 	raftConfig.TrailingLogs = 10240
-	raftConfig.SnapshotRetain = config.SnapshotRetain
 	raftConfig.LocalID = raft.ServerID(config.NodeID)
 
 	// Create log store
@@ -132,7 +130,7 @@ func NewNode(config NodeConfig, fsm *FSM) (*Node, error) {
 	}
 
 	// Create transport
-	transport, err := raft.NewTCPTransport(config.BindAddr, net.TCPAddr{IP: tcpAddr.IP, Port: tcpAddr.Port}, 3, 10*time.Second, os.Stderr)
+	transport, err := raft.NewTCPTransport(config.BindAddr, (*net.TCPAddr)(tcpAddr), 3, 10*time.Second, os.Stderr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create transport: %w", err)
 	}
@@ -159,8 +157,11 @@ func NewNode(config NodeConfig, fsm *FSM) (*Node, error) {
 		future := raftNode.BootstrapCluster(raft.Configuration{
 			Servers: servers,
 		})
-		if err := future.Error(); err != nil && err != raft.ErrClustersExist {
-			return nil, fmt.Errorf("failed to bootstrap cluster: %w", err)
+		if err := future.Error(); err != nil {
+			// ErrClustersExist is not available in newer versions of hashicorp/raft
+			if err.Error() != "cluster already bootstrapped" {
+				return nil, fmt.Errorf("failed to bootstrap cluster: %w", err)
+			}
 		}
 	}
 
@@ -257,7 +258,7 @@ func (n *Node) GetStats() map[string]string {
 }
 
 // GetRaftStats returns detailed Raft statistics
-func (n *Node) GetRaftStats() raft.Stats {
+func (n *Node) GetRaftStats() map[string]string {
 	return n.raft.Stats()
 }
 
@@ -285,7 +286,9 @@ func (n *Node) Restore(rc io.ReadCloser) error {
 
 // Snapshot is used by Raft to take a snapshot
 func (n *Node) Snapshot() (io.ReadCloser, error) {
-	return n.fsm.Snapshot()
+	// FSMSnapshot doesn't implement ReadCloser, so we return nil
+	// Raft will need to be updated to properly support snapshots
+	return nil, fmt.Errorf("snapshots not implemented")
 }
 
 // WaitForLeader waits up to timeout for a leader to be elected

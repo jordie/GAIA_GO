@@ -242,7 +242,7 @@ func (sc *SessionCoordinator) GetAvailableSession(ctx context.Context, lessonID 
 
 	// If lesson ID provided, use affinity scoring
 	if lessonID != nil {
-		bestSession, score := sc.findBestSessionForLesson(ctx, candidates, *lessonID)
+		bestSession, _ := sc.findBestSessionForLesson(ctx, candidates, *lessonID)
 		if bestSession != nil {
 			return bestSession, nil
 		}

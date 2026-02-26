@@ -1,7 +1,6 @@
 package raft
 
 import (
-	"bytes"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"

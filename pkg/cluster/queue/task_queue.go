@@ -151,7 +151,7 @@ func (tq *TaskQueue) Claim(ctx context.Context, sessionID uuid.UUID) (*models.Di
 		expiresAt := time.Now().Add(tq.claimTimeout)
 		if err := tq.taskRepo.Claim(ctx, task.ID, sessionID, expiresAt); err != nil {
 			// Release lock on failure
-			if releaseErr := tq.lockRepo.Release(ctx, lockKey, sessionID.String()); releaseErr != nil {
+			if _, releaseErr := tq.lockRepo.Release(ctx, lockKey, sessionID.String()); releaseErr != nil {
 				fmt.Printf("warning: failed to release lock: %v\n", releaseErr)
 			}
 			continue
@@ -198,7 +198,7 @@ func (tq *TaskQueue) Complete(ctx context.Context, taskID uuid.UUID, result inte
 	// Release lock
 	if task.ClaimedBy != nil {
 		lockKey := fmt.Sprintf("task:%s", taskID.String())
-		if err := tq.lockRepo.Release(ctx, lockKey, task.ClaimedBy.String()); err != nil {
+		if _, err := tq.lockRepo.Release(ctx, lockKey, task.ClaimedBy.String()); err != nil {
 			fmt.Printf("warning: failed to release lock: %v\n", err)
 		}
 	}
@@ -220,7 +220,7 @@ func (tq *TaskQueue) Fail(ctx context.Context, taskID uuid.UUID, reason string) 
 	// Release lock
 	if task.ClaimedBy != nil {
 		lockKey := fmt.Sprintf("task:%s", taskID.String())
-		if err := tq.lockRepo.Release(ctx, lockKey, task.ClaimedBy.String()); err != nil {
+		if _, err := tq.lockRepo.Release(ctx, lockKey, task.ClaimedBy.String()); err != nil {
 			fmt.Printf("warning: failed to release lock: %v\n", err)
 		}
 	}
