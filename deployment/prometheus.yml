@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'gaia-go-staging'
+
+scrape_configs:
+  - job_name: 'gaia_go'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['localhost:5432']
