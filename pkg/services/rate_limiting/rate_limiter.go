@@ -339,7 +339,7 @@ func (l *PostgresRateLimiter) recordViolation(ctx context.Context, req LimitChec
 				severity = 1 // Lower severity for API calls
 			}
 
-			description := fmt.Sprintf("Rate limit violation: %s on %s", rule.LimitType, req.ResourcePath)
+			description := fmt.Sprintf("Rate limit violation: %s on %s", rule.LimitType, req.RequestPath)
 			_ = l.reputation.RecordViolation(userID, severity, description)
 		}
 	}

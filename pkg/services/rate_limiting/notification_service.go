@@ -1,7 +1,6 @@
 package rate_limiting
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -38,14 +37,14 @@ type Notification struct {
 	CreatedAt     time.Time          `json:"created_at" gorm:"index"`
 }
 
-// NotificationChannel defines how notifications are delivered
-type NotificationChannel string
+// PreferredChannel defines user's preferred notification delivery channels
+type PreferredChannel string
 
 const (
-	ChannelEmail NotificationChannel = "email"
-	ChannelSMS   NotificationChannel = "sms"
-	ChannelInApp NotificationChannel = "in_app"
-	ChannelSlack NotificationChannel = "slack"
+	ChannelEmail PreferredChannel = "email"
+	ChannelSMS   PreferredChannel = "sms"
+	ChannelInApp PreferredChannel = "in_app"
+	ChannelSlack PreferredChannel = "slack"
 )
 
 // NotificationPreferences defines user notification settings
@@ -348,13 +347,13 @@ func (ns *NotificationService) startWorker() {
 
 // deliverNotification sends notification via configured channels
 func (ns *NotificationService) deliverNotification(notif *Notification) {
-	prefs, err := ns.GetNotificationPreferences(notif.UserID)
+	_, err := ns.GetNotificationPreferences(notif.UserID)
 	if err != nil {
 		return
 	}
 
 	// Parse preferred channels from JSON
-	// TODO: Parse prefs.PreferredChannels and deliver accordingly
+	// TODO: Parse notification preferences and deliver accordingly
 
 	// Example deliveries (would be implemented):
 	// - Email: Send via SMTP

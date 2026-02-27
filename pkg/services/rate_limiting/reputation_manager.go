@@ -1,7 +1,6 @@
 package rate_limiting
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -259,7 +258,6 @@ func (rm *ReputationManager) ApplyRepDecay(userID int) error {
 
 // ApplyRepDecayAll applies decay to all users
 func (rm *ReputationManager) ApplyRepDecayAll() (int, error) {
-	var count int64
 	result := rm.db.Model(&UserReputation{}).
 		Where("score != ?", 50).
 		Update("score", gorm.Expr("CASE WHEN score < 50 THEN score + 5 ELSE score - 5 END"))
