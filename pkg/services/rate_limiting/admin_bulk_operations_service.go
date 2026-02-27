@@ -103,7 +103,7 @@ func (abos *AdminBulkOperationsService) BulkApproveAppeals(
 
 	// Process each appeal
 	for _, appeal := range appeals {
-		if err := abos.approveAppeal(ctx, operation.OperationID, adminID, appeal, approvedPoints, comment); err != nil {
+		if err := abos.approveAppeal(ctx, operation.OperationID, adminID, &appeal, approvedPoints, comment); err != nil {
 			operation.TotalFailed++
 		} else {
 			operation.TotalSucceeded++
@@ -149,7 +149,7 @@ func (abos *AdminBulkOperationsService) BulkDenyAppeals(
 
 	// Process each appeal
 	for _, appeal := range appeals {
-		if err := abos.denyAppeal(ctx, operation.OperationID, adminID, appeal, rejectionReason, comment); err != nil {
+		if err := abos.denyAppeal(ctx, operation.OperationID, adminID, &appeal, rejectionReason, comment); err != nil {
 			operation.TotalFailed++
 		} else {
 			operation.TotalSucceeded++
@@ -329,7 +329,7 @@ func (abos *AdminBulkOperationsService) approveAppeal(
 		Table("appeals").
 		Where("id = ?", appeal.ID).
 		Updates(map[string]interface{}{
-			"status":           StatusApproved,
+			"status":           AppealApproved,
 			"reviewed_by":      fmt.Sprintf("bulk_admin_%d", adminID),
 			"review_comment":   comment,
 			"approved_points":  approvedPoints,
@@ -344,7 +344,7 @@ func (abos *AdminBulkOperationsService) approveAppeal(
 		ctx,
 		appeal.ID,
 		appeal.Status,
-		StatusApproved,
+		AppealApproved,
 		fmt.Sprintf("bulk_operation_%s", operationID),
 		fmt.Sprintf("Approved via bulk operation: %s", comment),
 		map[string]interface{}{
@@ -368,7 +368,7 @@ func (abos *AdminBulkOperationsService) denyAppeal(
 		Table("appeals").
 		Where("id = ?", appeal.ID).
 		Updates(map[string]interface{}{
-			"status":         StatusDenied,
+			"status":         AppealDenied,
 			"reviewed_by":    fmt.Sprintf("bulk_admin_%d", adminID),
 			"review_comment": comment,
 			"resolution":     rejectionReason,
@@ -383,7 +383,7 @@ func (abos *AdminBulkOperationsService) denyAppeal(
 		ctx,
 		appeal.ID,
 		appeal.Status,
-		StatusDenied,
+		AppealDenied,
 		fmt.Sprintf("bulk_operation_%s", operationID),
 		fmt.Sprintf("Denied via bulk operation: %s", comment),
 		map[string]interface{}{

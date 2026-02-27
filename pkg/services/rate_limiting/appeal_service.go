@@ -288,7 +288,11 @@ func (as *AppealService) ReviewAppeal(ctx context.Context, appealID int, reviewe
 
 	// If approved, restore reputation
 	if action == AppealApproved {
-		as.reputationMgr.UpdateUserReputation(appeal.UserID, approvedPoints)
+		// Get current reputation and add approved points
+		currentRep, _ := as.reputationMgr.GetUserReputation(appeal.UserID)
+		if currentRep != nil {
+			as.reputationMgr.SetUserReputation(appeal.UserID, currentRep.Score+int(approvedPoints), "Appeal approved - reputation restored")
+		}
 	}
 
 	return nil

@@ -109,8 +109,8 @@ func (ans *AppealNegotiationService) SendMessage(
 	// Update appeal status if not already reviewing
 	ans.db.WithContext(ctx).
 		Table("appeals").
-		Where("id = ? AND status = ?", appealID, StatusPending).
-		Update("status", StatusReviewing)
+		Where("id = ? AND status = ?", appealID, AppealPending).
+		Update("status", AppealReviewing)
 
 	return &negotiationMsg, nil
 }
@@ -419,16 +419,5 @@ func analyzeToneTrend(messages []NegotiationMessage) string {
 	return "stable"
 }
 
-// Scan implements sql.Scanner interface for datatypes.JSONMap
-func (j datatypes.JSONMap) Value() (driver.Value, error) {
-	return json.Marshal(j)
-}
-
-// Scan implements sql.Scanner interface
-func (j *datatypes.JSONMap) Scan(value interface{}) error {
-	bytes, ok := value.([]byte)
-	if !ok {
-		return fmt.Errorf("type assertion failed")
-	}
-	return json.Unmarshal(bytes, &j)
-}
+// NOTE: datatypes.JSONMap already implements sql.Scanner interface
+// Defining methods on external types is not allowed in Go

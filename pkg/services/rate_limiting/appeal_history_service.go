@@ -162,7 +162,7 @@ func (ahs *AppealHistoryService) GetAppealTimeline(
 	// Calculate resolution days if resolved
 	if len(timeline.Events) > 0 {
 		lastEvent := timeline.Events[len(timeline.Events)-1]
-		if lastEvent.Status == StatusApproved || lastEvent.Status == StatusDenied {
+		if lastEvent.Status == AppealApproved || lastEvent.Status == AppealDenied {
 			resolution := lastEvent.Timestamp.Sub(timeline.SubmittedAt).Hours() / 24.0
 			timeline.ResolutionDays = &resolution
 			timeline.LastUpdateAt = lastEvent.Timestamp
@@ -374,16 +374,5 @@ func (ahs *AppealHistoryService) GetChangeFrequency(
 	return result_map, nil
 }
 
-// Scan implements sql.Scanner interface for datatypes.JSONMap
-func (j datatypes.JSONMap) Value() (driver.Value, error) {
-	return json.Marshal(j)
-}
-
-// Scan implements sql.Scanner interface
-func (j *datatypes.JSONMap) Scan(value interface{}) error {
-	bytes, ok := value.([]byte)
-	if !ok {
-		return fmt.Errorf("type assertion failed")
-	}
-	return json.Unmarshal(bytes, &j)
-}
+// NOTE: datatypes.JSONMap already implements sql.Scanner interface
+// Defining methods on external types is not allowed in Go

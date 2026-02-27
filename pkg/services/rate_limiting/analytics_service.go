@@ -96,7 +96,7 @@ func (as *AnalyticsService) GetReputationTrends(ctx context.Context, userID int,
 	var scores []float64
 	var prevScore float64
 
-	for i, event := range events {
+	for _, event := range events {
 		score := prevScore + event.Score
 		change := score - prevScore
 		prevScore = score

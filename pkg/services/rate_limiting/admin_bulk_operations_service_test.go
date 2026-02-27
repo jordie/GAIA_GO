@@ -398,7 +398,9 @@ func TestBulkOperationFiltering(t *testing.T) {
 	statuses := []AppealStatus{StatusPending, StatusPending, StatusReviewing, StatusPending}
 	priorities := []AppealPriority{"low", "medium", "high", "medium"}
 
-	for i, (status, priority) := range zip(statuses, priorities) {
+	for i := 0; i < len(statuses); i++ {
+		status := statuses[i]
+		priority := priorities[i]
 		appeal := &Appeal{
 			ID:        60 + i,
 			UserID:    160 + i,

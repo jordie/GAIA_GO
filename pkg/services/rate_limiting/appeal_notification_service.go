@@ -10,47 +10,47 @@ import (
 	"gorm.io/gorm"
 )
 
-// NotificationType represents the type of notification
-type NotificationType string
+// AppealNotificationType represents the type of notification
+type AppealNotificationType string
 
 const (
-	NotificationSubmitted NotificationType = "submitted"
-	NotificationApproved  NotificationType = "approved"
-	NotificationDenied    NotificationType = "denied"
-	NotificationExpired   NotificationType = "expired"
-	NotificationUpdate    NotificationType = "status_update"
+	AppealNotificationSubmitted AppealNotificationType = "submitted"
+	AppealAppealNotificationApproved  AppealNotificationType = "approved"
+	AppealNotificationDenied    AppealNotificationType = "denied"
+	AppealNotificationExpired   AppealNotificationType = "expired"
+	AppealNotificationUpdate    AppealNotificationType = "status_update"
 )
 
-// NotificationChannel represents the delivery channel
-type NotificationChannel string
+// AppealNotificationChannel represents the delivery channel
+type AppealNotificationChannel string
 
 const (
-	ChannelEmail  NotificationChannel = "email"
-	ChannelInApp  NotificationChannel = "in_app"
-	ChannelSMS    NotificationChannel = "sms"
+	AppealChannelEmail  AppealNotificationChannel = "email"
+	AppealChannelInApp  AppealNotificationChannel = "in_app"
+	AppealChannelSMS    AppealNotificationChannel = "sms"
 )
 
-// NotificationStatus represents delivery status
-type NotificationStatus string
+// AppealNotificationStatus represents delivery status
+type AppealNotificationStatus string
 
 const (
-	StatusPending NotificationStatus = "pending"
-	StatusSent    NotificationStatus = "sent"
-	StatusFailed  NotificationStatus = "failed"
-	StatusBounced NotificationStatus = "bounced"
+	AppealStatusPending AppealNotificationStatus = "pending"
+	AppealStatusSent    AppealNotificationStatus = "sent"
+	AppealStatusFailed  AppealNotificationStatus = "failed"
+	AppealStatusBounced AppealNotificationStatus = "bounced"
 )
 
-// Notification represents a notification record
-type Notification struct {
+// AppealNotificationRecord represents a notification record
+type AppealNotificationRecord struct {
 	ID              int64
 	AppealID        int
 	UserID          int
-	NotificationType NotificationType
-	Channel         NotificationChannel
+	NotificationType AppealNotificationType
+	Channel         AppealNotificationChannel
 	Recipient       string
 	Subject         string
 	Body            string
-	Status          NotificationStatus
+	Status          AppealNotificationStatus
 	ErrorMessage    *string
 	SentAt          *time.Time
 	OpenedAt        *time.Time
@@ -58,8 +58,8 @@ type Notification struct {
 	CreatedAt       time.Time
 }
 
-// NotificationTemplate represents an email template
-type NotificationTemplate struct {
+// AppealNotificationTemplate represents an email template
+type AppealNotificationTemplate struct {
 	Subject      string
 	BodyTemplate string
 }
@@ -72,7 +72,7 @@ type AppealNotificationService struct {
 	smtpUsername    string
 	smtpPassword    string
 	fromEmail       string
-	templates       map[NotificationType]NotificationTemplate
+	templates       map[AppealNotificationType]AppealNotificationTemplate
 }
 
 // NewAppealNotificationService creates a new notification service
@@ -122,7 +122,7 @@ GAIA GO Reputation Team
 		appeal.ID,
 		appeal.UserID,
 		userEmail,
-		NotificationApproved,
+		AppealAppealNotificationApproved,
 		subject,
 		body,
 	)
@@ -161,7 +161,7 @@ GAIA GO Reputation Team
 		appeal.ID,
 		appeal.UserID,
 		userEmail,
-		NotificationDenied,
+		AppealNotificationDenied,
 		subject,
 		body,
 	)
@@ -199,7 +199,7 @@ GAIA GO Reputation Team
 		appeal.ID,
 		appeal.UserID,
 		userEmail,
-		NotificationSubmitted,
+		AppealNotificationSubmitted,
 		subject,
 		body,
 	)
@@ -234,7 +234,7 @@ GAIA GO Reputation Team
 		appeal.ID,
 		appeal.UserID,
 		userEmail,
-		NotificationExpired,
+		AppealNotificationExpired,
 		subject,
 		body,
 	)
@@ -246,20 +246,20 @@ func (ans *AppealNotificationService) sendNotification(
 	appealID int,
 	userID int,
 	recipient string,
-	notificationType NotificationType,
+	notificationType AppealNotificationType,
 	subject string,
 	body string,
 ) error {
 	// Record notification in database
-	notification := Notification{
+	notification := AppealNotificationRecord{
 		AppealID:         appealID,
 		UserID:           userID,
 		NotificationType: notificationType,
-		Channel:          ChannelEmail,
+		Channel:          AppealChannelEmail,
 		Recipient:        recipient,
 		Subject:          subject,
 		Body:             body,
-		Status:           StatusPending,
+		Status:           AppealStatusPending,
 		CreatedAt:        time.Now(),
 	}
 
@@ -276,7 +276,7 @@ func (ans *AppealNotificationService) sendNotification(
 			ans.db.WithContext(ctx).Table("appeal_notifications").
 				Where("id = ?", notification.ID).
 				Updates(map[string]interface{}{
-					"status":        StatusFailed,
+					"status":        AppealStatusFailed,
 					"error_message": err.Error(),
 				})
 			return nil // Non-blocking failure
@@ -287,7 +287,7 @@ func (ans *AppealNotificationService) sendNotification(
 		ans.db.WithContext(ctx).Table("appeal_notifications").
 			Where("id = ?", notification.ID).
 			Updates(map[string]interface{}{
-				"status":  StatusSent,
+				"status":  AppealStatusSent,
 				"sent_at": now,
 			})
 	}
@@ -320,8 +320,8 @@ func (ans *AppealNotificationService) sendEmailNotification(
 func (ans *AppealNotificationService) GetNotifications(
 	ctx context.Context,
 	appealID int,
-) ([]Notification, error) {
-	var notifications []Notification
+) ([]AppealNotificationRecord, error) {
+	var notifications []AppealNotificationRecord
 	result := ans.db.WithContext(ctx).
 		Table("appeal_notifications").
 		Where("appeal_id = ?", appealID).
@@ -365,12 +365,12 @@ func (ans *AppealNotificationService) GetNotificationStats(
 
 	ans.db.WithContext(ctx).
 		Table("appeal_notifications").
-		Where("status = ?", StatusSent).
+		Where("status = ?", AppealStatusSent).
 		Count(&stats.SentCount)
 
 	ans.db.WithContext(ctx).
 		Table("appeal_notifications").
-		Where("status = ?", StatusFailed).
+		Where("status = ?", AppealStatusFailed).
 		Count(&stats.FailedCount)
 
 	ans.db.WithContext(ctx).
@@ -380,22 +380,22 @@ func (ans *AppealNotificationService) GetNotificationStats(
 
 	ans.db.WithContext(ctx).
 		Table("appeal_notifications").
-		Where("notification_type = ?", NotificationSubmitted).
+		Where("notification_type = ?", AppealNotificationSubmitted).
 		Count(&stats.SubmitNotifications)
 
 	ans.db.WithContext(ctx).
 		Table("appeal_notifications").
-		Where("notification_type = ?", NotificationApproved).
+		Where("notification_type = ?", AppealNotificationApproved).
 		Count(&stats.ApprovalNotifications)
 
 	ans.db.WithContext(ctx).
 		Table("appeal_notifications").
-		Where("notification_type = ?", NotificationDenied).
+		Where("notification_type = ?", AppealNotificationDenied).
 		Count(&stats.DenialNotifications)
 
 	ans.db.WithContext(ctx).
 		Table("appeal_notifications").
-		Where("notification_type = ?", NotificationExpired).
+		Where("notification_type = ?", AppealNotificationExpired).
 		Count(&stats.ExpirationNotifications)
 
 	return map[string]interface{}{
@@ -413,21 +413,21 @@ func (ans *AppealNotificationService) GetNotificationStats(
 }
 
 // initializeTemplates sets up default notification templates
-func (ans *AppealNotificationService) initializeTemplates() map[NotificationType]NotificationTemplate {
-	return map[NotificationType]NotificationTemplate{
-		NotificationSubmitted: {
+func (ans *AppealNotificationService) initializeTemplates() map[AppealNotificationType]AppealNotificationTemplate {
+	return map[AppealNotificationType]AppealNotificationTemplate{
+		AppealNotificationSubmitted: {
 			Subject:      "Appeal Received - ID: {{.AppealID}}",
 			BodyTemplate: "Your appeal has been received and will be reviewed shortly.",
 		},
-		NotificationApproved: {
+		AppealNotificationApproved: {
 			Subject:      "Appeal Approved - ID: {{.AppealID}}",
 			BodyTemplate: "Your appeal has been approved. {{.ApprovedPoints}} reputation points have been restored.",
 		},
-		NotificationDenied: {
+		AppealNotificationDenied: {
 			Subject:      "Appeal Reviewed - ID: {{.AppealID}}",
 			BodyTemplate: "Your appeal has been reviewed. Reason: {{.RejectionReason}}",
 		},
-		NotificationExpired: {
+		AppealNotificationExpired: {
 			Subject:      "Appeal Expired - ID: {{.AppealID}}",
 			BodyTemplate: "Your appeal has expired and is no longer under review.",
 		},

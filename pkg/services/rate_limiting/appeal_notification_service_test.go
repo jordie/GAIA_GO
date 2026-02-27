@@ -78,9 +78,9 @@ func TestSendApprovalNotification(t *testing.T) {
 	}
 
 	// Verify notification was recorded
-	var notif Notification
+	var notif AppealNotificationRecord
 	result := db.Table("appeal_notifications").
-		Where("appeal_id = ? AND notification_type = ?", appeal.ID, NotificationApproved).
+		Where("appeal_id = ? AND notification_type = ?", appeal.ID, AppealNotificationApproved).
 		First(&notif)
 
 	if result.Error != nil {
@@ -120,7 +120,7 @@ func TestSendDenialNotification(t *testing.T) {
 		t.Errorf("Failed to send denial notification: %v", err)
 	}
 
-	var notif Notification
+	var notif AppealNotificationRecord
 	result := db.Table("appeal_notifications").
 		Where("appeal_id = ? AND notification_type = ?", appeal.ID, NotificationDenied).
 		First(&notif)
@@ -158,7 +158,7 @@ func TestSendSubmissionNotification(t *testing.T) {
 		t.Errorf("Failed to send submission notification: %v", err)
 	}
 
-	var notif Notification
+	var notif AppealNotificationRecord
 	result := db.Table("appeal_notifications").
 		Where("appeal_id = ? AND notification_type = ?", appeal.ID, NotificationSubmitted).
 		First(&notif)
@@ -227,7 +227,7 @@ func TestGetNotifications(t *testing.T) {
 }
 
 // TestMarkAsRead marks notification as read
-func TestMarkAsRead(t *testing.T) {
+func TestAppealMarkAsRead(t *testing.T) {
 	db := setupNotificationTestDB(t)
 	ns := NewAppealNotificationService(db)
 
@@ -235,7 +235,7 @@ func TestMarkAsRead(t *testing.T) {
 	ns.SendSubmissionNotification(context.Background(), appeal, "user@example.com")
 
 	// Get notification ID
-	var notif Notification
+	var notif AppealNotificationRecord
 	db.Table("appeal_notifications").
 		Where("appeal_id = ?", 6).
 		First(&notif)
@@ -303,7 +303,7 @@ func TestNotificationChannels(t *testing.T) {
 func TestNotificationTypes(t *testing.T) {
 	types := []NotificationType{
 		NotificationSubmitted,
-		NotificationApproved,
+		AppealNotificationApproved,
 		NotificationDenied,
 		NotificationExpired,
 	}
@@ -340,7 +340,7 @@ func BenchmarkSendNotification(b *testing.B) {
 }
 
 // BenchmarkGetNotifications benchmarks notification retrieval
-func BenchmarkGetNotifications(b *testing.B) {
+func BenchmarkAppealGetNotifications(b *testing.B) {
 	db := setupNotificationTestDB(&testing.T{})
 	ns := NewAppealNotificationService(db)
 
