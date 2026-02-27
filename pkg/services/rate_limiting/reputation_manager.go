@@ -22,17 +22,6 @@ type UserReputation struct {
 	CreatedAt     time.Time `json:"created_at"`
 }
 
-// ReputationEvent represents a reputation change event
-type ReputationEvent struct {
-	ID          int       `json:"id"`
-	UserID      int       `json:"user_id"`
-	EventType   string    `json:"event_type"` // violation, clean, decay, manual
-	Severity    int       `json:"severity"`   // For violations: 1-3
-	Description string    `json:"description"`
-	ScoreDelta  int       `json:"score_delta"`
-	CreatedAt   time.Time `json:"created_at"`
-}
-
 // ReputationManager manages user reputation scores and tiers
 type ReputationManager struct {
 	db          *gorm.DB
@@ -122,13 +111,16 @@ func (rm *ReputationManager) RecordViolation(userID int, severity int, descripti
 	}
 
 	// Record event
+	now := time.Now()
 	event := ReputationEvent{
-		UserID:      userID,
-		EventType:   "violation",
-		Severity:    severity,
-		Description: description,
-		ScoreDelta:  -penalty,
-		CreatedAt:   time.Now(),
+		UserID:        userID,
+		EventType:     "violation",
+		Severity:      severity,
+		ReasonCode:    description,
+		ScoreDelta:    float64(-penalty),
+		SourceService: "reputation_manager",
+		Timestamp:     now,
+		CreatedAt:     now,
 	}
 	if err := rm.db.Table("reputation_events").Create(&event).Error; err != nil {
 		return fmt.Errorf("failed to record event: %w", err)
@@ -171,12 +163,15 @@ func (rm *ReputationManager) RecordCleanRequest(userID int) error {
 	// Record event (optional, to reduce database load)
 	// Only record every Nth clean request
 	if rep.CleanRequests%100 == 0 {
+		now := time.Now()
 		event := ReputationEvent{
-			UserID:      userID,
-			EventType:   "clean",
-			Description: "Clean request recorded",
-			ScoreDelta:  1,
-			CreatedAt:   time.Now(),
+			UserID:        userID,
+			EventType:     "clean",
+			ReasonCode:    "Clean request recorded",
+			ScoreDelta:    float64(1),
+			SourceService: "reputation_manager",
+			Timestamp:     now,
+			CreatedAt:     now,
 		}
 		rm.db.Table("reputation_events").Create(&event)
 	}
@@ -239,11 +234,15 @@ func (rm *ReputationManager) ApplyRepDecay(userID int) error {
 	}
 
 	// Record event
+	now := time.Now()
 	event := ReputationEvent{
-		UserID:      userID,
-		EventType:   "decay",
-		Description: "Weekly reputation decay applied",
-		CreatedAt:   time.Now(),
+		UserID:        userID,
+		EventType:     "decay",
+		ReasonCode:    "Weekly reputation decay applied",
+		ScoreDelta:    0,
+		SourceService: "reputation_manager",
+		Timestamp:     now,
+		CreatedAt:     now,
 	}
 	rm.db.Table("reputation_events").Create(&event)
 
@@ -298,11 +297,15 @@ func (rm *ReputationManager) SetVIPTier(userID int, tier string, expiresAt *time
 	}
 
 	// Record event
+	now := time.Now()
 	event := ReputationEvent{
-		UserID:      userID,
-		EventType:   "manual",
-		Description: fmt.Sprintf("Set VIP tier to %s. Reason: %s", tier, reason),
-		CreatedAt:   time.Now(),
+		UserID:        userID,
+		EventType:     "manual",
+		ReasonCode:    fmt.Sprintf("Set VIP tier to %s. Reason: %s", tier, reason),
+		ScoreDelta:    0,
+		SourceService: "reputation_manager",
+		Timestamp:     now,
+		CreatedAt:     now,
 	}
 	rm.db.Table("reputation_events").Create(&event)
 
@@ -334,11 +337,15 @@ func (rm *ReputationManager) RemoveVIPTier(userID int) error {
 	}
 
 	// Record event
+	now := time.Now()
 	event := ReputationEvent{
-		UserID:      userID,
-		EventType:   "manual",
-		Description: "VIP tier removed",
-		CreatedAt:   time.Now(),
+		UserID:        userID,
+		EventType:     "manual",
+		ReasonCode:    "VIP tier removed",
+		ScoreDelta:    0,
+		SourceService: "reputation_manager",
+		Timestamp:     now,
+		CreatedAt:     now,
 	}
 	rm.db.Table("reputation_events").Create(&event)
 
@@ -373,12 +380,15 @@ func (rm *ReputationManager) SetUserReputation(userID int, score int, descriptio
 	}
 
 	// Record event
+	now := time.Now()
 	event := ReputationEvent{
-		UserID:      userID,
-		EventType:   "manual",
-		Description: description,
-		ScoreDelta:  score - oldScore,
-		CreatedAt:   time.Now(),
+		UserID:        userID,
+		EventType:     "manual",
+		ReasonCode:    description,
+		ScoreDelta:    float64(score - oldScore),
+		SourceService: "reputation_manager",
+		Timestamp:     now,
+		CreatedAt:     now,
 	}
 	rm.db.Table("reputation_events").Create(&event)
 

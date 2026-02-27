@@ -157,7 +157,7 @@ func (ad *AnomalyDetector) analyzeUser(userID int) {
 
 	// Determine severity
 	score.Severity = ad.getSeverity(score.Score)
-	score.Confidence = ad.calculateConfidence(len(recentRequests), len(recentViolations))
+	score.Confidence = ad.calculateConfidence(recentRequests, recentViolations)
 
 	// Update cache
 	ad.cacheMutex.Lock()
@@ -281,7 +281,8 @@ func (ad *AnomalyDetector) getRecentRequests(userID int, window time.Duration) i
 	ad.db.Table("rate_limit_buckets").
 		Where("scope = ? AND scope_value = ? AND window_end > ?",
 			"user", fmt.Sprintf("%d", userID), time.Now().Add(-window)).
-		Sum("request_count", &count)
+		Select("SUM(request_count)").
+		Scan(&count)
 	return int(count)
 }
 

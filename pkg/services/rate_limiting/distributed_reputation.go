@@ -237,7 +237,7 @@ func (drm *DistributedReputationManager) flushEventBuffer() {
 // replicateEventsToNode sends events to a specific remote node
 func (drm *DistributedReputationManager) replicateEventsToNode(nodeID string, events []*ReputationEvent) {
 	drm.mu.RLock()
-	endpoint, exists := drm.remoteNodes[nodeID]
+	_, exists := drm.remoteNodes[nodeID]
 	drm.mu.RUnlock()
 
 	if !exists {
@@ -325,10 +325,10 @@ func (drm *DistributedReputationManager) GetUserReputationConsensus(ctx context.
 	}
 
 	// If no authoritative source, use majority
+	maxCount := 0
 	if !authoritativeFound {
 		score = scoreSum / float64(len(nodeReps))
 
-		maxCount := 0
 		for t, count := range tierCounts {
 			if count > maxCount {
 				maxCount = count
@@ -423,8 +423,7 @@ func (drm *DistributedReputationManager) GetReplicationStats(ctx context.Context
 	drm.db.Model(&ReputationEvent{}).Count(&eventCount)
 	drm.db.Model(&ReputationEvent{}).Where("synced_at IS NULL").Count(&unsyncedCount)
 
-	// Get duplicate detection stats
-	var duplicateCount int64
+	// Get local-only events count
 	var localOnlyCount int64
 
 	drm.db.Model(&ReputationEvent{}).Where("local_only = ?", true).Count(&localOnlyCount)
