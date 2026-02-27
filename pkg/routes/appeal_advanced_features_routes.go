@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"architect/pkg/services/rate_limiting"
+	"github.com/jgirmay/GAIA_GO/pkg/services/rate_limiting"
 )
 
 // RegisterAppealAdvancedFeaturesRoutes registers Phase 3 Sprint 4 routes

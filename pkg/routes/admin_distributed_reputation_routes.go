@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"architect/pkg/services/rate_limiting"
+	"github.com/jgirmay/GAIA_GO/pkg/services/rate_limiting"
 )
 
 // RegisterDistributedReputationRoutes registers all distributed reputation API routes

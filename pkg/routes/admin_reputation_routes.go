@@ -11,7 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"gorm.io/gorm"
 
-	"gaia_go/pkg/services/rate_limiting"
+	"github.com/jgirmay/GAIA_GO/pkg/services/rate_limiting"
 )
 
 // AdminReputationRoutes registers reputation management endpoints
