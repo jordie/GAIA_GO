@@ -74,8 +74,8 @@ func TestRecordStatusChange(t *testing.T) {
 	err := hs.RecordStatusChange(
 		context.Background(),
 		1,
-		StatusPending,
-		StatusReviewing,
+		AppealPending,
+		AppealReviewing,
 		"admin_1",
 		"Started review",
 		map[string]interface{}{"reviewer_id": 123},
@@ -88,7 +88,7 @@ func TestRecordStatusChange(t *testing.T) {
 	// Verify recorded
 	var count int64
 	db.Table("appeal_status_changes").
-		Where("appeal_id = ? AND new_status = ?", 1, StatusReviewing).
+		Where("appeal_id = ? AND new_status = ?", 1, AppealReviewing).
 		Count(&count)
 
 	if count == 0 {
@@ -105,7 +105,7 @@ func TestGetAppealTimeline(t *testing.T) {
 	appeal := &Appeal{
 		ID:        2,
 		UserID:    200,
-		Status:    StatusPending,
+		Status:    AppealPending,
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().AddDate(0, 0, 30),
 	}
@@ -113,9 +113,9 @@ func TestGetAppealTimeline(t *testing.T) {
 	db.Table("appeals").Create(appeal)
 
 	// Record status changes
-	hs.RecordStatusChange(context.Background(), 2, StatusPending, StatusReviewing, "admin", "Started", nil)
+	hs.RecordStatusChange(context.Background(), 2, AppealPending, AppealReviewing, "admin", "Started", nil)
 	time.Sleep(10 * time.Millisecond)
-	hs.RecordStatusChange(context.Background(), 2, StatusReviewing, StatusApproved, "admin", "Approved", nil)
+	hs.RecordStatusChange(context.Background(), 2, AppealReviewing, AppealApproved, "admin", "Approved", nil)
 
 	timeline, err := hs.GetAppealTimeline(context.Background(), 2)
 	if err != nil {
@@ -141,7 +141,7 @@ func TestGetUserAppealHistory(t *testing.T) {
 		appeal := &Appeal{
 			ID:        i,
 			UserID:    201,
-			Status:    StatusPending,
+			Status:    AppealPending,
 			CreatedAt: time.Now().AddDate(0, 0, -i),
 			ExpiresAt: time.Now().AddDate(0, 0, 30-i),
 		}
@@ -166,13 +166,13 @@ func TestGetStatusChangeHistory(t *testing.T) {
 	appeal := &Appeal{
 		ID:        3,
 		UserID:    202,
-		Status:    StatusPending,
+		Status:    AppealPending,
 		CreatedAt: time.Now(),
 	}
 	db.Table("appeals").Create(appeal)
 
-	hs.RecordStatusChange(context.Background(), 3, StatusPending, StatusReviewing, "admin", "Review", nil)
-	hs.RecordStatusChange(context.Background(), 3, StatusReviewing, StatusApproved, "admin", "Approved", nil)
+	hs.RecordStatusChange(context.Background(), 3, AppealPending, AppealReviewing, "admin", "Review", nil)
+	hs.RecordStatusChange(context.Background(), 3, AppealReviewing, AppealApproved, "admin", "Approved", nil)
 
 	changes, err := hs.GetStatusChangeHistory(context.Background(), 3)
 	if err != nil {
@@ -183,12 +183,12 @@ func TestGetStatusChangeHistory(t *testing.T) {
 		t.Errorf("Expected 2 changes, got %d", len(changes))
 	}
 
-	if changes[0].NewStatus != StatusReviewing {
-		t.Errorf("Expected first change to StatusReviewing, got %s", changes[0].NewStatus)
+	if changes[0].NewStatus != AppealReviewing {
+		t.Errorf("Expected first change to AppealReviewing, got %s", changes[0].NewStatus)
 	}
 
-	if changes[1].NewStatus != StatusApproved {
-		t.Errorf("Expected second change to StatusApproved, got %s", changes[1].NewStatus)
+	if changes[1].NewStatus != AppealApproved {
+		t.Errorf("Expected second change to AppealApproved, got %s", changes[1].NewStatus)
 	}
 }
 
@@ -202,7 +202,7 @@ func TestGetTimingMetrics(t *testing.T) {
 		appeal := &Appeal{
 			ID:        100 + i,
 			UserID:    300 + i,
-			Status:    StatusApproved,
+			Status:    AppealApproved,
 			CreatedAt: time.Now().AddDate(0, 0, -30),
 			ExpiresAt: time.Now().AddDate(0, 0, -25),
 		}
@@ -212,8 +212,8 @@ func TestGetTimingMetrics(t *testing.T) {
 		hs.RecordStatusChange(
 			context.Background(),
 			100+i,
-			StatusPending,
-			StatusReviewing,
+			AppealPending,
+			AppealReviewing,
 			"admin",
 			"Review",
 			nil,
@@ -222,8 +222,8 @@ func TestGetTimingMetrics(t *testing.T) {
 		hs.RecordStatusChange(
 			context.Background(),
 			100+i,
-			StatusReviewing,
-			StatusApproved,
+			AppealReviewing,
+			AppealApproved,
 			"admin",
 			"Approved",
 			nil,
@@ -250,7 +250,7 @@ func TestGetStatusDistribution(t *testing.T) {
 	hs := NewAppealHistoryService(db)
 
 	// Create appeals with different statuses
-	statuses := []AppealStatus{StatusPending, StatusReviewing, StatusApproved, StatusPending}
+	statuses := []AppealStatus{AppealPending, AppealReviewing, AppealApproved, AppealPending}
 	for i, status := range statuses {
 		appeal := &Appeal{
 			ID:        200 + i,
@@ -270,12 +270,12 @@ func TestGetStatusDistribution(t *testing.T) {
 		t.Errorf("Distribution is nil")
 	}
 
-	if dist[StatusPending] != 2 {
-		t.Errorf("Expected 2 pending, got %d", dist[StatusPending])
+	if dist[AppealPending] != 2 {
+		t.Errorf("Expected 2 pending, got %d", dist[AppealPending])
 	}
 
-	if dist[StatusApproved] != 1 {
-		t.Errorf("Expected 1 approved, got %d", dist[StatusApproved])
+	if dist[AppealApproved] != 1 {
+		t.Errorf("Expected 1 approved, got %d", dist[AppealApproved])
 	}
 }
 
@@ -289,7 +289,7 @@ func TestGetChangeFrequency(t *testing.T) {
 		appeal := &Appeal{
 			ID:        300 + i,
 			UserID:    500 + i,
-			Status:    StatusApproved,
+			Status:    AppealApproved,
 			CreatedAt: time.Now(),
 		}
 		db.Table("appeals").Create(appeal)
@@ -297,8 +297,8 @@ func TestGetChangeFrequency(t *testing.T) {
 		hs.RecordStatusChange(
 			context.Background(),
 			300+i,
-			StatusPending,
-			StatusReviewing,
+			AppealPending,
+			AppealReviewing,
 			"admin",
 			"Review",
 			nil,
@@ -306,8 +306,8 @@ func TestGetChangeFrequency(t *testing.T) {
 		hs.RecordStatusChange(
 			context.Background(),
 			300+i,
-			StatusReviewing,
-			StatusApproved,
+			AppealReviewing,
+			AppealApproved,
 			"admin",
 			"Approved",
 			nil,
@@ -334,7 +334,7 @@ func TestResolutionDaysCalculation(t *testing.T) {
 	appeal := &Appeal{
 		ID:        400,
 		UserID:    600,
-		Status:    StatusApproved,
+		Status:    AppealApproved,
 		CreatedAt: now,
 		ExpiresAt: now.AddDate(0, 0, 30),
 		ResolvedAt: &[]time.Time{now.Add(2 * 24 * time.Hour)}[0],
@@ -342,9 +342,9 @@ func TestResolutionDaysCalculation(t *testing.T) {
 	db.Table("appeals").Create(appeal)
 
 	// Record changes
-	hs.RecordStatusChange(context.Background(), 400, StatusPending, StatusReviewing, "admin", "", nil)
+	hs.RecordStatusChange(context.Background(), 400, AppealPending, AppealReviewing, "admin", "", nil)
 	time.Sleep(100 * time.Millisecond)
-	hs.RecordStatusChange(context.Background(), 400, StatusReviewing, StatusApproved, "admin", "", nil)
+	hs.RecordStatusChange(context.Background(), 400, AppealReviewing, AppealApproved, "admin", "", nil)
 
 	timeline, err := hs.GetAppealTimeline(context.Background(), 400)
 	if err != nil {
@@ -366,18 +366,18 @@ func TestTimelineEventOrdering(t *testing.T) {
 	appeal := &Appeal{
 		ID:        401,
 		UserID:    601,
-		Status:    StatusApproved,
+		Status:    AppealApproved,
 		CreatedAt: time.Now(),
 	}
 	db.Table("appeals").Create(appeal)
 
 	// Record changes with delays
-	for i, status := range []AppealStatus{StatusPending, StatusReviewing, StatusApproved} {
+	for i, status := range []AppealStatus{AppealPending, AppealReviewing, AppealApproved} {
 		if i > 0 {
 			hs.RecordStatusChange(
 				context.Background(),
 				401,
-				[]AppealStatus{StatusPending, StatusReviewing}[i-1],
+				[]AppealStatus{AppealPending, AppealReviewing}[i-1],
 				status,
 				"admin",
 				"",
@@ -406,8 +406,8 @@ func BenchmarkRecordStatusChange(b *testing.B) {
 		hs.RecordStatusChange(
 			context.Background(),
 			i,
-			StatusPending,
-			StatusReviewing,
+			AppealPending,
+			AppealReviewing,
 			"admin",
 			"Review",
 			nil,
@@ -420,11 +420,11 @@ func BenchmarkGetAppealTimeline(b *testing.B) {
 	db := setupHistoryTestDB(&testing.T{})
 	hs := NewAppealHistoryService(db)
 
-	appeal := &Appeal{ID: 500, UserID: 700, Status: StatusPending, CreatedAt: time.Now()}
+	appeal := &Appeal{ID: 500, UserID: 700, Status: AppealPending, CreatedAt: time.Now()}
 	db.Table("appeals").Create(appeal)
 
 	for i := 0; i < 10; i++ {
-		hs.RecordStatusChange(context.Background(), 500, StatusPending, StatusReviewing, "admin", "", nil)
+		hs.RecordStatusChange(context.Background(), 500, AppealPending, AppealReviewing, "admin", "", nil)
 	}
 
 	b.ResetTimer()

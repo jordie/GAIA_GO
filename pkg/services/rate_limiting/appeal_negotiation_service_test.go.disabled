@@ -62,7 +62,7 @@ func TestSendMessage(t *testing.T) {
 	ns := NewAppealNegotiationService(db)
 
 	// Create test appeal
-	appeal := &Appeal{ID: 1, UserID: 100, Status: StatusPending, CreatedAt: time.Now()}
+	appeal := &Appeal{ID: 1, UserID: 100, Status: AppealPending, CreatedAt: time.Now()}
 	db.Table("appeals").Create(appeal)
 
 	msg, err := ns.SendMessage(
@@ -94,7 +94,7 @@ func TestGetNegotiationThread(t *testing.T) {
 	db := setupNegotiationTestDB(t)
 	ns := NewAppealNegotiationService(db)
 
-	appeal := &Appeal{ID: 2, UserID: 101, Status: StatusPending, CreatedAt: time.Now()}
+	appeal := &Appeal{ID: 2, UserID: 101, Status: AppealPending, CreatedAt: time.Now()}
 	db.Table("appeals").Create(appeal)
 
 	// Send multiple messages
@@ -135,7 +135,7 @@ func TestGetUserConversations(t *testing.T) {
 		appeal := &Appeal{
 			ID:     i,
 			UserID: 200,
-			Status: StatusPending,
+			Status: AppealPending,
 			CreatedAt: time.Now(),
 		}
 		db.Table("appeals").Create(appeal)
@@ -167,7 +167,7 @@ func TestPinMessage(t *testing.T) {
 	db := setupNegotiationTestDB(t)
 	ns := NewAppealNegotiationService(db)
 
-	appeal := &Appeal{ID: 3, UserID: 201, Status: StatusPending, CreatedAt: time.Now()}
+	appeal := &Appeal{ID: 3, UserID: 201, Status: AppealPending, CreatedAt: time.Now()}
 	db.Table("appeals").Create(appeal)
 
 	msg, _ := ns.SendMessage(
@@ -202,7 +202,7 @@ func TestGetPinnedMessages(t *testing.T) {
 	db := setupNegotiationTestDB(t)
 	ns := NewAppealNegotiationService(db)
 
-	appeal := &Appeal{ID: 4, UserID: 202, Status: StatusPending, CreatedAt: time.Now()}
+	appeal := &Appeal{ID: 4, UserID: 202, Status: AppealPending, CreatedAt: time.Now()}
 	db.Table("appeals").Create(appeal)
 
 	msg1, _ := ns.SendMessage(context.Background(), 4, 202, SenderTypeUser, "Important", MessageTypeMessage, nil, nil)
@@ -225,7 +225,7 @@ func TestAnalyzeConversationTone(t *testing.T) {
 	db := setupNegotiationTestDB(t)
 	ns := NewAppealNegotiationService(db)
 
-	appeal := &Appeal{ID: 5, UserID: 203, Status: StatusPending, CreatedAt: time.Now()}
+	appeal := &Appeal{ID: 5, UserID: 203, Status: AppealPending, CreatedAt: time.Now()}
 	db.Table("appeals").Create(appeal)
 
 	ns.SendMessage(context.Background(), 5, 203, SenderTypeUser, "Message", MessageTypeMessage, nil, nil)
@@ -249,7 +249,7 @@ func TestGetNegotiationMetrics(t *testing.T) {
 	db := setupNegotiationTestDB(t)
 	ns := NewAppealNegotiationService(db)
 
-	appeal := &Appeal{ID: 6, UserID: 204, Status: StatusPending, CreatedAt: time.Now()}
+	appeal := &Appeal{ID: 6, UserID: 204, Status: AppealPending, CreatedAt: time.Now()}
 	db.Table("appeals").Create(appeal)
 
 	ns.SendMessage(context.Background(), 6, 204, SenderTypeUser, "Message", MessageTypeMessage, nil, nil)
@@ -303,7 +303,7 @@ func BenchmarkSendMessage(b *testing.B) {
 	db := setupNegotiationTestDB(&testing.T{})
 	ns := NewAppealNegotiationService(db)
 
-	appeal := &Appeal{ID: 100, UserID: 1000, Status: StatusPending, CreatedAt: time.Now()}
+	appeal := &Appeal{ID: 100, UserID: 1000, Status: AppealPending, CreatedAt: time.Now()}
 	db.Table("appeals").Create(appeal)
 
 	b.ResetTimer()
@@ -326,7 +326,7 @@ func BenchmarkGetNegotiationThread(b *testing.B) {
 	db := setupNegotiationTestDB(&testing.T{})
 	ns := NewAppealNegotiationService(db)
 
-	appeal := &Appeal{ID: 101, UserID: 1001, Status: StatusPending, CreatedAt: time.Now()}
+	appeal := &Appeal{ID: 101, UserID: 1001, Status: AppealPending, CreatedAt: time.Now()}
 	db.Table("appeals").Create(appeal)
 
 	for i := 0; i < 10; i++ {

@@ -18,7 +18,7 @@ func setupRateLimiterTestDB(t *testing.T) *gorm.DB {
 
 	// Create required tables
 	db.Exec(`
-		CREATE TABLE rate_limit_configs (
+		CREATE TABLE rate_limit_rules (
 			id INTEGER PRIMARY KEY,
 			rule_name TEXT UNIQUE,
 			scope TEXT,
@@ -80,6 +80,23 @@ func setupRateLimiterTestDB(t *testing.T) *gorm.DB {
 	`)
 
 	db.Exec(`
+		CREATE TABLE rate_limit_metrics (
+			id INTEGER PRIMARY KEY,
+			system_id TEXT,
+			scope TEXT,
+			scope_value TEXT,
+			timestamp TIMESTAMP,
+			requests_processed INTEGER,
+			requests_allowed INTEGER,
+			requests_blocked INTEGER,
+			average_response_time REAL,
+			cpu_usage_percent REAL,
+			memory_usage_percent REAL,
+			created_at TIMESTAMP
+		)
+	`)
+
+	db.Exec(`
 		CREATE TABLE reputation_scores (
 			id INTEGER PRIMARY KEY,
 			user_id INTEGER UNIQUE,
@@ -118,11 +135,15 @@ func setupRateLimiterTestDB(t *testing.T) *gorm.DB {
 // defaultConfig returns a standard test configuration
 func defaultConfig() Config {
 	return Config{
-		DefaultRetryAfter:      60,
-		EnableViolationTracking: true,
-		EnableMetrics:          true,
-		ClockTolerance:         0,
+		BucketCleanupInterval:  10 * time.Minute,
+		ViolationRetention:     7 * 24 * time.Hour,
+		MetricsRetention:       30 * 24 * time.Hour,
 		RuleCacheTTL:           5 * time.Minute,
+		RuleCacheSize:          1000,
+		EnableMetrics:          true,
+		EnableViolationTracking: true,
+		DefaultRetryAfter:      60,
+		ClockTolerance:         1 * time.Second,
 	}
 }
 

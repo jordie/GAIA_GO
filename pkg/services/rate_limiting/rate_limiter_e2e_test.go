@@ -1,7 +1,6 @@
 package rate_limiting
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"

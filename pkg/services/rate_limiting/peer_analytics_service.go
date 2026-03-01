@@ -3,7 +3,6 @@ package rate_limiting
 import (
 	"context"
 	"fmt"
-	"math"
 	"sort"
 	"time"
 

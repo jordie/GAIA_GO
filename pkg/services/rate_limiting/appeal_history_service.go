@@ -2,7 +2,6 @@ package rate_limiting
 
 import (
 	"context"
-	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"time"
