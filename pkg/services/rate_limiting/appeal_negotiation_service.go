@@ -338,10 +338,13 @@ func (ans *AppealNegotiationService) GetNegotiationMetrics(
 		Scan(&metrics.TotalNegotiations)
 
 	// Average messages per appeal
+	subquery := ans.db.Table("appeal_negotiation_messages").
+		Select("COUNT(*) as msg_count").
+		Group("appeal_id")
+
 	ans.db.WithContext(ctx).
-		Table("appeal_negotiation_messages").
+		Model(&[]interface{}{}).
 		Select("AVG(msg_count)").
-		From("(SELECT appeal_id, COUNT(*) as msg_count FROM appeal_negotiation_messages GROUP BY appeal_id) subq").
 		Scan(&metrics.AvgMessagesPerAppeal)
 
 	// Average sentiment and quality

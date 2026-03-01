@@ -15,7 +15,7 @@ type AppealNotificationType string
 
 const (
 	AppealNotificationSubmitted AppealNotificationType = "submitted"
-	AppealAppealNotificationApproved  AppealNotificationType = "approved"
+	AppealNotificationApproved  AppealNotificationType = "approved"
 	AppealNotificationDenied    AppealNotificationType = "denied"
 	AppealNotificationExpired   AppealNotificationType = "expired"
 	AppealNotificationUpdate    AppealNotificationType = "status_update"
@@ -122,7 +122,7 @@ GAIA GO Reputation Team
 		appeal.ID,
 		appeal.UserID,
 		userEmail,
-		AppealAppealNotificationApproved,
+		AppealNotificationApproved,
 		subject,
 		body,
 	)
