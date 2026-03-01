@@ -412,9 +412,22 @@ func (l *PostgresRateLimiter) CreateRule(ctx context.Context, rule Rule) (int64,
 func (l *PostgresRateLimiter) UpdateRule(ctx context.Context, rule Rule) error {
 	rule.UpdatedAt = time.Now()
 
+	// Use a map to ensure all fields (including zero values) are updated
+	updateMap := map[string]interface{}{
+		"rule_name":     rule.RuleName,
+		"scope":         rule.Scope,
+		"scope_value":   rule.ScopeValue,
+		"limit_type":    rule.LimitType,
+		"limit_value":   rule.LimitValue,
+		"resource_type": rule.ResourceType,
+		"enabled":       rule.Enabled, // Explicitly update enabled status
+		"priority":      rule.Priority,
+		"updated_at":    rule.UpdatedAt,
+	}
+
 	result := l.db.WithContext(ctx).Table("rate_limit_rules").
 		Where("id = ?", rule.ID).
-		Updates(&rule)
+		Updates(updateMap)
 
 	if result.Error != nil {
 		return result.Error
