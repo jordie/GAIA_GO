@@ -25,7 +25,7 @@ func setupRateLimiterIntegrationTestDB(t *testing.T) *gorm.DB {
 // createRateLimiterIntegrationTestTables creates all required tables for rate limiter integration tests
 func createRateLimiterIntegrationTestTables(t *testing.T, db *gorm.DB) {
 	db.Exec(`
-		CREATE TABLE rate_limit_configs (
+		CREATE TABLE rate_limit_rules (
 			id INTEGER PRIMARY KEY,
 			rule_name TEXT UNIQUE,
 			scope TEXT,

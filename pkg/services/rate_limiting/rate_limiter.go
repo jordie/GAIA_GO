@@ -184,7 +184,7 @@ func (l *PostgresRateLimiter) checkRule(ctx context.Context, rule *Rule, scopeVa
 
 // checkSlidingWindow checks a sliding window rate limit
 func (l *PostgresRateLimiter) checkSlidingWindow(ctx context.Context, rule *Rule, scopeValue string, now time.Time, window time.Duration) (bool, int, time.Time) {
-	windowStart := now.Add(-window).Add(l.config.ClockTolerance)
+	windowStart := now.Add(-window - l.config.ClockTolerance)
 	windowEnd := now
 
 	// Get or create bucket
@@ -211,17 +211,20 @@ func (l *PostgresRateLimiter) checkSlidingWindow(ctx context.Context, rule *Rule
 	}
 
 	// Increment bucket
-	if err := l.db.WithContext(ctx).
+	result := l.db.WithContext(ctx).
 		Table("rate_limit_buckets").
 		Where("rule_id = ? AND scope_value = ? AND window_start = ?", rule.ID, scopeValue, bucket.WindowStart).
-		Update("request_count", gorm.Expr("request_count + 1")).Error; err != nil {
+		Update("request_count", gorm.Expr("request_count + 1"))
 
-		// Create new bucket if doesn't exist
+	// Create new bucket if update didn't affect any rows or failed
+	if result.Error != nil || result.RowsAffected == 0 {
+		bucket.RequestCount = 1 // First request in this bucket
 		l.db.WithContext(ctx).Table("rate_limit_buckets").Create(&bucket)
 	}
 
 	allowed := count < int64(rule.LimitValue)
-	remaining := int(int64(rule.LimitValue) - count)
+	// Remaining should account for the current request being allowed
+	remaining := int(int64(rule.LimitValue) - count - 1)
 	if remaining < 0 {
 		remaining = 0
 	}
@@ -250,20 +253,19 @@ func (l *PostgresRateLimiter) checkQuota(ctx context.Context, rule *Rule, scopeV
 
 	// Check if within quota
 	var existing Quota
-	err := l.db.WithContext(ctx).
+	err := l.db.WithContext(ctx).Table("resource_quotas").
 		Where("system_id = ? AND scope = ? AND scope_value = ? AND resource_type = ? AND period_start = ?",
 			quota.SystemID, quota.Scope, quota.ScopeValue, quota.ResourceType, periodStart).
 		First(&existing).Error
 
 	if err == gorm.ErrRecordNotFound {
 		// Create new quota
-		l.db.WithContext(ctx).Create(&quota)
+		l.db.WithContext(ctx).Table("resource_quotas").Create(&quota)
 		return true, rule.LimitValue - 1, periodEnd
 	}
 
 	// Increment existing quota
-	l.db.WithContext(ctx).
-		Model(&Quota{}).
+	l.db.WithContext(ctx).Table("resource_quotas").
 		Where("id = ?", existing.ID).
 		Update("quota_used", gorm.Expr("quota_used + 1"))
 
@@ -382,45 +384,184 @@ func (l *PostgresRateLimiter) startCleanupJob() {
 	}
 }
 
-// Stub implementations (will be completed in next section)
-func (l *PostgresRateLimiter) GetUsage(ctx context.Context, system, scope, value string) (Usage, error) {
-	return Usage{}, nil
-}
-
-func (l *PostgresRateLimiter) GetRules(ctx context.Context, system string) ([]Rule, error) {
-	return []Rule{}, nil
-}
-
+// CreateRule creates a new rate limit rule
 func (l *PostgresRateLimiter) CreateRule(ctx context.Context, rule Rule) (int64, error) {
-	return 0, nil
+	now := time.Now()
+	rule.CreatedAt = now
+	rule.UpdatedAt = now
+
+	// Auto-generate rule name if empty
+	if rule.RuleName == "" {
+		rule.RuleName = fmt.Sprintf("%s_%s_%d_%d", rule.SystemID, rule.Scope, rule.LimitValue, now.UnixNano())
+	}
+
+	result := l.db.WithContext(ctx).Table("rate_limit_rules").Create(&rule)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+
+	// Invalidate cache
+	l.ruleLock.Lock()
+	delete(l.ruleCache, rule.SystemID)
+	l.ruleLock.Unlock()
+
+	return rule.ID, nil
 }
 
+// UpdateRule updates an existing rule
 func (l *PostgresRateLimiter) UpdateRule(ctx context.Context, rule Rule) error {
+	rule.UpdatedAt = time.Now()
+
+	result := l.db.WithContext(ctx).Table("rate_limit_rules").
+		Where("id = ?", rule.ID).
+		Updates(&rule)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	// Invalidate cache
+	l.ruleLock.Lock()
+	delete(l.ruleCache, rule.SystemID)
+	l.ruleLock.Unlock()
+
 	return nil
 }
 
+// DeleteRule deletes a rule by ID
 func (l *PostgresRateLimiter) DeleteRule(ctx context.Context, ruleID int64) error {
+	// Get the rule first to find system ID for cache invalidation
+	var rule Rule
+	if err := l.db.WithContext(ctx).Table("rate_limit_rules").Where("id = ?", ruleID).First(&rule).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil // Already deleted
+		}
+		return err
+	}
+
+	result := l.db.WithContext(ctx).Table("rate_limit_rules").Where("id = ?", ruleID).Delete(nil)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	// Invalidate cache
+	l.ruleLock.Lock()
+	delete(l.ruleCache, rule.SystemID)
+	l.ruleLock.Unlock()
+
 	return nil
 }
 
+// GetRule retrieves a rule by ID
 func (l *PostgresRateLimiter) GetRule(ctx context.Context, ruleID int64) (*Rule, error) {
-	return nil, nil
+	var rule Rule
+	err := l.db.WithContext(ctx).Table("rate_limit_rules").Where("id = ?", ruleID).First(&rule).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &rule, nil
 }
 
+// GetRules returns all rules for a system
+func (l *PostgresRateLimiter) GetRules(ctx context.Context, system string) ([]Rule, error) {
+	var rules []Rule
+	err := l.db.WithContext(ctx).
+		Table("rate_limit_rules").
+		Where("system_id IN (?, ?)", system, SystemGlobal).
+		Order("priority ASC").
+		Scan(&rules).Error
+	return rules, err
+}
+
+// GetUsage returns current usage statistics
+func (l *PostgresRateLimiter) GetUsage(ctx context.Context, system, scope, value string) (Usage, error) {
+	usage := Usage{
+		Scope:      scope,
+		ScopeValue: value,
+	}
+
+	// Get current quota info
+	var quota Quota
+	now := time.Now()
+	err := l.db.WithContext(ctx).Table("resource_quotas").
+		Where("system_id = ? AND scope = ? AND scope_value = ? AND period_start <= ? AND period_end > ?",
+			system, scope, value, now, now).
+		First(&quota).Error
+
+	if err == nil {
+		usage.QuotaLimit = quota.QuotaLimit
+		usage.QuotaUsed = quota.QuotaUsed
+		usage.QuotaPeriod = quota.QuotaPeriod
+		usage.ResetTime = quota.PeriodEnd
+	}
+
+	return usage, nil
+}
+
+// IncrementQuota increments quota usage
 func (l *PostgresRateLimiter) IncrementQuota(ctx context.Context, system, scope, value, resourceType string, amount int) error {
-	return nil
+	now := time.Now()
+	result := l.db.WithContext(ctx).Table("resource_quotas").
+		Where("system_id = ? AND scope = ? AND scope_value = ? AND resource_type = ? AND period_start <= ? AND period_end > ?",
+			system, scope, value, resourceType, now, now).
+		Update("quota_used", gorm.Expr("quota_used + ?", amount))
+
+	return result.Error
 }
 
+// GetQuota retrieves quota information
 func (l *PostgresRateLimiter) GetQuota(ctx context.Context, system, scope, value, resourceType string) (*Quota, error) {
-	return nil, nil
+	var quota Quota
+	now := time.Now()
+	err := l.db.WithContext(ctx).Table("resource_quotas").
+		Where("system_id = ? AND scope = ? AND scope_value = ? AND resource_type = ? AND period_start <= ? AND period_end > ?",
+			system, scope, value, resourceType, now, now).
+		First(&quota).Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &quota, nil
 }
 
+// GetViolations returns violations for a system since a specific time
 func (l *PostgresRateLimiter) GetViolations(ctx context.Context, system string, since time.Time) ([]Violation, error) {
-	return []Violation{}, nil
+	var violations []Violation
+	err := l.db.WithContext(ctx).Table("rate_limit_violations").
+		Where("system_id = ? AND violation_time >= ?", system, since).
+		Order("violation_time DESC").
+		Scan(&violations).Error
+	return violations, err
 }
 
+// GetViolationStats returns violation statistics
 func (l *PostgresRateLimiter) GetViolationStats(ctx context.Context, system string) (map[string]interface{}, error) {
-	return map[string]interface{}{}, nil
+	stats := make(map[string]interface{})
+
+	// Total violations
+	var total int64
+	l.db.WithContext(ctx).Table("rate_limit_violations").
+		Where("system_id = ?", system).
+		Count(&total)
+	stats["total_violations"] = total
+
+	// Violations by scope
+	var byScope []map[string]interface{}
+	l.db.WithContext(ctx).Table("rate_limit_violations").
+		Select("scope, COUNT(*) as count").
+		Where("system_id = ?", system).
+		Group("scope").
+		Scan(&byScope)
+	stats["by_scope"] = byScope
+
+	return stats, nil
 }
 
 func (l *PostgresRateLimiter) CleanupOldBuckets(ctx context.Context, before time.Time) (int64, error) {
