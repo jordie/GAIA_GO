@@ -93,7 +93,8 @@ func setupBulkTestDB(t *testing.T) *gorm.DB {
 // TestBulkOperationsServiceCreation tests service initialization
 func TestBulkOperationsServiceCreation(t *testing.T) {
 	db := setupBulkTestDB(t)
-	appealSvc := NewAppealService(db)
+	reputation := NewReputationManager(db)
+	appealSvc := NewAppealService(db, reputation)
 	notifSvc := NewAppealNotificationService(db)
 	historySvc := NewAppealHistoryService(db)
 	bos := NewAdminBulkOperationsService(db, appealSvc, notifSvc, historySvc)
@@ -106,7 +107,8 @@ func TestBulkOperationsServiceCreation(t *testing.T) {
 // TestBulkApproveAppeals tests bulk approval
 func TestBulkApproveAppeals(t *testing.T) {
 	db := setupBulkTestDB(t)
-	appealSvc := NewAppealService(db)
+	reputation := NewReputationManager(db)
+	appealSvc := NewAppealService(db, reputation)
 	notifSvc := NewAppealNotificationService(db)
 	historySvc := NewAppealHistoryService(db)
 	bos := NewAdminBulkOperationsService(db, appealSvc, notifSvc, historySvc)
@@ -116,7 +118,7 @@ func TestBulkApproveAppeals(t *testing.T) {
 		appeal := &Appeal{
 			ID:          i,
 			UserID:      100 + i,
-			Status:      StatusPending,
+			Status:      AppealPending,
 			Priority:    "medium",
 			CreatedAt:   time.Now(),
 			ExpiresAt:   time.Now().AddDate(0, 0, 30),
@@ -156,7 +158,7 @@ func TestBulkApproveAppeals(t *testing.T) {
 	// Verify appeals were approved
 	var approvedCount int64
 	db.Table("appeals").
-		Where("status = ?", StatusApproved).
+		Where("status = ?", string(AppealApproved)).
 		Count(&approvedCount)
 
 	if approvedCount != 5 {
@@ -167,7 +169,8 @@ func TestBulkApproveAppeals(t *testing.T) {
 // TestBulkDenyAppeals tests bulk denial
 func TestBulkDenyAppeals(t *testing.T) {
 	db := setupBulkTestDB(t)
-	appealSvc := NewAppealService(db)
+	reputation := NewReputationManager(db)
+	appealSvc := NewAppealService(db, reputation)
 	notifSvc := NewAppealNotificationService(db)
 	historySvc := NewAppealHistoryService(db)
 	bos := NewAdminBulkOperationsService(db, appealSvc, notifSvc, historySvc)
@@ -177,7 +180,7 @@ func TestBulkDenyAppeals(t *testing.T) {
 		appeal := &Appeal{
 			ID:        i,
 			UserID:    100 + i,
-			Status:    StatusPending,
+			Status:    string(AppealPending),
 			Priority:  "high",
 			CreatedAt: time.Now(),
 			ExpiresAt: time.Now().AddDate(0, 0, 30),
@@ -209,7 +212,7 @@ func TestBulkDenyAppeals(t *testing.T) {
 	// Verify appeals were denied
 	var deniedCount int64
 	db.Table("appeals").
-		Where("status = ?", StatusDenied).
+		Where("status = ?", string(AppealDenied)).
 		Count(&deniedCount)
 
 	if deniedCount != 5 {
@@ -220,7 +223,8 @@ func TestBulkDenyAppeals(t *testing.T) {
 // TestBulkAssignPriority tests bulk priority assignment
 func TestBulkAssignPriority(t *testing.T) {
 	db := setupBulkTestDB(t)
-	appealSvc := NewAppealService(db)
+	reputation := NewReputationManager(db)
+	appealSvc := NewAppealService(db, reputation)
 	notifSvc := NewAppealNotificationService(db)
 	historySvc := NewAppealHistoryService(db)
 	bos := NewAdminBulkOperationsService(db, appealSvc, notifSvc, historySvc)
@@ -230,7 +234,7 @@ func TestBulkAssignPriority(t *testing.T) {
 		appeal := &Appeal{
 			ID:        i,
 			UserID:    100 + i,
-			Status:    StatusPending,
+			Status:    string(AppealPending),
 			Priority:  "low",
 			CreatedAt: time.Now(),
 		}
