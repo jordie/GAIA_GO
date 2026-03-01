@@ -6,23 +6,14 @@ import (
 	"time"
 )
 
-// AlertSeverity defines the alert severity level
-type AlertSeverity string
+// AlertSeverity type alias for severity levels
+type AlertSeverity = string
 
-const (
-	SeverityCritical AlertSeverity = "critical"
-	SeverityWarning  AlertSeverity = "warning"
-	SeverityInfo     AlertSeverity = "info"
-)
+// AlertStatus type alias for alert status
+type AlertStatus = string
 
-// AlertStatus defines the alert status
-type AlertStatus string
-
-const (
-	AlertStatusActive   AlertStatus = "active"
-	AlertStatusResolved AlertStatus = "resolved"
-	AlertStatusSilenced AlertStatus = "silenced"
-)
+// Constants for alert severity and status are defined in models.go
+// AlertStatusActive is used for new/active alerts, AlertStatusResolved for completed
 
 // AlertRule defines a rule that triggers alerts
 type AlertRule struct {

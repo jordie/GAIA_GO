@@ -284,8 +284,8 @@ func TestMultipleAlerts(t *testing.T) {
 	assert.Greater(t, len(activeAlerts), 0)
 }
 
-// TestNotificationChannels tests notification channel registration
-func TestNotificationChannels(t *testing.T) {
+// TestAlertServiceNotificationChannels tests notification channel registration
+func TestAlertServiceNotificationChannels(t *testing.T) {
 	alertSvc := NewAlertService()
 	defer alertSvc.Stop()
 
