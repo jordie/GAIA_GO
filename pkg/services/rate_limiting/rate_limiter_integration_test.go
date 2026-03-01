@@ -68,6 +68,7 @@ func createRateLimiterIntegrationTestTables(t *testing.T, db *gorm.DB) {
 			quota_used INTEGER DEFAULT 0,
 			period_start TIMESTAMP,
 			period_end TIMESTAMP,
+			last_reset TIMESTAMP,
 			created_at TIMESTAMP,
 			updated_at TIMESTAMP
 		)
@@ -77,12 +78,18 @@ func createRateLimiterIntegrationTestTables(t *testing.T, db *gorm.DB) {
 		CREATE TABLE rate_limit_violations (
 			id INTEGER PRIMARY KEY,
 			system_id TEXT,
+			rule_id INTEGER,
 			scope TEXT,
 			scope_value TEXT,
 			resource_type TEXT,
 			violated_limit INTEGER,
+			actual_count INTEGER DEFAULT 0,
 			violation_time TIMESTAMP,
-			blocked BOOLEAN DEFAULT 1
+			request_path TEXT,
+			request_method TEXT,
+			user_agent TEXT,
+			blocked BOOLEAN DEFAULT 1,
+			severity TEXT
 		)
 	`)
 
@@ -111,10 +118,13 @@ func createRateLimiterIntegrationTestTables(t *testing.T, db *gorm.DB) {
 			system_id TEXT,
 			scope TEXT,
 			scope_value TEXT,
-			resource_type TEXT,
-			request_count INTEGER,
-			violation_count INTEGER,
-			avg_latency_ms REAL,
+			timestamp TIMESTAMP,
+			requests_processed INTEGER,
+			requests_allowed INTEGER,
+			requests_blocked INTEGER,
+			average_response_time REAL,
+			cpu_usage_percent REAL,
+			memory_usage_percent REAL,
 			created_at TIMESTAMP
 		)
 	`)

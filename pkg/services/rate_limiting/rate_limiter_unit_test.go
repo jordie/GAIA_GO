@@ -61,6 +61,7 @@ func setupRateLimiterTestDB(t *testing.T) *gorm.DB {
 			quota_used INTEGER DEFAULT 0,
 			period_start TIMESTAMP,
 			period_end TIMESTAMP,
+			last_reset TIMESTAMP,
 			created_at TIMESTAMP,
 			updated_at TIMESTAMP
 		)
@@ -70,12 +71,18 @@ func setupRateLimiterTestDB(t *testing.T) *gorm.DB {
 		CREATE TABLE rate_limit_violations (
 			id INTEGER PRIMARY KEY,
 			system_id TEXT,
+			rule_id INTEGER,
 			scope TEXT,
 			scope_value TEXT,
 			resource_type TEXT,
 			violated_limit INTEGER,
+			actual_count INTEGER DEFAULT 0,
 			violation_time TIMESTAMP,
-			blocked BOOLEAN DEFAULT 1
+			request_path TEXT,
+			request_method TEXT,
+			user_agent TEXT,
+			blocked BOOLEAN DEFAULT 1,
+			severity TEXT
 		)
 	`)
 
@@ -111,20 +118,6 @@ func setupRateLimiterTestDB(t *testing.T) *gorm.DB {
 			system_id TEXT,
 			scope TEXT,
 			scope_value TEXT,
-			created_at TIMESTAMP
-		)
-	`)
-
-	db.Exec(`
-		CREATE TABLE rate_limit_metrics (
-			id INTEGER PRIMARY KEY,
-			system_id TEXT,
-			scope TEXT,
-			scope_value TEXT,
-			resource_type TEXT,
-			request_count INTEGER,
-			violation_count INTEGER,
-			avg_latency_ms REAL,
 			created_at TIMESTAMP
 		)
 	`)

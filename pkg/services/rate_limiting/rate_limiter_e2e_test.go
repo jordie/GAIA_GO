@@ -29,7 +29,7 @@ func setupRateLimiterE2ETestDB(t *testing.T) *gorm.DB {
 // createRateLimiterE2ETestTables creates all required tables for E2E tests
 func createRateLimiterE2ETestTables(t *testing.T, db *gorm.DB) {
 	db.Exec(`
-		CREATE TABLE rate_limit_configs (
+		CREATE TABLE rate_limit_rules (
 			id INTEGER PRIMARY KEY,
 			rule_name TEXT UNIQUE,
 			scope TEXT,
@@ -76,6 +76,7 @@ func createRateLimiterE2ETestTables(t *testing.T, db *gorm.DB) {
 			quota_used INTEGER DEFAULT 0,
 			period_start TIMESTAMP,
 			period_end TIMESTAMP,
+			last_reset TIMESTAMP,
 			created_at TIMESTAMP,
 			updated_at TIMESTAMP
 		)
@@ -85,12 +86,35 @@ func createRateLimiterE2ETestTables(t *testing.T, db *gorm.DB) {
 		CREATE TABLE rate_limit_violations (
 			id INTEGER PRIMARY KEY,
 			system_id TEXT,
+			rule_id INTEGER,
 			scope TEXT,
 			scope_value TEXT,
 			resource_type TEXT,
 			violated_limit INTEGER,
+			actual_count INTEGER DEFAULT 0,
 			violation_time TIMESTAMP,
-			blocked BOOLEAN DEFAULT 1
+			request_path TEXT,
+			request_method TEXT,
+			user_agent TEXT,
+			blocked BOOLEAN DEFAULT 1,
+			severity TEXT
+		)
+	`)
+
+	db.Exec(`
+		CREATE TABLE rate_limit_metrics (
+			id INTEGER PRIMARY KEY,
+			system_id TEXT,
+			scope TEXT,
+			scope_value TEXT,
+			timestamp TIMESTAMP,
+			requests_processed INTEGER,
+			requests_allowed INTEGER,
+			requests_blocked INTEGER,
+			average_response_time REAL,
+			cpu_usage_percent REAL,
+			memory_usage_percent REAL,
+			created_at TIMESTAMP
 		)
 	`)
 }
@@ -171,7 +195,7 @@ func (h *MockRateLimitHandler) CreateRule(w http.ResponseWriter, r *http.Request
 	}
 
 	result := h.db.Exec(`
-		INSERT INTO rate_limit_configs
+		INSERT INTO rate_limit_rules
 		(rule_name, scope, scope_value, limit_type, limit_value, resource_type, priority, enabled, created_at, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, req.RuleName, req.Scope, req.ScopeValue, req.LimitType, req.LimitValue,
@@ -206,7 +230,7 @@ func (h *MockRateLimitHandler) ListRules(w http.ResponseWriter, r *http.Request)
 	result := h.db.Raw(`
 		SELECT id, rule_name, scope, scope_value, limit_type, limit_value,
 		       resource_type, enabled, priority, created_at, updated_at
-		FROM rate_limit_configs
+		FROM rate_limit_rules
 		WHERE enabled = 1
 		ORDER BY priority, created_at DESC
 	`).Scan(&rules)
@@ -239,7 +263,7 @@ func (h *MockRateLimitHandler) GetRule(w http.ResponseWriter, r *http.Request) {
 	result := h.db.Raw(`
 		SELECT id, rule_name, scope, scope_value, limit_type, limit_value,
 		       resource_type, enabled, priority, created_at, updated_at
-		FROM rate_limit_configs
+		FROM rate_limit_rules
 		WHERE id = ?
 	`, ruleID).Scan(&rule)
 
@@ -284,7 +308,7 @@ func (h *MockRateLimitHandler) UpdateRule(w http.ResponseWriter, r *http.Request
 	}
 
 	result := h.db.Exec(`
-		UPDATE rate_limit_configs
+		UPDATE rate_limit_rules
 		SET limit_value = ?, priority = ?, enabled = ?, updated_at = ?
 		WHERE id = ?
 	`, req.LimitValue, req.Priority, req.Enabled, time.Now(), req.ID)
@@ -315,7 +339,7 @@ func (h *MockRateLimitHandler) DeleteRule(w http.ResponseWriter, r *http.Request
 
 	ruleID := r.URL.Query().Get("id")
 
-	result := h.db.Exec(`DELETE FROM rate_limit_configs WHERE id = ?`, ruleID)
+	result := h.db.Exec(`DELETE FROM rate_limit_rules WHERE id = ?`, ruleID)
 
 	if result.RowsAffected == 0 {
 		http.Error(w, "Rule not found", http.StatusNotFound)
@@ -474,7 +498,7 @@ func (h *MockRateLimitHandler) Health(w http.ResponseWriter, r *http.Request) {
 	var rulesCount int64
 	var violationsCount int64
 
-	h.db.Table("rate_limit_configs").Where("enabled = ?", true).Count(&rulesCount)
+	h.db.Table("rate_limit_rules").Where("enabled = ?", true).Count(&rulesCount)
 	h.db.Table("rate_limit_violations").Count(&violationsCount)
 
 	status := HealthStatusAPI{
@@ -824,7 +848,7 @@ func TestRateLimitEnforcementFlow(t *testing.T) {
 
 	// Create test rule
 	db.Exec(`
-		INSERT INTO rate_limit_configs
+		INSERT INTO rate_limit_rules
 		(rule_name, scope, scope_value, limit_type, limit_value, resource_type, enabled, priority)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`, "test_rule", "ip", "192.168.1.1", "requests_per_minute", 5, "api_call", 1, 1)
