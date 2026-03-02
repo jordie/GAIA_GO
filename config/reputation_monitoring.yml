@@ -1,0 +1,344 @@
+# Reputation System Monitoring and Alerting Configuration
+
+# Global configuration
+global:
+  evaluation_interval: 60s
+  scrape_interval: 30s
+  external_labels:
+    system: 'reputation'
+    environment: '${ENVIRONMENT}'
+
+# Prometheus scrape configuration
+scrape_configs:
+  - job_name: 'reputation-system'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+# Alert rules
+rule_files:
+  - 'reputation_alerts.yml'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['localhost:9093']
+
+---
+
+# Detailed Alert Rules
+alerts:
+
+  # Appeal Submission Alerts
+  - name: high_appeal_submission_rate
+    description: "Appeal submission rate exceeds normal levels"
+    query: rate(appeal_submissions_total[5m]) > 100
+    threshold: 100
+    duration: 5m
+    severity: warning
+    action: "Investigate appeal surge for potential abuse"
+
+  - name: appeal_submission_errors
+    description: "High error rate in appeal submission"
+    query: rate(appeal_errors_total[5m]) / rate(appeal_submissions_total[5m]) > 0.05
+    threshold: 0.05
+    duration: 5m
+    severity: critical
+    action: "Check application logs, verify database connectivity"
+
+  # Appeal Processing Alerts
+  - name: high_pending_appeals
+    description: "Too many appeals pending review"
+    query: appeal_status_pending > 1000
+    threshold: 1000
+    duration: 10m
+    severity: warning
+    action: "Increase review capacity or prioritize critical appeals"
+
+  - name: stuck_appeals
+    description: "Appeals stuck in review for too long"
+    query: appeal_review_time_p95 > 86400  # 24 hours
+    threshold: 86400
+    duration: 30m
+    severity: warning
+    action: "Check for blocked reviews, escalate if necessary"
+
+  - name: low_approval_rate
+    description: "Appeal approval rate significantly below baseline"
+    query: rate(appeal_approved_total[1h]) / rate(appeal_reviewed_total[1h]) < 0.3
+    threshold: 0.3
+    duration: 1h
+    severity: info
+    action: "Monitor for policy changes or issue patterns"
+
+  # Negotiation Alerts
+  - name: long_negotiation_duration
+    description: "Negotiations taking longer than expected"
+    query: negotiation_duration_p95 > 259200  # 72 hours
+    threshold: 259200
+    duration: 15m
+    severity: warning
+    action: "Review stalled negotiations, consider admin intervention"
+
+  - name: high_message_volume
+    description: "Single negotiation has excessive messages"
+    query: negotiation_message_count > 500
+    threshold: 500
+    duration: 5m
+    severity: info
+    action: "Monitor for spam or abuse patterns"
+
+  - name: low_sentiment_score
+    description: "Conversation sentiment degrading"
+    query: negotiation_avg_sentiment < -0.5
+    threshold: -0.5
+    duration: 10m
+    severity: warning
+    action: "Consider escalation to manager, potential de-escalation"
+
+  # ML Prediction Alerts
+  - name: ml_prediction_latency_high
+    description: "ML prediction latency exceeds SLA"
+    query: ml_prediction_latency_p99 > 1000  # milliseconds
+    threshold: 1000
+    duration: 5m
+    severity: warning
+    action: "Check ML service status, review model performance"
+
+  - name: ml_model_low_confidence
+    description: "ML models running with low confidence"
+    query: ml_prediction_confidence < 0.6
+    threshold: 0.6
+    duration: 10m
+    severity: info
+    action: "Verify model data quality, consider retraining"
+
+  - name: ml_accuracy_degradation
+    description: "Prediction accuracy below threshold"
+    query: ml_prediction_accuracy < 0.75
+    threshold: 0.75
+    duration: 1h
+    severity: warning
+    action: "Review recent model changes, consider rollback"
+
+  # Database Alerts
+  - name: database_connection_pool_full
+    description: "Database connection pool nearly exhausted"
+    query: db_connections_active / db_connections_max > 0.8
+    threshold: 0.8
+    duration: 5m
+    severity: critical
+    action: "Investigate for connection leaks, scale if needed"
+
+  - name: database_size_growing_fast
+    description: "Database size growing rapidly"
+    query: rate(db_size_bytes[1h]) > 10737418  # 10MB/hour
+    threshold: 10737418
+    duration: 30m
+    severity: warning
+    action: "Implement data archival strategy"
+
+  - name: database_query_slow
+    description: "Database queries running slowly"
+    query: db_query_duration_p95 > 500  # milliseconds
+    threshold: 500
+    duration: 10m
+    severity: warning
+    action: "Review indexes, optimize queries"
+
+  - name: database_disk_space_low
+    description: "Database disk space critically low"
+    query: disk_free_bytes / disk_total_bytes < 0.1
+    threshold: 0.1
+    duration: 1m
+    severity: critical
+    action: "Clean up old data, expand disk immediately"
+
+  # API Alerts
+  - name: api_error_rate_high
+    description: "API error rate exceeds threshold"
+    query: rate(api_errors_total[5m]) / rate(api_requests_total[5m]) > 0.01
+    threshold: 0.01
+    duration: 5m
+    severity: critical
+    action: "Check application logs, verify all services healthy"
+
+  - name: api_response_time_slow
+    description: "API response time exceeds SLA"
+    query: api_response_time_p99 > 2000  # milliseconds
+    threshold: 2000
+    duration: 10m
+    severity: warning
+    action: "Check backend performance, database, external dependencies"
+
+  # Notification Alerts
+  - name: notification_delivery_failed
+    description: "High notification delivery failure rate"
+    query: rate(notification_failures_total[5m]) / rate(notification_sent_total[5m]) > 0.05
+    threshold: 0.05
+    duration: 10m
+    severity: warning
+    action: "Check notification service status, verify credentials"
+
+  - name: notification_queue_backlog
+    description: "Notification processing queue backlog"
+    query: notification_queue_size > 10000
+    threshold: 10000
+    duration: 15m
+    severity: warning
+    action: "Scale notification workers, investigate delays"
+
+  # Analytics Alerts
+  - name: analytics_cache_hit_rate_low
+    description: "Analytics cache performance degraded"
+    query: rate(analytics_cache_hits_total[5m]) / (rate(analytics_cache_hits_total[5m]) + rate(analytics_cache_misses_total[5m])) < 0.8
+    threshold: 0.8
+    duration: 10m
+    severity: info
+    action: "Verify cache configuration, consider increasing TTL"
+
+  # System Resource Alerts
+  - name: high_cpu_usage
+    description: "CPU usage consistently high"
+    query: rate(cpu_seconds_total[5m]) > 0.8
+    threshold: 0.8
+    duration: 10m
+    severity: warning
+    action: "Profile application, identify hot paths, scale horizontally"
+
+  - name: high_memory_usage
+    description: "Memory usage dangerously high"
+    query: memory_usage_bytes / memory_total_bytes > 0.85
+    threshold: 0.85
+    duration: 5m
+    severity: critical
+    action: "Investigate memory leaks, scale vertically"
+
+  - name: goroutine_leak
+    description: "Goroutine count continuously increasing"
+    query: rate(goroutine_count[10m]) > 0
+    threshold: 0
+    duration: 15m
+    severity: warning
+    action: "Profile application for goroutine leaks"
+
+---
+
+# Notification Channels
+notifications:
+
+  email:
+    enabled: true
+    smtp_host: "smtp.example.com"
+    smtp_port: 587
+    from: "alerts@gaia.example.com"
+    to:
+      - "ops-team@example.com"
+      - "on-call@example.com"
+    templates:
+      - critical: "CRITICAL Alert: {{.GroupLabels.instance}}"
+      - warning: "WARNING Alert: {{.GroupLabels.instance}}"
+
+  slack:
+    enabled: true
+    webhook_url: "${SLACK_WEBHOOK_URL}"
+    channel: "#reputation-alerts"
+    username: "ReputationBot"
+    icon_emoji: ":robot_face:"
+    templates:
+      - critical: ":rotating_light: CRITICAL: {{.CommonAnnotations.summary}}"
+      - warning: ":warning: WARNING: {{.CommonAnnotations.summary}}"
+      - info: ":information_source: INFO: {{.CommonAnnotations.summary}}"
+
+  pagerduty:
+    enabled: "${PAGERDUTY_ENABLED:-false}"
+    service_key: "${PAGERDUTY_SERVICE_KEY}"
+    severity_mapping:
+      critical: "critical"
+      warning: "warning"
+      info: "info"
+
+  opsgenie:
+    enabled: "${OPSGENIE_ENABLED:-false}"
+    api_key: "${OPSGENIE_API_KEY}"
+    priority_mapping:
+      critical: "P1"
+      warning: "P3"
+      info: "P5"
+
+---
+
+# SLA and Performance Targets
+slas:
+
+  appeal_processing:
+    p50_latency_ms: 100
+    p95_latency_ms: 500
+    p99_latency_ms: 1000
+    availability_percent: 99.5
+
+  negotiation:
+    message_delivery_ms: 50
+    thread_load_ms: 100
+    availability_percent: 99.0
+
+  ml_predictions:
+    recovery_timeline_ms: 50
+    approval_probability_ms: 30
+    auto_suggestions_ms: 100
+    availability_percent: 99.0
+
+  api:
+    response_time_p95_ms: 500
+    response_time_p99_ms: 1000
+    error_rate_percent: 0.1
+    availability_percent: 99.9
+
+---
+
+# Grafana Dashboard Configuration
+dashboards:
+
+  overview:
+    title: "Reputation System Overview"
+    panels:
+      - appeal_submission_rate
+      - appeal_approval_rate
+      - negotiation_duration
+      - ml_prediction_latency
+      - api_error_rate
+
+  appeals:
+    title: "Appeal Processing Dashboard"
+    panels:
+      - pending_appeals_count
+      - approval_timeline
+      - review_efficiency
+      - reason_distribution
+
+  negotiation:
+    title: "Negotiation Analytics"
+    panels:
+      - active_negotiations
+      - message_volume
+      - sentiment_analysis
+      - resolution_time
+
+  ml:
+    title: "ML Predictions Performance"
+    panels:
+      - prediction_accuracy
+      - model_latency
+      - confidence_distribution
+      - recommendation_effectiveness
+
+  infrastructure:
+    title: "System Infrastructure"
+    panels:
+      - cpu_usage
+      - memory_usage
+      - disk_io
+      - database_connections

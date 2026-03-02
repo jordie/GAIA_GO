@@ -178,6 +178,18 @@ const (
 	SeverityMedium   = "medium"
 	SeverityHigh     = "high"
 	SeverityCritical = "critical"
+	SeverityWarning  = "warning"
+	SeverityInfo     = "info"
+)
+
+// Alert Status constants
+const (
+	AlertStatusActive   = "active"
+	AlertStatusResolved = "resolved"
+	AlertStatusSilenced = "silenced"
+	AlertStatusNew      = "new"
+	AlertStatusMonitoring = "monitoring"
+	AlertStatusMuted    = "muted"
 )
 
 // System ID constants

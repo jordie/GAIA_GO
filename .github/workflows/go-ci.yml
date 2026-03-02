@@ -133,7 +133,7 @@ jobs:
           file server
 
       - name: Upload binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: architect-go-binary-${{ github.sha }}
           path: architect-go/server

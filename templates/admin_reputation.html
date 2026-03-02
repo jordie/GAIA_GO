@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reputation Management - GAIA Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --warning: #ea580c;
+            --danger: #dc2626;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+            padding: 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--gray-200);
+            background: var(--gray-50);
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            padding: 16px 20px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-600);
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            flex: 1;
+            text-align: center;
+        }
+
+        .nav-tab:hover {
+            color: var(--primary);
+            background: white;
+        }
+
+        .nav-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: white;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Dashboard Tab */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+        }
+
+        .stat-card.danger {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .stat-detail {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 8px;
+        }
+
+        /* Users Tab */
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+            min-width: 250px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            padding: 10px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 14px;
+            flex: 1;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* Table */
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background: var(--gray-100);
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        tbody tr:hover {
+            background: var(--gray-50);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .badge-flagged {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--danger);
+        }
+
+        .badge-standard {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+        }
+
+        .badge-trusted {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+        }
+
+        .badge-premium {
+            background: rgba(168, 85, 247, 0.1);
+            color: #a855f7;
+        }
+
+        .badge-vip {
+            background: #fbbf24;
+            color: #78350f;
+            font-weight: bold;
+        }
+
+        /* Score Bar */
+        .score-bar {
+            display: inline-block;
+            width: 100px;
+            height: 6px;
+            background: var(--gray-200);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .score-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #dc2626 0%, #f97316 50%, #16a34a 100%);
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--gray-900);
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--gray-700);
+            font-size: 14px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray-600);
+        }
+
+        .spinner {
+            border: 3px solid var(--gray-200);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid var(--gray-300);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .pagination button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .pagination button:hover:not(.active) {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Charts */
+        .chart {
+            margin: 30px 0;
+            height: 300px;
+            background: var(--gray-50);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid var(--gray-200);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray-500);
+        }
+
+        .empty-state svg {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: var(--gray-600);
+        }
+
+        /* Status Indicator */
+        .status-online {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-offline {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--gray-300);
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .nav-tabs {
+                flex-direction: column;
+            }
+
+            .nav-tab {
+                text-align: left;
+                border-bottom: 1px solid var(--gray-200);
+                border-right: 2px solid transparent;
+            }
+
+            .nav-tab.active {
+                border-right-color: var(--primary);
+                border-bottom-color: transparent;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ Reputation Management</h1>
+            <p>Monitor and manage user reputation scores, tiers, and compliance</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="dashboard">Dashboard</button>
+            <button class="nav-tab" data-tab="users">Users</button>
+            <button class="nav-tab" data-tab="events">Events</button>
+            <button class="nav-tab" data-tab="trends">Trends</button>
+            <button class="nav-tab" data-tab="settings">Settings</button>
+        </div>
+
+        <div class="content">
+            <!-- Dashboard Tab -->
+            <div class="tab-content active" id="dashboard">
+                <div class="stats-grid" id="statsGrid">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading statistics...
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <h2 style="margin-bottom: 20px; font-size: 18px;">User Distribution</h2>
+                    <div class="chart" id="distributionChart">
+                        <p style="text-align: center; padding-top: 120px; color: var(--gray-400);">
+                            Chart rendering requires JavaScript charting library
+                        </p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <h2 style="margin-bottom: 20px; font-size: 18px;">Recent Events</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>Event Type</th>
+                                <th>Description</th>
+                                <th>Score Change</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentEvents">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 20px;">
+                                    <div class="spinner" style="margin: 0 auto 10px;"></div>
+                                    Loading events...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div class="tab-content" id="users">
+                <div class="controls">
+                    <div class="input-group">
+                        <input type="text" id="searchUser" placeholder="Search by User ID or name...">
+                        <select id="tierFilter">
+                            <option value="">All Tiers</option>
+                            <option value="flagged">Flagged</option>
+                            <option value="standard">Standard</option>
+                            <option value="trusted">Trusted</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="refreshUsers()">🔄 Refresh</button>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>Score</th>
+                                <th>Tier</th>
+                                <th>Multiplier</th>
+                                <th>VIP Status</th>
+                                <th>Violations</th>
+                                <th>Clean Requests</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTable">
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 20px;">
+                                    <div class="spinner" style="margin: 0 auto 10px;"></div>
+                                    Loading users...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination" id="usersPagination"></div>
+            </div>
+
+            <!-- Events Tab -->
+            <div class="tab-content" id="events">
+                <div class="controls">
+                    <div class="input-group">
+                        <input type="number" id="eventUserId" placeholder="Enter User ID...">
+                        <select id="eventType">
+                            <option value="">All Event Types</option>
+                            <option value="violation">Violation</option>
+                            <option value="clean">Clean Request</option>
+                            <option value="decay">Decay</option>
+                            <option value="manual">Manual</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="searchEvents()">🔍 Search</button>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>Event Type</th>
+                                <th>Severity</th>
+                                <th>Description</th>
+                                <th>Score Change</th>
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventsTable">
+                            <tr>
+                                <td colspan="6" style="text-align: center;">
+                                    <p style="padding: 20px; color: var(--gray-500);">
+                                        Enter a User ID and click Search to view events
+                                    </p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Trends Tab -->
+            <div class="tab-content" id="trends">
+                <div class="controls">
+                    <select id="trendDays">
+                        <option value="7">Last 7 Days</option>
+                        <option value="14">Last 14 Days</option>
+                        <option value="30">Last 30 Days</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="refreshTrends()">📈 Refresh</button>
+                </div>
+
+                <div class="chart" id="trendsChart">
+                    <p style="text-align: center; padding-top: 120px; color: var(--gray-400);">
+                        Trend chart will display here
+                    </p>
+                </div>
+
+                <div class="table-wrapper" style="margin-top: 30px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Violations</th>
+                                <th>Clean Requests</th>
+                                <th>Decay Events</th>
+                                <th>Total Events</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trendsTable">
+                            <tr>
+                                <td colspan="5" style="text-align: center;">
+                                    <div class="spinner" style="margin: 0 auto 10px;"></div>
+                                    Loading trends...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content" id="settings">
+                <h2 style="margin-bottom: 20px; font-size: 18px;">Reputation Tiers</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tier</th>
+                            <th>Score Range</th>
+                            <th>Multiplier</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tiersTable">
+                        <tr>
+                            <td colspan="4" style="text-align: center;">
+                                <div class="spinner" style="margin: 0 auto 10px;"></div>
+                                Loading tiers...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 30px;">
+                    <h2 style="margin-bottom: 20px; font-size: 18px;">Reputation Decay</h2>
+                    <button class="btn btn-success" onclick="triggerDecay()">⚡ Apply Weekly Decay Now</button>
+                    <p style="margin-top: 12px; font-size: 13px; color: var(--gray-600);">
+                        Applies reputation decay to all users (moves scores towards neutral score of 50)
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="userModal">
+        <div class="modal-content">
+            <div class="modal-header">Manage User Reputation</div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>User ID</label>
+                    <input type="number" id="modalUserId" readonly style="background: var(--gray-100);">
+                </div>
+                <div class="form-group">
+                    <label>Current Score</label>
+                    <input type="number" id="modalCurrentScore" readonly style="background: var(--gray-100);">
+                </div>
+                <div class="form-group">
+                    <label>New Score (0-100)</label>
+                    <input type="number" id="modalNewScore" min="0" max="100">
+                </div>
+                <div class="form-group">
+                    <label>Reason</label>
+                    <input type="text" id="modalReason" placeholder="e.g., Admin adjustment for testing">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('userModal')" style="background: var(--gray-300); color: var(--gray-700);">Cancel</button>
+                <button class="btn btn-primary" onclick="saveUserReputation()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="vipModal">
+        <div class="modal-content">
+            <div class="modal-header">Set VIP Tier</div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>User ID</label>
+                    <input type="number" id="vipUserId" readonly style="background: var(--gray-100);">
+                </div>
+                <div class="form-group">
+                    <label>VIP Tier</label>
+                    <select id="vipTierSelect">
+                        <option value="premium">Premium (2.0x)</option>
+                        <option value="elite">Elite (3.0x)</option>
+                        <option value="platinum">Platinum (4.0x)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Expires In (days)</label>
+                    <input type="number" id="vipDays" value="30" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Reason</label>
+                    <input type="text" id="vipReason" placeholder="e.g., Corporate customer">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('vipModal')" style="background: var(--gray-300); color: var(--gray-700);">Cancel</button>
+                <button class="btn btn-primary" onclick="saveVIPTier()">Assign VIP</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/admin/reputation';
+
+        // Tab Navigation
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const tabName = e.target.dataset.tab;
+                switchTab(tabName);
+            });
+        });
+
+        function switchTab(tabName) {
+            // Hide all content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Deactivate all tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected content
+            document.getElementById(tabName).classList.add('active');
+
+            // Activate clicked tab
+            event.target.classList.add('active');
+
+            // Load data for the tab
+            if (tabName === 'dashboard') {
+                loadDashboard();
+            } else if (tabName === 'users') {
+                loadUsers();
+            } else if (tabName === 'trends') {
+                loadTrends();
+            } else if (tabName === 'settings') {
+                loadSettings();
+            }
+        }
+
+        // Dashboard
+        async function loadDashboard() {
+            try {
+                const response = await fetch(`${API_BASE}/stats`);
+                const stats = await response.json();
+
+                const grid = document.getElementById('statsGrid');
+                grid.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-label">Total Users</div>
+                        <div class="stat-value">${stats.total_users || 0}</div>
+                        <div class="stat-detail">Tracked in system</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-label">Trusted Users</div>
+                        <div class="stat-value">${stats.distribution?.trusted || 0}</div>
+                        <div class="stat-detail">${((stats.distribution?.trusted / stats.total_users) * 100).toFixed(1)}% of total</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-label">Standard Users</div>
+                        <div class="stat-value">${stats.distribution?.standard || 0}</div>
+                        <div class="stat-detail">Normal reputation</div>
+                    </div>
+                    <div class="stat-card danger">
+                        <div class="stat-label">Flagged Users</div>
+                        <div class="stat-value">${stats.distribution?.flagged || 0}</div>
+                        <div class="stat-detail">Multiple violations</div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);">
+                        <div class="stat-label">Average Score</div>
+                        <div class="stat-value">${stats.avg_score || '50'}</div>
+                        <div class="stat-detail">Scale: 0-100</div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        // Users
+        let currentPage = 1;
+
+        async function loadUsers(page = 1) {
+            try {
+                const response = await fetch(`${API_BASE}/users?page=${page}&limit=20`);
+                const data = await response.json();
+
+                const tbody = document.getElementById('usersTable');
+                tbody.innerHTML = data.users.map(user => `
+                    <tr>
+                        <td><strong>${user.user_id}</strong></td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div class="score-bar">
+                                    <div class="score-fill" style="width: ${user.score}%"></div>
+                                </div>
+                                <span>${user.score}</span>
+                            </div>
+                        </td>
+                        <td><span class="badge badge-${user.tier}">${user.tier}</span></td>
+                        <td>${user.multiplier}x</td>
+                        <td>${user.vip_tier ? `<span class="badge badge-vip">${user.vip_tier}</span>` : '-'}</td>
+                        <td>${user.violation_count}</td>
+                        <td>${user.clean_requests}</td>
+                        <td>
+                            <button class="btn btn-small btn-primary" onclick="openUserModal(${user.user_id}, ${user.score})">Edit</button>
+                            <button class="btn btn-small btn-success" onclick="openVIPModal(${user.user_id})">VIP</button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Pagination
+                const pagination = document.getElementById('usersPagination');
+                pagination.innerHTML = '';
+                for (let i = 1; i <= data.total_pages; i++) {
+                    const btn = document.createElement('button');
+                    btn.textContent = i;
+                    btn.className = i === page ? 'active' : '';
+                    btn.onclick = () => loadUsers(i);
+                    pagination.appendChild(btn);
+                }
+
+                currentPage = page;
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        // Events
+        async function searchEvents() {
+            const userId = document.getElementById('eventUserId').value;
+            const eventType = document.getElementById('eventType').value;
+
+            if (!userId) {
+                alert('Please enter a User ID');
+                return;
+            }
+
+            try {
+                let url = `${API_BASE}/users/${userId}/events?limit=50`;
+                if (eventType) url += `&type=${eventType}`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                const tbody = document.getElementById('eventsTable');
+                tbody.innerHTML = data.events.map(event => `
+                    <tr>
+                        <td>${event.user_id}</td>
+                        <td><span class="badge" style="background: rgba(99, 102, 241, 0.1); color: #6366f1;">${event.event_type}</span></td>
+                        <td>${event.severity || '-'}</td>
+                        <td>${event.description}</td>
+                        <td style="color: ${event.score_delta > 0 ? 'var(--success)' : 'var(--danger)'};">
+                            ${event.score_delta > 0 ? '+' : ''}${event.score_delta}
+                        </td>
+                        <td style="font-size: 12px;">${new Date(event.created_at).toLocaleString()}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error searching events:', error);
+            }
+        }
+
+        // Trends
+        async function loadTrends() {
+            const days = document.getElementById('trendDays').value || '7';
+
+            try {
+                const response = await fetch(`${API_BASE}/trends?days=${days}`);
+                const data = await response.json();
+
+                const tbody = document.getElementById('trendsTable');
+                tbody.innerHTML = data.trends.map(trend => `
+                    <tr>
+                        <td>${trend.date}</td>
+                        <td>${trend.violations}</td>
+                        <td>${trend.clean_requests}</td>
+                        <td>${trend.decays}</td>
+                        <td><strong>${trend.total_events}</strong></td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading trends:', error);
+            }
+        }
+
+        // Settings
+        async function loadSettings() {
+            try {
+                const response = await fetch(`${API_BASE}/tiers`);
+                const data = await response.json();
+
+                const tbody = document.getElementById('tiersTable');
+                tbody.innerHTML = data.tiers.map(tier => `
+                    <tr>
+                        <td><span class="badge badge-${tier.name}">${tier.name}</span></td>
+                        <td>${tier.score_range}</td>
+                        <td><strong>${tier.multiplier}x</strong></td>
+                        <td>${tier.description}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading settings:', error);
+            }
+        }
+
+        // Modals
+        function openUserModal(userId, currentScore) {
+            document.getElementById('modalUserId').value = userId;
+            document.getElementById('modalCurrentScore').value = currentScore;
+            document.getElementById('modalNewScore').value = currentScore;
+            document.getElementById('userModal').classList.add('active');
+        }
+
+        function openVIPModal(userId) {
+            document.getElementById('vipUserId').value = userId;
+            document.getElementById('vipModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        async function saveUserReputation() {
+            const userId = document.getElementById('modalUserId').value;
+            const newScore = document.getElementById('modalNewScore').value;
+            const reason = document.getElementById('modalReason').value;
+
+            if (!newScore || newScore < 0 || newScore > 100) {
+                alert('Score must be between 0 and 100');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/users/${userId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        score: parseInt(newScore),
+                        description: reason
+                    })
+                });
+
+                if (response.ok) {
+                    alert('User reputation updated successfully');
+                    closeModal('userModal');
+                    loadUsers(currentPage);
+                } else {
+                    alert('Error updating reputation');
+                }
+            } catch (error) {
+                console.error('Error saving reputation:', error);
+                alert('Error saving changes');
+            }
+        }
+
+        async function saveVIPTier() {
+            const userId = document.getElementById('vipUserId').value;
+            const tier = document.getElementById('vipTierSelect').value;
+            const days = document.getElementById('vipDays').value;
+            const reason = document.getElementById('vipReason').value;
+
+            try {
+                const expiresAt = new Date();
+                expiresAt.setDate(expiresAt.getDate() + parseInt(days));
+
+                const response = await fetch(`${API_BASE}/users/${userId}/vip`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tier: tier,
+                        expires_at: expiresAt.toISOString(),
+                        reason: reason
+                    })
+                });
+
+                if (response.ok) {
+                    alert('VIP tier assigned successfully');
+                    closeModal('vipModal');
+                    loadUsers(currentPage);
+                } else {
+                    alert('Error assigning VIP tier');
+                }
+            } catch (error) {
+                console.error('Error assigning VIP:', error);
+                alert('Error assigning VIP');
+            }
+        }
+
+        async function triggerDecay() {
+            if (!confirm('Apply reputation decay to all users now?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/decay`, { method: 'POST' });
+                if (response.ok) {
+                    alert('Reputation decay applied to all users');
+                    loadSettings();
+                } else {
+                    alert('Error applying decay');
+                }
+            } catch (error) {
+                console.error('Error triggering decay:', error);
+            }
+        }
+
+        function refreshUsers() {
+            loadUsers(currentPage);
+        }
+
+        function refreshTrends() {
+            loadTrends();
+        }
+
+        // Close modals on background click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
+        // Load initial data
+        loadDashboard();
+    </script>
+</body>
+</html>

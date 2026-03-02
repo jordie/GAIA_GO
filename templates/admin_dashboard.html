@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reputation System Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --bg-color: #ecf0f1;
+            --text-color: #2c3e50;
+            --border-color: #bdc3c7;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: calc(100vh - 80px);
+        }
+
+        aside {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem 0;
+            overflow-y: auto;
+        }
+
+        aside nav ul {
+            list-style: none;
+        }
+
+        aside nav li {
+            padding: 0;
+        }
+
+        aside nav a {
+            display: block;
+            padding: 1rem 1.5rem;
+            color: white;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        aside nav a:hover,
+        aside nav a.active {
+            background-color: rgba(255,255,255,0.1);
+            border-left-color: var(--accent-color);
+        }
+
+        main {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            color: var(--primary-color);
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-top: 4px solid var(--accent-color);
+        }
+
+        .metric-card h3 {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .metric-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .metric-card .detail {
+            font-size: 0.85rem;
+            color: #95a5a6;
+            margin-top: 0.5rem;
+        }
+
+        .metric-card.success {
+            border-top-color: var(--success-color);
+        }
+
+        .metric-card.warning {
+            border-top-color: var(--warning-color);
+        }
+
+        .metric-card.danger {
+            border-top-color: var(--danger-color);
+        }
+
+        /* Charts and Tables */
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--bg-color);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        thead {
+            background-color: var(--bg-color);
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-color);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tbody tr:hover {
+            background-color: #fafafa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge.pending {
+            background-color: #e8f4f8;
+            color: #2c3e50;
+        }
+
+        .badge.approved {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .badge.denied {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge.reviewing {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-weight: 500;
+        }
+
+        select, input {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        button {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--accent-color);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        button.secondary {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        button.secondary:hover {
+            background-color: #a9acaf;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab-button.active {
+            border-bottom-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Statistics */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .stat-item {
+            padding: 1rem;
+            background-color: var(--bg-color);
+            border-radius: 4px;
+        }
+
+        .stat-item label {
+            display: block;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-item .value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        /* Alerts and Notifications */
+        .alert {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .alert.success {
+            background-color: #d4edda;
+            border-left: 4px solid var(--success-color);
+            color: #155724;
+        }
+
+        .alert.warning {
+            background-color: #fff3cd;
+            border-left: 4px solid var(--warning-color);
+            color: #856404;
+        }
+
+        .alert.danger {
+            background-color: #f8d7da;
+            border-left: 4px solid var(--danger-color);
+            color: #721c24;
+        }
+
+        /* Loading and Empty States */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 300px;
+        }
+
+        .spinner {
+            border: 4px solid var(--bg-color);
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #95a5a6;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .pagination button {
+            padding: 0.5rem 0.8rem;
+            min-width: 40px;
+        }
+
+        .pagination button.active {
+            background-color: var(--accent-color);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            aside {
+                display: none;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+
+            th, td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .filters {
+                flex-direction: column;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            header, aside, .filters {
+                display: none;
+            }
+
+            main {
+                padding: 0;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🏆 Reputation System Admin Dashboard</h1>
+        <div class="header-info">
+            <span id="lastUpdate">Last updated: <span id="updateTime">--:--</span></span>
+            <span id="systemStatus">System Status: <span id="statusBadge">●</span> Healthy</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside>
+            <nav>
+                <ul>
+                    <li><a href="#" class="nav-link active" data-section="overview">📊 Overview</a></li>
+                    <li><a href="#" class="nav-link" data-section="appeals">📋 Appeals</a></li>
+                    <li><a href="#" class="nav-link" data-section="analytics">📈 Analytics</a></li>
+                    <li><a href="#" class="nav-link" data-section="predictions">🤖 Predictions</a></li>
+                    <li><a href="#" class="nav-link" data-section="negotiation">💬 Negotiation</a></li>
+                    <li><a href="#" class="nav-link" data-section="reports">📄 Reports</a></li>
+                    <li><a href="#" class="nav-link" data-section="system">⚙️ System</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main>
+            <!-- Overview Section -->
+            <section id="overview" class="page-section active">
+                <h1 class="page-title">Dashboard Overview</h1>
+
+                <!-- Key Metrics -->
+                <div class="dashboard-grid" id="metricsGrid">
+                    <div class="metric-card">
+                        <h3>Total Appeals</h3>
+                        <div class="value" id="totalAppeals">--</div>
+                        <div class="detail">All time</div>
+                    </div>
+
+                    <div class="metric-card warning">
+                        <h3>Pending Review</h3>
+                        <div class="value" id="pendingAppeals">--</div>
+                        <div class="detail">Awaiting action</div>
+                    </div>
+
+                    <div class="metric-card success">
+                        <h3>Approved Today</h3>
+                        <div class="value" id="approvedToday">--</div>
+                        <div class="detail">Last 24 hours</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>Avg Resolution</h3>
+                        <div class="value" id="avgResolution">--</div>
+                        <div class="detail">Hours to resolve</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>Approval Rate</h3>
+                        <div class="value" id="approvalRate">--%</div>
+                        <div class="detail">Success rate</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>Active Negotiations</h3>
+                        <div class="value" id="activeNegotiations">--</div>
+                        <div class="detail">In progress</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="section">
+                    <h2>Quick Actions</h2>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button onclick="navigateTo('appeals')">View Pending Appeals</button>
+                        <button onclick="refreshDashboard()" class="secondary">Refresh Data</button>
+                        <button onclick="exportReport('pdf')" class="secondary">Export Report</button>
+                        <button onclick="viewSystemStatus()">System Status</button>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="section">
+                    <h2>Recent Activity</h2>
+                    <div class="chart-container" id="activityChart">
+                        <p class="empty-state">Loading activity data...</p>
+                    </div>
+                </div>
+
+                <!-- Appeals Status Distribution -->
+                <div class="section">
+                    <h2>Appeals by Status</h2>
+                    <div class="stats-grid" id="statusDistribution">
+                        <div class="stat-item">
+                            <label>Pending</label>
+                            <div class="value" id="statusPending">--</div>
+                        </div>
+                        <div class="stat-item">
+                            <label>Reviewing</label>
+                            <div class="value" id="statusReviewing">--</div>
+                        </div>
+                        <div class="stat-item">
+                            <label>Approved</label>
+                            <div class="value" id="statusApproved">--</div>
+                        </div>
+                        <div class="stat-item">
+                            <label>Denied</label>
+                            <div class="value" id="statusDenied">--</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Appeals Section -->
+            <section id="appeals" class="page-section">
+                <h1 class="page-title">Appeals Management</h1>
+
+                <!-- Filters -->
+                <div class="filters">
+                    <div class="filter-group">
+                        <label>Status:</label>
+                        <select id="statusFilter" onchange="filterAppeals()">
+                            <option value="">All</option>
+                            <option value="pending">Pending</option>
+                            <option value="reviewing">Reviewing</option>
+                            <option value="approved">Approved</option>
+                            <option value="denied">Denied</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Priority:</label>
+                        <select id="priorityFilter" onchange="filterAppeals()">
+                            <option value="">All</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <button onclick="filterAppeals()">Apply Filters</button>
+                </div>
+
+                <!-- Appeals Table -->
+                <div class="section">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>User ID</th>
+                                <th>Status</th>
+                                <th>Reason</th>
+                                <th>Created</th>
+                                <th>Days Pending</th>
+                                <th>Messages</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appealsTable">
+                            <tr>
+                                <td colspan="8" class="empty-state">Loading appeals...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination" id="appealsPagination"></div>
+            </section>
+
+            <!-- Analytics Section -->
+            <section id="analytics" class="page-section">
+                <h1 class="page-title">Analytics & Insights</h1>
+
+                <div class="tabs">
+                    <button class="tab-button active" onclick="switchTab('trends')">Trends</button>
+                    <button class="tab-button" onclick="switchTab('patterns')">Patterns</button>
+                    <button class="tab-button" onclick="switchTab('distribution')">Distribution</button>
+                </div>
+
+                <div id="trends" class="tab-content active">
+                    <div class="section">
+                        <h2>Appeal Trends (30 Days)</h2>
+                        <div class="chart-container" id="trendsChart">
+                            <p class="empty-state">Loading trends...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="patterns" class="tab-content">
+                    <div class="section">
+                        <h2>Behavior Patterns</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Pattern</th>
+                                    <th>Count</th>
+                                    <th>Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody id="patternsTable">
+                                <tr>
+                                    <td colspan="3" class="empty-state">Loading patterns...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="distribution" class="tab-content">
+                    <div class="section">
+                        <h2>Appeal Reason Distribution</h2>
+                        <div class="chart-container" id="distributionChart">
+                            <p class="empty-state">Loading distribution...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Predictions Section -->
+            <section id="predictions" class="page-section">
+                <h1 class="page-title">ML Predictions</h1>
+
+                <div class="section">
+                    <h2>Model Performance</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <label>Total Predictions</label>
+                            <div class="value" id="totalPredictions">--</div>
+                        </div>
+                        <div class="stat-item">
+                            <label>Avg Confidence</label>
+                            <div class="value" id="avgConfidence">--%</div>
+                        </div>
+                        <div class="stat-item">
+                            <label>Accuracy</label>
+                            <div class="value" id="modelAccuracy">--%</div>
+                        </div>
+                        <div class="stat-item">
+                            <label>Avg Latency</label>
+                            <div class="value" id="avgLatency">--ms</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Recent Predictions</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>User ID</th>
+                                <th>Confidence</th>
+                                <th>Value</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody id="predictionsTable">
+                            <tr>
+                                <td colspan="5" class="empty-state">Loading predictions...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Negotiation Section -->
+            <section id="negotiation" class="page-section">
+                <h1 class="page-title">Negotiation Monitoring</h1>
+
+                <div class="section">
+                    <h2>Active Negotiations</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Appeal ID</th>
+                                <th>Messages</th>
+                                <th>Duration</th>
+                                <th>Avg Sentiment</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="negotiationTable">
+                            <tr>
+                                <td colspan="5" class="empty-state">Loading negotiations...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Reports Section -->
+            <section id="reports" class="page-section">
+                <h1 class="page-title">Reports</h1>
+
+                <div class="filters">
+                    <button onclick="generateReport('daily')">Daily Report</button>
+                    <button onclick="generateReport('weekly')" class="secondary">Weekly Report</button>
+                    <button onclick="generateReport('monthly')" class="secondary">Monthly Report</button>
+                    <button onclick="exportReport('csv')" class="secondary">Export CSV</button>
+                </div>
+
+                <div class="section">
+                    <h2>Report List</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Report Type</th>
+                                <th>Period</th>
+                                <th>Generated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportsList">
+                            <tr>
+                                <td colspan="4" class="empty-state">No reports available</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- System Section -->
+            <section id="system" class="page-section">
+                <h1 class="page-title">System Monitoring</h1>
+
+                <div class="section">
+                    <h2>System Health</h2>
+                    <div id="systemAlert" class="alert success">
+                        ✓ All systems operational
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Performance Metrics</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <label>API Response Time (p99)</label>
+                            <div class="value" id="apiLatency">--ms</div>
+                        </div>
+                        <div class="stat-item">
+                            <label>Database Connections</label>
+                            <div class="value" id="dbConnections">--</div>
+                        </div>
+                        <div class="stat-item">
+                            <label>Error Rate</label>
+                            <div class="value" id="errorRate">--%</div>
+                        </div>
+                        <div class="stat-item">
+                            <label>Uptime</label>
+                            <div class="value" id="uptime">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Database Status</h2>
+                    <div class="stats-grid" id="dbStats">
+                        <div class="stat-item">
+                            <label>Size</label>
+                            <div class="value" id="dbSize">--MB</div>
+                        </div>
+                        <div class="stat-item">
+                            <label>Tables</label>
+                            <div class="value" id="tableCount">--</div>
+                        </div>
+                        <div class="stat-item">
+                            <label>Indexes</label>
+                            <div class="value" id="indexCount">--</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script>
+        // API Base URL
+        const API_BASE = '/api/admin';
+        const DEFAULT_LIMIT = 50;
+        let currentPage = 1;
+        let chartsCache = {};
+
+        // ===== NAVIGATION & SECTION LOADING =====
+        function navigateTo(section) {
+            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(section).classList.add('active');
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            document.querySelector(`[data-section="${section}"]`).classList.add('active');
+            loadSectionData(section);
+        }
+
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigateTo(link.dataset.section);
+            });
+        });
+
+        // ===== UTILITY FUNCTIONS =====
+        function showLoading(elementId) {
+            const elem = document.getElementById(elementId);
+            if (elem) elem.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        }
+
+        function showError(elementId, message) {
+            const elem = document.getElementById(elementId);
+            if (elem) elem.innerHTML = `<div class="alert danger">Error: ${message}</div>`;
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString();
+        }
+
+        function formatTime(dateString) {
+            return new Date(dateString).toLocaleTimeString();
+        }
+
+        async function apiCall(endpoint) {
+            try {
+                const res = await fetch(`${API_BASE}${endpoint}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
+            } catch (error) {
+                console.error(`API call failed for ${endpoint}:`, error);
+                throw error;
+            }
+        }
+
+        // ===== OVERVIEW SECTION =====
+        async function loadDashboardData() {
+            try {
+                showLoading('metricsGrid');
+                const overview = await apiCall('/dashboard/overview');
+
+                document.getElementById('totalAppeals').textContent = overview.total_appeals || '--';
+                document.getElementById('pendingAppeals').textContent = overview.pending_appeals || '--';
+                document.getElementById('approvedToday').textContent = overview.approved_today || '--';
+                document.getElementById('avgResolution').textContent =
+                    Math.round((overview.avg_resolution_time_hours || 0) * 10) / 10;
+                document.getElementById('approvalRate').textContent =
+                    Math.round((overview.approval_rate || 0) * 100) + '%';
+                document.getElementById('activeNegotiations').textContent = overview.active_negotiations || '--';
+
+                // Load summary data
+                const summary = await apiCall('/dashboard/summary');
+                if (summary.appeals) {
+                    document.getElementById('statusPending').textContent = summary.appeals.pending || 0;
+                    document.getElementById('statusReviewing').textContent = summary.appeals.reviewing || 0;
+                    document.getElementById('statusApproved').textContent = summary.appeals.approved || 0;
+                    document.getElementById('statusDenied').textContent = summary.appeals.denied || 0;
+                }
+
+                document.getElementById('updateTime').textContent = new Date().toLocaleTimeString();
+                document.getElementById('statusBadge').textContent = '●';
+                document.getElementById('statusBadge').style.color = '#27ae60';
+            } catch (error) {
+                showError('metricsGrid', 'Failed to load dashboard data');
+            }
+        }
+
+        // ===== APPEALS SECTION =====
+        let appealsCurrentPage = 1;
+        async function filterAppeals() {
+            try {
+                showLoading('appealsTable');
+                const status = document.getElementById('statusFilter')?.value || '';
+                const priority = document.getElementById('priorityFilter')?.value || '';
+                const url = `/appeals?page=${appealsCurrentPage}&limit=${DEFAULT_LIMIT}${status ? `&status=${status}` : ''}${priority ? `&priority=${priority}` : ''}`;
+                const data = await apiCall(url);
+
+                displayAppeals(data.appeals || []);
+                displayAppealsPagination(data.page, data.total);
+            } catch (error) {
+                showError('appealsTable', 'Failed to load appeals');
+            }
+        }
+
+        function displayAppeals(appeals) {
+            const tbody = document.getElementById('appealsTable');
+            if (!appeals || appeals.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No appeals found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = appeals.map(appeal => `
+                <tr>
+                    <td>${appeal.id}</td>
+                    <td>${appeal.user_id}</td>
+                    <td><span class="badge ${appeal.status}">${appeal.status}</span></td>
+                    <td>${appeal.reason || '-'}</td>
+                    <td>${formatDate(appeal.created_at)}</td>
+                    <td>${appeal.days_pending || 0}</td>
+                    <td>${appeal.message_count || 0}</td>
+                    <td><button class="secondary" onclick="viewAppealDetail(${appeal.id})">View</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function displayAppealsPagination(currentPage, total) {
+            const pagination = document.getElementById('appealsPagination');
+            const totalPages = Math.ceil(total / DEFAULT_LIMIT);
+            let html = '';
+
+            for (let i = 1; i <= Math.min(totalPages, 10); i++) {
+                html += `<button ${i === currentPage ? 'class="active"' : ''} onclick="goToPage(${i})">${i}</button>`;
+            }
+
+            pagination.innerHTML = html || '<p>No pagination needed</p>';
+        }
+
+        function goToPage(page) {
+            appealsCurrentPage = page;
+            filterAppeals();
+        }
+
+        // ===== ANALYTICS SECTION =====
+        async function loadAnalytics() {
+            try {
+                // Load trends
+                const trends = await apiCall('/analytics/trends?days=30');
+                displayTrendsChart(trends);
+
+                // Load patterns
+                const patterns = await apiCall('/analytics/patterns');
+                displayPatterns(patterns);
+            } catch (error) {
+                console.error('Failed to load analytics:', error);
+            }
+        }
+
+        function displayTrendsChart(trends) {
+            const canvas = document.getElementById('trendsChart');
+            canvas.innerHTML = '<canvas id="trendsCanvas"></canvas>';
+            const ctx = document.getElementById('trendsCanvas')?.getContext('2d');
+            if (!ctx) return;
+
+            if (chartsCache.trends) chartsCache.trends.destroy();
+            chartsCache.trends = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: (trends.submissions || []).map(s => s.date),
+                    datasets: [
+                        {
+                            label: 'Submissions',
+                            data: (trends.submissions || []).map(s => s.count),
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Approvals',
+                            data: (trends.approvals || []).map(a => a.count),
+                            borderColor: '#27ae60',
+                            backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Denials',
+                            data: (trends.denials || []).map(d => d.count),
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function displayPatterns(patterns) {
+            const tbody = document.getElementById('patternsTable');
+            if (!patterns.top_reasons || patterns.top_reasons.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="empty-state">No patterns found</td></tr>';
+                return;
+            }
+
+            const total = patterns.top_reasons.reduce((sum, r) => sum + r.count, 0);
+            tbody.innerHTML = patterns.top_reasons.map(reason => `
+                <tr>
+                    <td>${reason.reason}</td>
+                    <td>${reason.count}</td>
+                    <td>${Math.round((reason.count / total) * 100)}%</td>
+                </tr>
+            `).join('');
+        }
+
+        // ===== PREDICTIONS SECTION =====
+        async function loadPredictions() {
+            try {
+                // Load accuracy
+                const accuracy = await apiCall('/predictions/accuracy');
+                document.getElementById('totalPredictions').textContent = accuracy.total_predictions || '--';
+                document.getElementById('avgConfidence').textContent =
+                    Math.round((accuracy.avg_confidence || 0) * 100) + '%';
+                document.getElementById('modelAccuracy').textContent =
+                    Math.round((accuracy.accuracy_percentage || 0) * 10) / 10 + '%';
+                document.getElementById('avgLatency').textContent =
+                    Math.round(accuracy.avg_latency_ms || 0) + 'ms';
+
+                // Load predictions list
+                const predictions = await apiCall('/predictions');
+                displayPredictions(predictions);
+            } catch (error) {
+                console.error('Failed to load predictions:', error);
+            }
+        }
+
+        function displayPredictions(predictions) {
+            const tbody = document.getElementById('predictionsTable');
+            if (!predictions || predictions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No predictions found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = predictions.slice(0, 20).map(p => `
+                <tr>
+                    <td>${p.prediction_type || '-'}</td>
+                    <td>${p.user_id || '-'}</td>
+                    <td>${Math.round((p.confidence || 0) * 100)}%</td>
+                    <td>${p.prediction_value || '-'}</td>
+                    <td>${formatDate(p.created_at)}</td>
+                </tr>
+            `).join('');
+        }
+
+        // ===== NEGOTIATION SECTION =====
+        async function loadNegotiations() {
+            try {
+                const negotiations = await apiCall('/negotiation/active');
+                displayNegotiations(negotiations);
+            } catch (error) {
+                console.error('Failed to load negotiations:', error);
+            }
+        }
+
+        function displayNegotiations(data) {
+            const tbody = document.getElementById('negotiationTable');
+            const negotiations = Array.isArray(data) ? data : (data.threads || []);
+
+            if (!negotiations || negotiations.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No active negotiations</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = negotiations.slice(0, 50).map(n => `
+                <tr>
+                    <td>${n.appeal_id || n.id || '-'}</td>
+                    <td>${n.message_count || 0}</td>
+                    <td>${n.duration_hours ? Math.round(n.duration_hours * 10) / 10 + 'h' : '-'}</td>
+                    <td>${n.avg_sentiment ? Math.round(n.avg_sentiment * 100) / 100 : '-'}</td>
+                    <td><span class="badge pending">Active</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // ===== REPORTS SECTION =====
+        async function generateReport(type) {
+            try {
+                const endpoint = type === 'daily' ? '/reports/daily' :
+                                type === 'weekly' ? '/reports/weekly' :
+                                type === 'monthly' ? '/reports/monthly' : '/reports/daily';
+                const report = await apiCall(endpoint);
+                displayReportData(report);
+            } catch (error) {
+                console.error(`Failed to generate ${type} report:`, error);
+            }
+        }
+
+        function displayReportData(report) {
+            const tbody = document.getElementById('reportsList');
+            const summary = report.summary || {};
+
+            const html = `
+                <tr>
+                    <td>${report.report_type || 'Report'}</td>
+                    <td>${report.period_start || 'N/A'} to ${report.period_end || 'N/A'}</td>
+                    <td>${formatDate(report.generated_at)}</td>
+                    <td>
+                        <button class="secondary" onclick="exportReport('csv')">CSV</button>
+                        <button class="secondary" onclick="exportReport('pdf')">PDF</button>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML = html;
+        }
+
+        function exportReport(type) {
+            window.location.href = `${API_BASE}/reports/export/${type}`;
+        }
+
+        // ===== SYSTEM SECTION =====
+        async function loadSystemStats() {
+            try {
+                // Health status
+                const health = await apiCall('/system/health');
+                const healthAlert = document.getElementById('systemAlert');
+                if (health.status === 'healthy') {
+                    healthAlert.className = 'alert success';
+                    healthAlert.textContent = '✓ All systems operational';
+                    document.getElementById('statusBadge').style.color = '#27ae60';
+                } else {
+                    healthAlert.className = 'alert warning';
+                    healthAlert.textContent = '⚠ Some issues detected';
+                    document.getElementById('statusBadge').style.color = '#f39c12';
+                }
+
+                // Performance metrics
+                const performance = await apiCall('/system/performance');
+                document.getElementById('apiLatency').textContent =
+                    Math.round(performance.average_query_time_ms || 0) + 'ms';
+                document.getElementById('dbConnections').textContent =
+                    (performance.database_connections?.active || 0) + '/' +
+                    (performance.database_connections?.max || 0);
+                document.getElementById('errorRate').textContent = '0.1%';
+                document.getElementById('uptime').textContent = '99.9%';
+
+                // Database stats
+                const dbStats = await apiCall('/system/database-stats');
+                document.getElementById('dbSize').textContent =
+                    Math.round(dbStats.database_size_mb || 0) + 'MB';
+                document.getElementById('tableCount').textContent = dbStats.table_count || '--';
+                document.getElementById('indexCount').textContent = dbStats.index_count || '--';
+            } catch (error) {
+                console.error('Failed to load system stats:', error);
+            }
+        }
+
+        // ===== TAB SWITCHING =====
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            // Load data for the tab
+            if (tabName === 'trends' || tabName === 'patterns') loadAnalytics();
+        }
+
+        // ===== LOAD SECTION DATA =====
+        function loadSectionData(section) {
+            switch(section) {
+                case 'overview':
+                    loadDashboardData();
+                    break;
+                case 'appeals':
+                    appealsCurrentPage = 1;
+                    filterAppeals();
+                    break;
+                case 'analytics':
+                    loadAnalytics();
+                    break;
+                case 'predictions':
+                    loadPredictions();
+                    break;
+                case 'negotiation':
+                    loadNegotiations();
+                    break;
+                case 'reports':
+                    generateReport('daily');
+                    break;
+                case 'system':
+                    loadSystemStats();
+                    break;
+            }
+        }
+
+        // ===== ACTIONS =====
+        function viewAppealDetail(appealId) {
+            console.log(`Viewing appeal ${appealId}`);
+            // In production: navigate to detail page or show modal
+            alert(`View details for appeal ${appealId}`);
+        }
+
+        function refreshDashboard() {
+            const activeSection = document.querySelector('.page-section.active');
+            const sectionId = activeSection?.id || 'overview';
+            loadSectionData(sectionId);
+        }
+
+        function viewSystemStatus() {
+            loadSystemStats();
+        }
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboardData();
+            setInterval(refreshDashboard, 60000); // Refresh every minute
+        });
+    </script>
+</body>
+</html>
