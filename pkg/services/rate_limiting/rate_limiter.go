@@ -412,6 +412,10 @@ func (l *PostgresRateLimiter) CreateRule(ctx context.Context, rule Rule) (int64,
 func (l *PostgresRateLimiter) UpdateRule(ctx context.Context, rule Rule) error {
 	rule.UpdatedAt = time.Now()
 
+	// Get the old rule to check if we're disabling it
+	var oldRule Rule
+	l.db.WithContext(ctx).Table("rate_limit_rules").Where("id = ?", rule.ID).First(&oldRule)
+
 	// Use a map to ensure all fields (including zero values) are updated
 	updateMap := map[string]interface{}{
 		"rule_name":     rule.RuleName,
@@ -431,6 +435,13 @@ func (l *PostgresRateLimiter) UpdateRule(ctx context.Context, rule Rule) error {
 
 	if result.Error != nil {
 		return result.Error
+	}
+
+	// If disabling a rule, clear its buckets to reset state
+	if oldRule.Enabled && !rule.Enabled {
+		l.db.WithContext(ctx).Table("rate_limit_buckets").
+			Where("rule_id = ?", rule.ID).
+			Delete(nil)
 	}
 
 	// Invalidate cache
