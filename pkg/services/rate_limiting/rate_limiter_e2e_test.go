@@ -17,8 +17,16 @@ import (
 
 // setupRateLimiterE2ETestDB creates a test database for E2E tests
 func setupRateLimiterE2ETestDB(t *testing.T) *gorm.DB {
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	// Use file::memory:?cache=shared to allow concurrent access to in-memory database
+	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
 	require.NoError(t, err, "failed to create E2E test database")
+
+	// Clear any existing tables from previous tests
+	db.Exec("DELETE FROM rate_limit_rules")
+	db.Exec("DELETE FROM rate_limit_buckets")
+	db.Exec("DELETE FROM resource_quotas")
+	db.Exec("DELETE FROM rate_limit_violations")
+	db.Exec("DELETE FROM rate_limit_metrics")
 
 	// Create required tables
 	createRateLimiterE2ETestTables(t, db)
@@ -28,26 +36,27 @@ func setupRateLimiterE2ETestDB(t *testing.T) *gorm.DB {
 
 // createRateLimiterE2ETestTables creates all required tables for E2E tests
 func createRateLimiterE2ETestTables(t *testing.T, db *gorm.DB) {
-	db.Exec(`
-		CREATE TABLE rate_limit_rules (
-			id INTEGER PRIMARY KEY,
+	result := db.Exec(`
+		CREATE TABLE IF NOT EXISTS rate_limit_rules (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			rule_name TEXT UNIQUE,
 			scope TEXT,
 			scope_value TEXT,
 			limit_type TEXT,
 			limit_value INTEGER,
 			resource_type TEXT,
-			enabled BOOLEAN DEFAULT 1,
+			enabled INTEGER DEFAULT 1,
 			priority INTEGER DEFAULT 1,
 			system_id TEXT,
 			created_at TIMESTAMP,
 			updated_at TIMESTAMP
 		)
 	`)
+	require.NoError(t, result.Error, "failed to create rate_limit_rules table")
 
-	db.Exec(`
-		CREATE TABLE rate_limit_buckets (
-			id INTEGER PRIMARY KEY,
+	result = db.Exec(`
+		CREATE TABLE IF NOT EXISTS rate_limit_buckets (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			rule_id INTEGER,
 			system_id TEXT,
 			scope TEXT,
@@ -59,14 +68,16 @@ func createRateLimiterE2ETestTables(t *testing.T, db *gorm.DB) {
 			updated_at TIMESTAMP
 		)
 	`)
+	require.NoError(t, result.Error, "failed to create rate_limit_buckets table")
 
-	db.Exec(`
-		CREATE INDEX idx_buckets_scope ON rate_limit_buckets(scope, scope_value, window_start)
+	result = db.Exec(`
+		CREATE INDEX IF NOT EXISTS idx_buckets_scope ON rate_limit_buckets(scope, scope_value, window_start)
 	`)
+	require.NoError(t, result.Error, "failed to create bucket index")
 
-	db.Exec(`
-		CREATE TABLE resource_quotas (
-			id INTEGER PRIMARY KEY,
+	result = db.Exec(`
+		CREATE TABLE IF NOT EXISTS resource_quotas (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			system_id TEXT,
 			scope TEXT,
 			scope_value TEXT,
@@ -81,10 +92,11 @@ func createRateLimiterE2ETestTables(t *testing.T, db *gorm.DB) {
 			updated_at TIMESTAMP
 		)
 	`)
+	require.NoError(t, result.Error, "failed to create resource_quotas table")
 
-	db.Exec(`
-		CREATE TABLE rate_limit_violations (
-			id INTEGER PRIMARY KEY,
+	result = db.Exec(`
+		CREATE TABLE IF NOT EXISTS rate_limit_violations (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			system_id TEXT,
 			rule_id INTEGER,
 			scope TEXT,
@@ -96,14 +108,15 @@ func createRateLimiterE2ETestTables(t *testing.T, db *gorm.DB) {
 			request_path TEXT,
 			request_method TEXT,
 			user_agent TEXT,
-			blocked BOOLEAN DEFAULT 1,
+			blocked INTEGER DEFAULT 1,
 			severity TEXT
 		)
 	`)
+	require.NoError(t, result.Error, "failed to create rate_limit_violations table")
 
-	db.Exec(`
-		CREATE TABLE rate_limit_metrics (
-			id INTEGER PRIMARY KEY,
+	result = db.Exec(`
+		CREATE TABLE IF NOT EXISTS rate_limit_metrics (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			system_id TEXT,
 			scope TEXT,
 			scope_value TEXT,
@@ -117,6 +130,7 @@ func createRateLimiterE2ETestTables(t *testing.T, db *gorm.DB) {
 			created_at TIMESTAMP
 		)
 	`)
+	require.NoError(t, result.Error, "failed to create rate_limit_metrics table")
 }
 
 // E2E API Response types

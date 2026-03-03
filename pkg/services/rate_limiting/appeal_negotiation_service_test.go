@@ -22,7 +22,20 @@ func setupNegotiationTestDB(t *testing.T) *gorm.DB {
 			user_id INTEGER,
 			violation_id INTEGER,
 			status TEXT DEFAULT 'pending',
-			created_at TIMESTAMP
+			priority TEXT,
+			reason TEXT,
+			description TEXT,
+			evidence TEXT,
+			reputation_lost REAL,
+			requested_action TEXT,
+			reviewed_by TEXT,
+			review_comment TEXT,
+			resolution TEXT,
+			approved_points REAL,
+			created_at TIMESTAMP,
+			updated_at TIMESTAMP,
+			expires_at TIMESTAMP,
+			resolved_at TIMESTAMP
 		)
 	`)
 
@@ -206,7 +219,7 @@ func TestGetPinnedMessages(t *testing.T) {
 	db.Table("appeals").Create(appeal)
 
 	msg1, _ := ns.SendMessage(context.Background(), 4, 202, SenderTypeUser, "Important", MessageTypeMessage, nil, nil)
-	msg2, _ := ns.SendMessage(context.Background(), 4, 202, SenderTypeUser, "Other", MessageTypeMessage, nil, nil)
+	_, _ = ns.SendMessage(context.Background(), 4, 202, SenderTypeUser, "Other", MessageTypeMessage, nil, nil)
 
 	ns.PinMessage(context.Background(), msg1.ID)
 
